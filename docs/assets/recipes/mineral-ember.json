@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "colors": [
+    "#251d32",
+    "#ab4e3b",
+    "#e6ad62",
+    "#f0e7d3"
+  ],
+  "options": {
+    "algorithm": "floyd-steinberg",
+    "width": 960,
+    "pixel_scale": 2,
+    "brightness": 0.06,
+    "contrast": 1.1,
+    "seed": 42,
+    "effects": {}
+  }
+}

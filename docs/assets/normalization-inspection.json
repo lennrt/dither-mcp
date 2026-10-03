@@ -1,0 +1,54 @@
+{
+  "tools": [
+    "dither_inspect",
+    "dither_preview"
+  ],
+  "inspections": [
+    {
+      "normalization": {
+        "stored_width": 320,
+        "stored_height": 520,
+        "exif_orientation": 6,
+        "orientation_applied": true,
+        "color_source": "assumed-srgb",
+        "working_space": "srgb",
+        "color_converted": false
+      },
+      "path": "normalization-oriented.png",
+      "format": "png",
+      "width": 520,
+      "height": 320,
+      "frames": 1,
+      "bytes": 9068,
+      "sha256": "6c500ec08ac480a1286c77089b1356479cf32c3e24a81a7593dd4187bc4fddef",
+      "has_alpha": true
+    },
+    {
+      "normalization": {
+        "stored_width": 520,
+        "stored_height": 320,
+        "exif_orientation": 1,
+        "orientation_applied": false,
+        "color_source": "embedded-icc",
+        "working_space": "srgb",
+        "color_converted": true,
+        "icc_sha256": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1"
+      },
+      "path": "normalization-linear.png",
+      "format": "png",
+      "width": 520,
+      "height": 320,
+      "frames": 1,
+      "bytes": 8422,
+      "sha256": "97ea01cc668a71106ed9ad68d17978c46548a6f5377d5b7e533a66db19135610",
+      "has_alpha": true
+    }
+  ],
+  "linear_128_srgb": {
+    "R": 188,
+    "G": 188,
+    "B": 188,
+    "A": 255
+  },
+  "preserved_alpha": 160
+}

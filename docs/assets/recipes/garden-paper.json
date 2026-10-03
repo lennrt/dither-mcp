@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "colors": [
+    "#242a25",
+    "#eee9de"
+  ],
+  "options": {
+    "algorithm": "atkinson",
+    "width": 960,
+    "pixel_scale": 2,
+    "brightness": 0.06,
+    "contrast": 1.1,
+    "seed": 42,
+    "effects": {}
+  }
+}

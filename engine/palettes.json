@@ -1,0 +1,5991 @@
+{
+  "schema_version": 1,
+  "palettes": [
+    {
+      "id": "mono",
+      "name": "Paper & ink",
+      "colors": [
+        "#000000",
+        "#ffffff"
+      ],
+      "category": "neutral",
+      "description": "Pure black and white for crisp linework, silhouettes and classic one-bit texture.",
+      "tags": [
+        "monochrome",
+        "high-contrast",
+        "linework"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "grayscale-4",
+      "name": "Four grays",
+      "colors": [
+        "#000000",
+        "#555555",
+        "#aaaaaa",
+        "#ffffff"
+      ],
+      "category": "neutral",
+      "description": "Four evenly spaced gray levels for compact tonal studies and readable texture.",
+      "tags": [
+        "grayscale",
+        "tonal",
+        "compact"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "grayscale-8",
+      "name": "Eight grays",
+      "colors": [
+        "#000000",
+        "#242424",
+        "#494949",
+        "#6d6d6d",
+        "#929292",
+        "#b6b6b6",
+        "#dbdbdb",
+        "#ffffff"
+      ],
+      "category": "neutral",
+      "description": "Eight evenly spaced grays preserve gentle shading in monochrome photographs.",
+      "tags": [
+        "grayscale",
+        "tonal",
+        "photography"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "gameboy",
+      "name": "Game Boy green",
+      "colors": [
+        "#0f380f",
+        "#306230",
+        "#8bac0f",
+        "#9bbc0f"
+      ],
+      "category": "retro",
+      "description": "A familiar green sRGB approximation of the original monochrome handheld display.",
+      "tags": [
+        "handheld",
+        "green",
+        "display-inspired"
+      ],
+      "origin": "approximation",
+      "source": "https://github.com/gbdev/pandocs/blob/master/src/Palettes.md"
+    },
+    {
+      "id": "gameboy-pocket",
+      "name": "Game Boy Pocket",
+      "colors": [
+        "#181818",
+        "#565656",
+        "#a8a8a8",
+        "#e0e0e0"
+      ],
+      "category": "retro",
+      "description": "A four-tone gray approximation of the reflective monochrome pocket display.",
+      "tags": [
+        "handheld",
+        "grayscale",
+        "display-inspired"
+      ],
+      "origin": "approximation",
+      "source": "https://github.com/gbdev/pandocs/blob/master/src/Palettes.md"
+    },
+    {
+      "id": "cga",
+      "name": "CGA cyan/magenta",
+      "colors": [
+        "#000000",
+        "#55ffff",
+        "#ff55ff",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The high-intensity cyan and magenta CGA combination expressed as conventional sRGB values.",
+      "tags": [
+        "hardware",
+        "cyan",
+        "magenta"
+      ],
+      "origin": "approximation",
+      "source": "https://www.pcjs.org/machines/pcx86/ibm/video/"
+    },
+    {
+      "id": "cga-warm",
+      "name": "CGA red/green",
+      "colors": [
+        "#000000",
+        "#55ff55",
+        "#ff5555",
+        "#ffff55"
+      ],
+      "category": "retro",
+      "description": "The bright green, red and yellow CGA combination expressed as conventional sRGB values.",
+      "tags": [
+        "hardware",
+        "primary",
+        "bright"
+      ],
+      "origin": "approximation",
+      "source": "https://www.pcjs.org/machines/pcx86/ibm/video/"
+    },
+    {
+      "id": "ega",
+      "name": "EGA 16",
+      "colors": [
+        "#000000",
+        "#0000aa",
+        "#00aa00",
+        "#00aaaa",
+        "#aa0000",
+        "#aa00aa",
+        "#aa5500",
+        "#aaaaaa",
+        "#555555",
+        "#5555ff",
+        "#55ff55",
+        "#55ffff",
+        "#ff5555",
+        "#ff55ff",
+        "#ffff55",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The classic sixteen RGBI colors expressed using the conventional bright and dark sRGB levels.",
+      "tags": [
+        "hardware",
+        "16-color",
+        "primary"
+      ],
+      "origin": "approximation",
+      "source": "https://www.pcjs.org/machines/pcx86/ibm/video/"
+    },
+    {
+      "id": "commodore-64",
+      "name": "Commodore 64 (approximate sRGB)",
+      "colors": [
+        "#000000",
+        "#ffffff",
+        "#68372b",
+        "#70a4b2",
+        "#6f3d86",
+        "#588d43",
+        "#352879",
+        "#b8c76f",
+        "#6f4f25",
+        "#433900",
+        "#9a6759",
+        "#444444",
+        "#6c6c6c",
+        "#9ad284",
+        "#6c5eb5",
+        "#959595"
+      ],
+      "category": "retro",
+      "description": "A widely used sixteen-color sRGB approximation of the analog Commodore 64 display.",
+      "tags": [
+        "hardware",
+        "analog",
+        "16-color"
+      ],
+      "origin": "approximation",
+      "source": "https://commodore.ca/manuals/c64_users_guide/c64-users_guide.htm"
+    },
+    {
+      "id": "pico-8",
+      "name": "PICO-8",
+      "colors": [
+        "#000000",
+        "#1d2b53",
+        "#7e2553",
+        "#008751",
+        "#ab5236",
+        "#5f574f",
+        "#c2c3c7",
+        "#fff1e8",
+        "#ff004d",
+        "#ffa300",
+        "#ffec27",
+        "#00e436",
+        "#29adff",
+        "#83769c",
+        "#ff77a8",
+        "#ffccaa"
+      ],
+      "category": "retro",
+      "description": "The sixteen-color base palette of the PICO-8 fantasy console, in its original index order.",
+      "tags": [
+        "fantasy-console",
+        "16-color",
+        "pixel-art"
+      ],
+      "origin": "reference",
+      "source": "https://www.lexaloffle.com/dl/docs/pico-8_manual.html"
+    },
+    {
+      "id": "sepia",
+      "name": "Sepia print",
+      "colors": [
+        "#24180f",
+        "#6a4630",
+        "#b58a5d",
+        "#efd9b5"
+      ],
+      "category": "print",
+      "description": "Warm brown ink and pale paper bring a quiet photographic print character to texture.",
+      "tags": [
+        "sepia",
+        "warm",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "amber",
+      "name": "Amber terminal",
+      "colors": [
+        "#160d00",
+        "#7c4100",
+        "#e78a12",
+        "#ffd77c"
+      ],
+      "category": "terminal",
+      "description": "Four amber phosphor tones contrast with a nearly black warm screen.",
+      "tags": [
+        "phosphor",
+        "amber",
+        "monochrome"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "terminal",
+      "name": "Green phosphor",
+      "colors": [
+        "#041408",
+        "#134d24",
+        "#39a95d",
+        "#b7f7b0"
+      ],
+      "category": "terminal",
+      "description": "Deep green through pale mint recreates the mood of a glowing text terminal.",
+      "tags": [
+        "phosphor",
+        "green",
+        "monochrome"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blueprint",
+      "name": "Blueprint",
+      "colors": [
+        "#071c40",
+        "#165995",
+        "#72b6d3",
+        "#e8f5eb"
+      ],
+      "category": "print",
+      "description": "Dark navy, cyan wash and pale paper lend drawings a technical print character.",
+      "tags": [
+        "blue",
+        "paper",
+        "technical"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "solarized",
+      "name": "Solarized",
+      "colors": [
+        "#002b36",
+        "#073642",
+        "#586e75",
+        "#657b83",
+        "#839496",
+        "#93a1a1",
+        "#eee8d5",
+        "#fdf6e3",
+        "#b58900",
+        "#cb4b16",
+        "#dc322f",
+        "#d33682",
+        "#6c71c4",
+        "#268bd2",
+        "#2aa198",
+        "#859900"
+      ],
+      "category": "interface",
+      "description": "Ethan Schoonover's sixteen-color Solarized palette combines balanced base tones with eight accents.",
+      "tags": [
+        "theme",
+        "balanced",
+        "16-color"
+      ],
+      "origin": "reference",
+      "source": "https://ethanschoonover.com/solarized/"
+    },
+    {
+      "id": "nord",
+      "name": "Nord",
+      "colors": [
+        "#2e3440",
+        "#3b4252",
+        "#434c5e",
+        "#4c566a",
+        "#d8dee9",
+        "#e5e9f0",
+        "#eceff4",
+        "#8fbcbb",
+        "#88c0d0",
+        "#81a1c1",
+        "#5e81ac",
+        "#bf616a",
+        "#d08770",
+        "#ebcb8b",
+        "#a3be8c",
+        "#b48ead"
+      ],
+      "category": "interface",
+      "description": "Nord's sixteen arctic colors pair polar neutrals with frost and aurora accents.",
+      "tags": [
+        "theme",
+        "arctic",
+        "16-color"
+      ],
+      "origin": "reference",
+      "source": "https://www.nordtheme.com/docs/colors-and-palettes/"
+    },
+    {
+      "id": "dracula",
+      "name": "Dracula",
+      "colors": [
+        "#282a36",
+        "#44475a",
+        "#f8f8f2",
+        "#6272a4",
+        "#8be9fd",
+        "#50fa7b",
+        "#ffb86c",
+        "#ff79c6",
+        "#bd93f9",
+        "#ff5555",
+        "#f1fa8c"
+      ],
+      "category": "interface",
+      "description": "The Dracula theme colors pair charcoal and cream with bright pastel syntax accents.",
+      "tags": [
+        "theme",
+        "dark",
+        "pastel"
+      ],
+      "origin": "reference",
+      "source": "https://draculatheme.com/contribute"
+    },
+    {
+      "id": "cyberpunk",
+      "name": "Neon after midnight",
+      "colors": [
+        "#100c2b",
+        "#452c70",
+        "#d82e8a",
+        "#ffb66c",
+        "#57e5e1",
+        "#e9f8ff"
+      ],
+      "category": "neon",
+      "description": "Deep violet, hot pink and luminous cyan create a saturated city-night palette.",
+      "tags": [
+        "night",
+        "pink",
+        "cyan"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "colors": [
+        "#211b35",
+        "#62365b",
+        "#b45a68",
+        "#e99074",
+        "#ffd1a0",
+        "#fff1d4"
+      ],
+      "category": "landscape",
+      "description": "Plum shadows and amber peach highlights capture the soft color of a fading sky.",
+      "tags": [
+        "sunset",
+        "warm",
+        "sky"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ocean",
+      "name": "Deep water",
+      "colors": [
+        "#071f2c",
+        "#165264",
+        "#278b9a",
+        "#63c7b2",
+        "#d7f3d4"
+      ],
+      "category": "ocean",
+      "description": "Navy depth, turquoise water and pale green light create a compact marine ramp.",
+      "tags": [
+        "water",
+        "teal",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "risograph",
+      "name": "Riso pink & blue",
+      "colors": [
+        "#20304a",
+        "#0078bf",
+        "#ff48b0",
+        "#ffd5d5",
+        "#fff8ea"
+      ],
+      "category": "print",
+      "description": "Pink and process blue accents on warm paper suggest a playful layered poster print.",
+      "tags": [
+        "poster",
+        "pink",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "newspaper",
+      "name": "Newsprint",
+      "colors": [
+        "#29251f",
+        "#767166",
+        "#c2bcad",
+        "#f0ead8"
+      ],
+      "category": "print",
+      "description": "Charcoal, warm gray and aged paper keep tonal photographs soft and tactile.",
+      "tags": [
+        "newsprint",
+        "paper",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "arcade-foundry",
+      "name": "Arcade Foundry",
+      "colors": [
+        "#141621",
+        "#34344f",
+        "#575478",
+        "#8b82a3",
+        "#d4cad5",
+        "#f8efd9",
+        "#7b243c",
+        "#c14756",
+        "#ef7869",
+        "#f3b263",
+        "#f6dd78",
+        "#265b4b",
+        "#479968",
+        "#89c887",
+        "#255c87",
+        "#58a8c6"
+      ],
+      "category": "retro",
+      "description": "Sixteen jewel-bright sprite colors share sturdy ink shadows and warm highlight tones.",
+      "tags": [
+        "arcade",
+        "pixel-art",
+        "jewel"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sprite-adventure",
+      "name": "Sprite Adventure",
+      "colors": [
+        "#202136",
+        "#44405e",
+        "#73658b",
+        "#b3a0b9",
+        "#edd8cf",
+        "#fff1d8",
+        "#7b3048",
+        "#c45555",
+        "#ec9d6c",
+        "#365b57",
+        "#69a47c",
+        "#83c2cb"
+      ],
+      "category": "retro",
+      "description": "Twelve storybook sprite colors combine forest green, brick red and clear blue for tiny scenes.",
+      "tags": [
+        "pixel-art",
+        "storybook",
+        "bright"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "plan9-256",
+      "name": "Plan 9 RGBV 256",
+      "colors": [
+        "#000000",
+        "#000044",
+        "#000088",
+        "#0000cc",
+        "#004400",
+        "#004444",
+        "#004488",
+        "#0044cc",
+        "#008800",
+        "#008844",
+        "#008888",
+        "#0088cc",
+        "#00cc00",
+        "#00cc44",
+        "#00cc88",
+        "#00cccc",
+        "#00dddd",
+        "#111111",
+        "#000055",
+        "#000099",
+        "#0000dd",
+        "#005500",
+        "#005555",
+        "#004c99",
+        "#0049dd",
+        "#009900",
+        "#00994c",
+        "#009999",
+        "#0093dd",
+        "#00dd00",
+        "#00dd49",
+        "#00dd93",
+        "#00ee9e",
+        "#00eeee",
+        "#222222",
+        "#000066",
+        "#0000aa",
+        "#0000ee",
+        "#006600",
+        "#006666",
+        "#0055aa",
+        "#004fee",
+        "#00aa00",
+        "#00aa55",
+        "#00aaaa",
+        "#009eee",
+        "#00ee00",
+        "#00ee4f",
+        "#00ff55",
+        "#00ffaa",
+        "#00ffff",
+        "#333333",
+        "#000077",
+        "#0000bb",
+        "#0000ff",
+        "#007700",
+        "#007777",
+        "#005dbb",
+        "#0055ff",
+        "#00bb00",
+        "#00bb5d",
+        "#00bbbb",
+        "#00aaff",
+        "#00ff00",
+        "#440044",
+        "#440088",
+        "#4400cc",
+        "#444400",
+        "#444444",
+        "#444488",
+        "#4444cc",
+        "#448800",
+        "#448844",
+        "#448888",
+        "#4488cc",
+        "#44cc00",
+        "#44cc44",
+        "#44cc88",
+        "#44cccc",
+        "#440000",
+        "#550000",
+        "#550055",
+        "#4c0099",
+        "#4900dd",
+        "#555500",
+        "#555555",
+        "#4c4c99",
+        "#4949dd",
+        "#4c9900",
+        "#4c994c",
+        "#4c9999",
+        "#4993dd",
+        "#49dd00",
+        "#49dd49",
+        "#49dd93",
+        "#49dddd",
+        "#4feeee",
+        "#660000",
+        "#660066",
+        "#5500aa",
+        "#4f00ee",
+        "#666600",
+        "#666666",
+        "#5555aa",
+        "#4f4fee",
+        "#55aa00",
+        "#55aa55",
+        "#55aaaa",
+        "#4f9eee",
+        "#4fee00",
+        "#4fee4f",
+        "#4fee9e",
+        "#55ffaa",
+        "#55ffff",
+        "#770000",
+        "#770077",
+        "#5d00bb",
+        "#5500ff",
+        "#777700",
+        "#777777",
+        "#5d5dbb",
+        "#5555ff",
+        "#5dbb00",
+        "#5dbb5d",
+        "#5dbbbb",
+        "#55aaff",
+        "#55ff00",
+        "#55ff55",
+        "#880088",
+        "#8800cc",
+        "#884400",
+        "#884444",
+        "#884488",
+        "#8844cc",
+        "#888800",
+        "#888844",
+        "#888888",
+        "#8888cc",
+        "#88cc00",
+        "#88cc44",
+        "#88cc88",
+        "#88cccc",
+        "#880000",
+        "#880044",
+        "#99004c",
+        "#990099",
+        "#9300dd",
+        "#994c00",
+        "#994c4c",
+        "#994c99",
+        "#9349dd",
+        "#999900",
+        "#99994c",
+        "#999999",
+        "#9393dd",
+        "#93dd00",
+        "#93dd49",
+        "#93dd93",
+        "#93dddd",
+        "#990000",
+        "#aa0000",
+        "#aa0055",
+        "#aa00aa",
+        "#9e00ee",
+        "#aa5500",
+        "#aa5555",
+        "#aa55aa",
+        "#9e4fee",
+        "#aaaa00",
+        "#aaaa55",
+        "#aaaaaa",
+        "#9e9eee",
+        "#9eee00",
+        "#9eee4f",
+        "#9eee9e",
+        "#9eeeee",
+        "#aaffff",
+        "#bb0000",
+        "#bb005d",
+        "#bb00bb",
+        "#aa00ff",
+        "#bb5d00",
+        "#bb5d5d",
+        "#bb5dbb",
+        "#aa55ff",
+        "#bbbb00",
+        "#bbbb5d",
+        "#bbbbbb",
+        "#aaaaff",
+        "#aaff00",
+        "#aaff55",
+        "#aaffaa",
+        "#cc00cc",
+        "#cc4400",
+        "#cc4444",
+        "#cc4488",
+        "#cc44cc",
+        "#cc8800",
+        "#cc8844",
+        "#cc8888",
+        "#cc88cc",
+        "#cccc00",
+        "#cccc44",
+        "#cccc88",
+        "#cccccc",
+        "#cc0000",
+        "#cc0044",
+        "#cc0088",
+        "#dd0093",
+        "#dd00dd",
+        "#dd4900",
+        "#dd4949",
+        "#dd4993",
+        "#dd49dd",
+        "#dd9300",
+        "#dd9349",
+        "#dd9393",
+        "#dd93dd",
+        "#dddd00",
+        "#dddd49",
+        "#dddd93",
+        "#dddddd",
+        "#dd0000",
+        "#dd0049",
+        "#ee004f",
+        "#ee009e",
+        "#ee00ee",
+        "#ee4f00",
+        "#ee4f4f",
+        "#ee4f9e",
+        "#ee4fee",
+        "#ee9e00",
+        "#ee9e4f",
+        "#ee9e9e",
+        "#ee9eee",
+        "#eeee00",
+        "#eeee4f",
+        "#eeee9e",
+        "#eeeeee",
+        "#ee0000",
+        "#ff0000",
+        "#ff0055",
+        "#ff00aa",
+        "#ff00ff",
+        "#ff5500",
+        "#ff5555",
+        "#ff55aa",
+        "#ff55ff",
+        "#ffaa00",
+        "#ffaa55",
+        "#ffaaaa",
+        "#ffaaff",
+        "#ffff00",
+        "#ffff55",
+        "#ffffaa",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The exact Go standard-library Plan 9 RGBV table provides 256 colors, with sixteen gray levels and useful continuous-tone shading.",
+      "tags": [
+        "historical",
+        "256-color",
+        "rgbv"
+      ],
+      "origin": "reference",
+      "source": "https://pkg.go.dev/image/color/palette#Plan9"
+    },
+    {
+      "id": "rgb-workbench-64",
+      "name": "RGB Workbench 64",
+      "colors": [
+        "#000000",
+        "#000055",
+        "#0000aa",
+        "#0000ff",
+        "#005500",
+        "#005555",
+        "#0055aa",
+        "#0055ff",
+        "#00aa00",
+        "#00aa55",
+        "#00aaaa",
+        "#00aaff",
+        "#00ff00",
+        "#00ff55",
+        "#00ffaa",
+        "#00ffff",
+        "#550000",
+        "#550055",
+        "#5500aa",
+        "#5500ff",
+        "#555500",
+        "#555555",
+        "#5555aa",
+        "#5555ff",
+        "#55aa00",
+        "#55aa55",
+        "#55aaaa",
+        "#55aaff",
+        "#55ff00",
+        "#55ff55",
+        "#55ffaa",
+        "#55ffff",
+        "#aa0000",
+        "#aa0055",
+        "#aa00aa",
+        "#aa00ff",
+        "#aa5500",
+        "#aa5555",
+        "#aa55aa",
+        "#aa55ff",
+        "#aaaa00",
+        "#aaaa55",
+        "#aaaaaa",
+        "#aaaaff",
+        "#aaff00",
+        "#aaff55",
+        "#aaffaa",
+        "#aaffff",
+        "#ff0000",
+        "#ff0055",
+        "#ff00aa",
+        "#ff00ff",
+        "#ff5500",
+        "#ff5555",
+        "#ff55aa",
+        "#ff55ff",
+        "#ffaa00",
+        "#ffaa55",
+        "#ffaaaa",
+        "#ffaaff",
+        "#ffff00",
+        "#ffff55",
+        "#ffffaa",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "A four-level RGB cube gives pixel artists sixty-four predictable combinations for colorful indexed studies.",
+      "tags": [
+        "color-cube",
+        "64-color",
+        "indexed"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "white-phosphor",
+      "name": "White Phosphor",
+      "colors": [
+        "#10171b",
+        "#3e4c53",
+        "#879a9f",
+        "#e4f2ef"
+      ],
+      "category": "terminal",
+      "description": "Cool charcoal and silver-white tones give monochrome artwork the appearance of a laboratory display.",
+      "tags": [
+        "phosphor",
+        "cool",
+        "grayscale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blue-phosphor",
+      "name": "Blue Phosphor",
+      "colors": [
+        "#050d20",
+        "#163d78",
+        "#3f8ac7",
+        "#a9dfff"
+      ],
+      "category": "terminal",
+      "description": "Four electric-blue tones contrast with navy for technical diagrams and nighttime silhouettes.",
+      "tags": [
+        "phosphor",
+        "blue",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "orange-phosphor",
+      "name": "Orange Phosphor",
+      "colors": [
+        "#1e0b04",
+        "#813311",
+        "#d96d25",
+        "#ffbd76"
+      ],
+      "category": "terminal",
+      "description": "Burnt orange through apricot creates a warm tonal range inspired by monochrome screens.",
+      "tags": [
+        "phosphor",
+        "orange",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "red-phosphor",
+      "name": "Red Phosphor",
+      "colors": [
+        "#210810",
+        "#73253b",
+        "#cc5166",
+        "#ffa6ae"
+      ],
+      "category": "terminal",
+      "description": "Wine-black, vermilion and pale rose form an urgent red monitor-style tonal ramp.",
+      "tags": [
+        "phosphor",
+        "red",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "teal-phosphor",
+      "name": "Teal Phosphor",
+      "colors": [
+        "#071a1c",
+        "#1b565a",
+        "#45a5a4",
+        "#b7ece0"
+      ],
+      "category": "terminal",
+      "description": "Petrol shadows brighten through turquoise and cool mint for clean marine-console texture.",
+      "tags": [
+        "phosphor",
+        "teal",
+        "cool"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "violet-phosphor",
+      "name": "Violet Phosphor",
+      "colors": [
+        "#160b29",
+        "#4f327b",
+        "#9979ce",
+        "#e1c6fa"
+      ],
+      "category": "terminal",
+      "description": "Inky plum and luminous lavender create a soft ultraviolet monitor mood.",
+      "tags": [
+        "phosphor",
+        "violet",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "radar-sweep",
+      "name": "Radar Sweep",
+      "colors": [
+        "#09190e",
+        "#324e1f",
+        "#88a52f",
+        "#d9ed82"
+      ],
+      "category": "terminal",
+      "description": "Dark bottle green, olive glow and chartreuse highlights evoke a compact sweep display.",
+      "tags": [
+        "radar",
+        "green",
+        "signal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "marine-console",
+      "name": "Marine Console",
+      "colors": [
+        "#081825",
+        "#254e65",
+        "#6197ad",
+        "#c2e7e9"
+      ],
+      "category": "terminal",
+      "description": "A deep blue-green screen ramp uses frosted cyan highlights for maritime navigation graphics.",
+      "tags": [
+        "marine",
+        "cyan",
+        "technical"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "plasma-terminal",
+      "name": "Plasma Terminal",
+      "colors": [
+        "#28141b",
+        "#77363c",
+        "#c77663",
+        "#ffceb0"
+      ],
+      "category": "terminal",
+      "description": "Warm maroon, coral and ivory give text and line art the radiance of a plasma-panel study.",
+      "tags": [
+        "plasma",
+        "coral",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "paper-terminal",
+      "name": "Paper Terminal",
+      "colors": [
+        "#292b25",
+        "#676c59",
+        "#a7ad8c",
+        "#e5e7c5"
+      ],
+      "category": "terminal",
+      "description": "Ink, olive-gray and creamy paper turn terminal-inspired artwork into a quiet printed page.",
+      "tags": [
+        "paper",
+        "olive",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "diagnostic-ice",
+      "name": "Diagnostic Ice",
+      "colors": [
+        "#091b28",
+        "#244157",
+        "#376976",
+        "#649bad",
+        "#a0cad0",
+        "#e6f4ec"
+      ],
+      "category": "terminal",
+      "description": "Six cool signal tones add distinct teal and ice-blue steps to a clear technical image.",
+      "tags": [
+        "technical",
+        "ice",
+        "cyan"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "vacuum-tube",
+      "name": "Vacuum Tube",
+      "colors": [
+        "#1a1112",
+        "#493039",
+        "#7b4b48",
+        "#ae7356",
+        "#d6a47a",
+        "#f2d7a3"
+      ],
+      "category": "terminal",
+      "description": "Six reddish-brown and amber shades suggest glowing valves behind smoked glass.",
+      "tags": [
+        "amber",
+        "brown",
+        "industrial"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cassette-console",
+      "name": "Cassette Console",
+      "colors": [
+        "#1b2320",
+        "#414e43",
+        "#69775c",
+        "#98a17c",
+        "#c5c7a5",
+        "#ece5c8"
+      ],
+      "category": "terminal",
+      "description": "Warm gray, moss and cream temper a green display ramp with the muted color of old audio hardware.",
+      "tags": [
+        "audio",
+        "muted",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "mission-control",
+      "name": "Mission Control",
+      "colors": [
+        "#0b1627",
+        "#27384d",
+        "#4c5c70",
+        "#819aa5",
+        "#c4d7d4",
+        "#eef3de",
+        "#47b4a0",
+        "#e5af5f"
+      ],
+      "category": "terminal",
+      "description": "Eight night-console colors mix teal readouts, amber alerts and cool pale labels.",
+      "tags": [
+        "technical",
+        "multicolor",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-garden",
+      "name": "Syntax Garden",
+      "colors": [
+        "#1d2928",
+        "#364541",
+        "#56675c",
+        "#829582",
+        "#b8c5af",
+        "#e8ead6",
+        "#7fb89e",
+        "#d8ad70",
+        "#c7838b",
+        "#a697c5",
+        "#82aec5",
+        "#d8d0a2"
+      ],
+      "category": "interface",
+      "description": "Twelve calm interface colors pair slate neutrals with leaf, rose, honey and sky accents.",
+      "tags": [
+        "theme",
+        "garden",
+        "balanced"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-clay",
+      "name": "Syntax Clay",
+      "colors": [
+        "#28232a",
+        "#49404a",
+        "#736572",
+        "#a294a0",
+        "#cbbfc5",
+        "#f2e8dd",
+        "#b76a57",
+        "#dcab78",
+        "#91a180",
+        "#6c99a2",
+        "#a486b9",
+        "#c7819e"
+      ],
+      "category": "interface",
+      "description": "A warm editor-style palette combines terracotta accents with stone, sage and dusty blue.",
+      "tags": [
+        "theme",
+        "earth",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-dawn",
+      "name": "Syntax Dawn",
+      "colors": [
+        "#302d42",
+        "#514d68",
+        "#817994",
+        "#aaa4b9",
+        "#d3cedd",
+        "#f5f0e8",
+        "#e8a98b",
+        "#d6b46c",
+        "#9db68e",
+        "#85b7cd",
+        "#b39bce",
+        "#dca4ba"
+      ],
+      "category": "interface",
+      "description": "Soft dawn neutrals and peach, violet and blue accents keep broad indexed artwork light and gentle.",
+      "tags": [
+        "theme",
+        "dawn",
+        "pastel"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-ocean",
+      "name": "Syntax Ocean",
+      "colors": [
+        "#102431",
+        "#294555",
+        "#526b79",
+        "#7b96a2",
+        "#b0c7cc",
+        "#e5ece2",
+        "#4e9b9d",
+        "#84c8bc",
+        "#e6a080",
+        "#d7bd7a",
+        "#a192c4",
+        "#c88599"
+      ],
+      "category": "interface",
+      "description": "Twelve sea-toned interface colors use coral and gold accents to animate navy and pale surf neutrals.",
+      "tags": [
+        "theme",
+        "ocean",
+        "balanced"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-orchid",
+      "name": "Syntax Orchid",
+      "colors": [
+        "#271e33",
+        "#463751",
+        "#6e5b7b",
+        "#9b84a2",
+        "#c7b7cc",
+        "#f0e5e7",
+        "#ac8fce",
+        "#d196b4",
+        "#8aaa83",
+        "#d3b879",
+        "#80a4b9",
+        "#e2aa82"
+      ],
+      "category": "interface",
+      "description": "Plum neutrals support lilac, pink, fern and gold accents in an expressive dark-theme study.",
+      "tags": [
+        "theme",
+        "orchid",
+        "violet"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-mint",
+      "name": "Syntax Mint",
+      "colors": [
+        "#172b2a",
+        "#344b48",
+        "#5b746d",
+        "#8eaaa0",
+        "#c0d4c2",
+        "#edf3df",
+        "#69b6a2",
+        "#a7c26a",
+        "#c68172",
+        "#739dc6",
+        "#b799c7",
+        "#e1c184"
+      ],
+      "category": "interface",
+      "description": "Cool dark ink and creamy mint neutrals meet restrained red, blue and lavender syntax accents.",
+      "tags": [
+        "theme",
+        "mint",
+        "cool"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-carbon",
+      "name": "Syntax Carbon",
+      "colors": [
+        "#181a22",
+        "#333742",
+        "#555c69",
+        "#86929f",
+        "#bac4cc",
+        "#f0f1e9",
+        "#dc777a",
+        "#e5ae68",
+        "#a2ba76",
+        "#72b9b4",
+        "#819ed1",
+        "#b68bc3"
+      ],
+      "category": "interface",
+      "description": "Six graphite neutrals and six sharp accent colors create a versatile modern indexed palette.",
+      "tags": [
+        "theme",
+        "graphite",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-ember",
+      "name": "Syntax Ember",
+      "colors": [
+        "#241d20",
+        "#48363a",
+        "#735357",
+        "#a38280",
+        "#cbb4a9",
+        "#f2e4ca",
+        "#d17f57",
+        "#e8b765",
+        "#8caa81",
+        "#6d9fa1",
+        "#a98bbb",
+        "#cc8c9e"
+      ],
+      "category": "interface",
+      "description": "Dark warm neutrals and ember-orange accents balance muted aqua, sage and rose for firelit scenes.",
+      "tags": [
+        "theme",
+        "ember",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-frost",
+      "name": "Syntax Frost",
+      "colors": [
+        "#243341",
+        "#455b6a",
+        "#718997",
+        "#a0b6bf",
+        "#c8d8dd",
+        "#eff3ed",
+        "#709bca",
+        "#76b3b6",
+        "#a6bd8f",
+        "#d2b579",
+        "#c38b9a",
+        "#a29cc4"
+      ],
+      "category": "interface",
+      "description": "Pale frosted neutrals and cool blue accents retain gentle gold, berry and green notes.",
+      "tags": [
+        "theme",
+        "frost",
+        "cool"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-cobalt",
+      "name": "Syntax Cobalt",
+      "colors": [
+        "#17213c",
+        "#2b3e63",
+        "#4a648e",
+        "#8199bb",
+        "#b9cbe0",
+        "#f0f2e8",
+        "#568fda",
+        "#7cb8cb",
+        "#aabc76",
+        "#dca875",
+        "#c982a4",
+        "#a68ecf"
+      ],
+      "category": "interface",
+      "description": "Navy neutrals and cobalt blue set a strong stage for lime, apricot and lavender accents.",
+      "tags": [
+        "theme",
+        "cobalt",
+        "bright"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-parchment",
+      "name": "Syntax Parchment",
+      "colors": [
+        "#2c2926",
+        "#554d44",
+        "#85776a",
+        "#b2a18d",
+        "#d8cbb4",
+        "#f6efdb",
+        "#4f7183",
+        "#8b5b4e",
+        "#b28b51",
+        "#6d8460",
+        "#8f729c",
+        "#ba8c96"
+      ],
+      "category": "interface",
+      "description": "Warm reading-paper neutrals carry restrained ink-blue, red-clay, olive and violet accents.",
+      "tags": [
+        "theme",
+        "paper",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "syntax-spectrum",
+      "name": "Syntax Spectrum 32",
+      "colors": [
+        "#101722",
+        "#26313f",
+        "#425465",
+        "#647c8b",
+        "#8ca4ae",
+        "#b5c8cc",
+        "#dbe5e1",
+        "#f8f5e6",
+        "#662e48",
+        "#9f4660",
+        "#d16b79",
+        "#f5a19b",
+        "#6d4327",
+        "#a4753d",
+        "#d0a35c",
+        "#f1cc86",
+        "#344e36",
+        "#557b48",
+        "#82a45e",
+        "#b6cc88",
+        "#164a4e",
+        "#2c7d7b",
+        "#55aba3",
+        "#96d8c6",
+        "#243d6b",
+        "#3e64a0",
+        "#6d91c5",
+        "#a6c4e7",
+        "#4b3268",
+        "#775498",
+        "#a77bbe",
+        "#d4afe0"
+      ],
+      "category": "interface",
+      "description": "Thirty-two deliberately spaced neutrals and colored accents support broad diagrams and detailed pixel illustrations.",
+      "tags": [
+        "theme",
+        "32-color",
+        "multicolor"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "web-safe-216",
+      "name": "Web-safe 216",
+      "colors": [
+        "#000000",
+        "#000033",
+        "#000066",
+        "#000099",
+        "#0000cc",
+        "#0000ff",
+        "#003300",
+        "#003333",
+        "#003366",
+        "#003399",
+        "#0033cc",
+        "#0033ff",
+        "#006600",
+        "#006633",
+        "#006666",
+        "#006699",
+        "#0066cc",
+        "#0066ff",
+        "#009900",
+        "#009933",
+        "#009966",
+        "#009999",
+        "#0099cc",
+        "#0099ff",
+        "#00cc00",
+        "#00cc33",
+        "#00cc66",
+        "#00cc99",
+        "#00cccc",
+        "#00ccff",
+        "#00ff00",
+        "#00ff33",
+        "#00ff66",
+        "#00ff99",
+        "#00ffcc",
+        "#00ffff",
+        "#330000",
+        "#330033",
+        "#330066",
+        "#330099",
+        "#3300cc",
+        "#3300ff",
+        "#333300",
+        "#333333",
+        "#333366",
+        "#333399",
+        "#3333cc",
+        "#3333ff",
+        "#336600",
+        "#336633",
+        "#336666",
+        "#336699",
+        "#3366cc",
+        "#3366ff",
+        "#339900",
+        "#339933",
+        "#339966",
+        "#339999",
+        "#3399cc",
+        "#3399ff",
+        "#33cc00",
+        "#33cc33",
+        "#33cc66",
+        "#33cc99",
+        "#33cccc",
+        "#33ccff",
+        "#33ff00",
+        "#33ff33",
+        "#33ff66",
+        "#33ff99",
+        "#33ffcc",
+        "#33ffff",
+        "#660000",
+        "#660033",
+        "#660066",
+        "#660099",
+        "#6600cc",
+        "#6600ff",
+        "#663300",
+        "#663333",
+        "#663366",
+        "#663399",
+        "#6633cc",
+        "#6633ff",
+        "#666600",
+        "#666633",
+        "#666666",
+        "#666699",
+        "#6666cc",
+        "#6666ff",
+        "#669900",
+        "#669933",
+        "#669966",
+        "#669999",
+        "#6699cc",
+        "#6699ff",
+        "#66cc00",
+        "#66cc33",
+        "#66cc66",
+        "#66cc99",
+        "#66cccc",
+        "#66ccff",
+        "#66ff00",
+        "#66ff33",
+        "#66ff66",
+        "#66ff99",
+        "#66ffcc",
+        "#66ffff",
+        "#990000",
+        "#990033",
+        "#990066",
+        "#990099",
+        "#9900cc",
+        "#9900ff",
+        "#993300",
+        "#993333",
+        "#993366",
+        "#993399",
+        "#9933cc",
+        "#9933ff",
+        "#996600",
+        "#996633",
+        "#996666",
+        "#996699",
+        "#9966cc",
+        "#9966ff",
+        "#999900",
+        "#999933",
+        "#999966",
+        "#999999",
+        "#9999cc",
+        "#9999ff",
+        "#99cc00",
+        "#99cc33",
+        "#99cc66",
+        "#99cc99",
+        "#99cccc",
+        "#99ccff",
+        "#99ff00",
+        "#99ff33",
+        "#99ff66",
+        "#99ff99",
+        "#99ffcc",
+        "#99ffff",
+        "#cc0000",
+        "#cc0033",
+        "#cc0066",
+        "#cc0099",
+        "#cc00cc",
+        "#cc00ff",
+        "#cc3300",
+        "#cc3333",
+        "#cc3366",
+        "#cc3399",
+        "#cc33cc",
+        "#cc33ff",
+        "#cc6600",
+        "#cc6633",
+        "#cc6666",
+        "#cc6699",
+        "#cc66cc",
+        "#cc66ff",
+        "#cc9900",
+        "#cc9933",
+        "#cc9966",
+        "#cc9999",
+        "#cc99cc",
+        "#cc99ff",
+        "#cccc00",
+        "#cccc33",
+        "#cccc66",
+        "#cccc99",
+        "#cccccc",
+        "#ccccff",
+        "#ccff00",
+        "#ccff33",
+        "#ccff66",
+        "#ccff99",
+        "#ccffcc",
+        "#ccffff",
+        "#ff0000",
+        "#ff0033",
+        "#ff0066",
+        "#ff0099",
+        "#ff00cc",
+        "#ff00ff",
+        "#ff3300",
+        "#ff3333",
+        "#ff3366",
+        "#ff3399",
+        "#ff33cc",
+        "#ff33ff",
+        "#ff6600",
+        "#ff6633",
+        "#ff6666",
+        "#ff6699",
+        "#ff66cc",
+        "#ff66ff",
+        "#ff9900",
+        "#ff9933",
+        "#ff9966",
+        "#ff9999",
+        "#ff99cc",
+        "#ff99ff",
+        "#ffcc00",
+        "#ffcc33",
+        "#ffcc66",
+        "#ffcc99",
+        "#ffcccc",
+        "#ffccff",
+        "#ffff00",
+        "#ffff33",
+        "#ffff66",
+        "#ffff99",
+        "#ffffcc",
+        "#ffffff"
+      ],
+      "category": "interface",
+      "description": "The exact Go standard-library browser cube provides all 216 combinations of red, green and blue at steps of 51.",
+      "tags": [
+        "historical",
+        "216-color",
+        "color-cube"
+      ],
+      "origin": "reference",
+      "source": "https://pkg.go.dev/image/color/palette#WebSafe"
+    },
+    {
+      "id": "copperplate",
+      "name": "Copperplate",
+      "colors": [
+        "#232c31",
+        "#4b5356",
+        "#82604a",
+        "#b38d68",
+        "#d6ba8b",
+        "#f3e8cd",
+        "#779c92"
+      ],
+      "category": "print",
+      "description": "Copper brown, ink-blue and ivory combine fine etched shadows with a small oxidized green accent.",
+      "tags": [
+        "etching",
+        "copper",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "letterpress-blue",
+      "name": "Letterpress Blue",
+      "colors": [
+        "#1b293d",
+        "#465d79",
+        "#9baec2",
+        "#eee7d5"
+      ],
+      "category": "print",
+      "description": "Four ink-blue and uncoated-paper tones suit bold poster shapes and orderly hatch texture.",
+      "tags": [
+        "letterpress",
+        "blue",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "woodcut",
+      "name": "Woodcut",
+      "colors": [
+        "#25251e",
+        "#584d35",
+        "#7d7954",
+        "#a8a176",
+        "#d4c99b",
+        "#f1e6bd",
+        "#516a50"
+      ],
+      "category": "print",
+      "description": "Charcoal, earth brown and forest green give carved illustrations warm shadows and golden grain.",
+      "tags": [
+        "woodcut",
+        "earth",
+        "forest"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "linocut-ochre",
+      "name": "Linocut Ochre",
+      "colors": [
+        "#292c22",
+        "#69704c",
+        "#b89b43",
+        "#eee2aa"
+      ],
+      "category": "print",
+      "description": "Near-black olive and strong ochre ink make a graphic four-color relief-print study.",
+      "tags": [
+        "linocut",
+        "ochre",
+        "bold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cyanotype-sun",
+      "name": "Cyanotype Sun",
+      "colors": [
+        "#102e49",
+        "#285b7c",
+        "#4c88a3",
+        "#8cbec6",
+        "#d5e4d9",
+        "#f2e9c7",
+        "#d1b168"
+      ],
+      "category": "print",
+      "description": "Prussian-blue-inspired shadows and sunlit cream extend a print-blue ramp with a restrained gold accent.",
+      "tags": [
+        "cyanotype",
+        "blue",
+        "gold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "etching-rose",
+      "name": "Etching Rose",
+      "colors": [
+        "#302027",
+        "#67434e",
+        "#a76d77",
+        "#d69e9b",
+        "#eac8b9",
+        "#f8ecda"
+      ],
+      "category": "print",
+      "description": "Rose-brown midtones and parchment highlights keep engraved portraits warm and delicate.",
+      "tags": [
+        "etching",
+        "rose",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lithograph",
+      "name": "Lithograph",
+      "colors": [
+        "#202d35",
+        "#4a6570",
+        "#7f9d99",
+        "#b6c6ae",
+        "#e8e4c8",
+        "#b2755e",
+        "#e1ad7a"
+      ],
+      "category": "print",
+      "description": "Blue-black, muted green and red clay meet creamy paper in a broad illustrated-book palette.",
+      "tags": [
+        "lithography",
+        "book",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "velvet-poster",
+      "name": "Velvet Poster",
+      "colors": [
+        "#24213b",
+        "#534866",
+        "#895770",
+        "#bf7082",
+        "#e7aaa3",
+        "#f5e6ca",
+        "#859ca8"
+      ],
+      "category": "print",
+      "description": "Velvety midnight blue, ruby and pink lift warm cream for theatrical screen-print images.",
+      "tags": [
+        "poster",
+        "red",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blackletter",
+      "name": "Blackletter",
+      "colors": [
+        "#211b19",
+        "#61534b",
+        "#a6927e",
+        "#e6d8bd"
+      ],
+      "category": "print",
+      "description": "Dense brown-black ink, taupe and old ivory make letterforms and high-contrast ornament feel tactile.",
+      "tags": [
+        "ink",
+        "paper",
+        "ornament"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blockprint",
+      "name": "Blockprint",
+      "colors": [
+        "#20272b",
+        "#445e61",
+        "#7a9790",
+        "#b7c2a2",
+        "#e8dcb6",
+        "#a04c44",
+        "#d28c61",
+        "#e9b66c"
+      ],
+      "category": "print",
+      "description": "Eight strong earth and sea colors share warm paper for playful carved shapes and layered posters.",
+      "tags": [
+        "blockprint",
+        "poster",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "marigold-riso",
+      "name": "Marigold Riso",
+      "colors": [
+        "#34283e",
+        "#996144",
+        "#e3af45",
+        "#e28d9e",
+        "#f5e8cb"
+      ],
+      "category": "print",
+      "description": "Dark plum, marigold and warm rose suggest a cheerful small-ink poster over pale cream.",
+      "tags": [
+        "poster",
+        "marigold",
+        "rose"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "museum-poster",
+      "name": "Museum Poster",
+      "colors": [
+        "#173d42",
+        "#42757a",
+        "#9aac98",
+        "#ca744f",
+        "#e3b562",
+        "#f3ebd6"
+      ],
+      "category": "print",
+      "description": "Deep teal, rust, saffron, and cool paper colors create a palette for modern exhibition prints.",
+      "tags": [
+        "poster",
+        "teal",
+        "rust"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "indigo-paper",
+      "name": "Indigo & Paper",
+      "colors": [
+        "#202d5c",
+        "#f0e5c9"
+      ],
+      "category": "duotone",
+      "description": "Deep indigo and warm paper form a crisp two-color treatment for drawings and type.",
+      "tags": [
+        "two-color",
+        "indigo",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "aubergine-cream",
+      "name": "Aubergine & Cream",
+      "colors": [
+        "#482a46",
+        "#f6e9c7"
+      ],
+      "category": "duotone",
+      "description": "Rich aubergine against vanilla cream makes expressive dot patterns and soft illustrated shadows.",
+      "tags": [
+        "two-color",
+        "plum",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "spruce-milk",
+      "name": "Spruce & Milk",
+      "colors": [
+        "#183e37",
+        "#e9efd6"
+      ],
+      "category": "duotone",
+      "description": "Dark spruce and pale green milk keep foliage and line art calm and clear.",
+      "tags": [
+        "two-color",
+        "green",
+        "botanical"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "burgundy-blush",
+      "name": "Burgundy & Blush",
+      "colors": [
+        "#5b2235",
+        "#f6d7cb"
+      ],
+      "category": "duotone",
+      "description": "Dark burgundy and a light blush create a tender print-like two-color portrait palette.",
+      "tags": [
+        "two-color",
+        "red",
+        "portrait"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "coal-apricot",
+      "name": "Coal & Apricot",
+      "colors": [
+        "#25333c",
+        "#f4c997"
+      ],
+      "category": "duotone",
+      "description": "Cool coal and warm apricot give silhouettes a bright, softly colored paper ground.",
+      "tags": [
+        "two-color",
+        "orange",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ultramarine-lemon",
+      "name": "Ultramarine & Lemon",
+      "colors": [
+        "#283780",
+        "#f4ed89"
+      ],
+      "category": "duotone",
+      "description": "Strong ultramarine with lemon-yellow light turns simple images into energetic poster art.",
+      "tags": [
+        "two-color",
+        "blue",
+        "yellow"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "plum-mint",
+      "name": "Plum & Mint",
+      "colors": [
+        "#432d55",
+        "#d8efc9"
+      ],
+      "category": "duotone",
+      "description": "Deep plum shadows meet pale mint for a cool complementary two-color texture.",
+      "tags": [
+        "two-color",
+        "purple",
+        "mint"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "espresso-parchment",
+      "name": "Espresso & Parchment",
+      "colors": [
+        "#3d281f",
+        "#efdcb5"
+      ],
+      "category": "duotone",
+      "description": "Espresso-brown ink on warm parchment creates a compact classic photographic print treatment.",
+      "tags": [
+        "two-color",
+        "brown",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cobalt-ice",
+      "name": "Cobalt & Ice",
+      "colors": [
+        "#244f91",
+        "#e3f4ef"
+      ],
+      "category": "duotone",
+      "description": "Cobalt blue against pale ice keeps geometry and one-bit-style texture cool and luminous.",
+      "tags": [
+        "two-color",
+        "cobalt",
+        "ice"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "rust-ivory",
+      "name": "Rust & Ivory",
+      "colors": [
+        "#853d30",
+        "#f5ebd2"
+      ],
+      "category": "duotone",
+      "description": "Dark red rust and clean ivory turn photos into warm, graphic dot studies.",
+      "tags": [
+        "two-color",
+        "rust",
+        "ivory"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "chocolate-rose",
+      "name": "Chocolate & Rose",
+      "colors": [
+        "#47302f",
+        "#f5d8df"
+      ],
+      "category": "duotone",
+      "description": "Chocolate ink and pale rose paper soften high-contrast portraits with a confectionery warmth.",
+      "tags": [
+        "two-color",
+        "brown",
+        "rose"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "bottle-green-lime",
+      "name": "Bottle Green & Lime",
+      "colors": [
+        "#164833",
+        "#e0ed94"
+      ],
+      "category": "duotone",
+      "description": "Dark bottle green and pale lime produce crisp plant silhouettes and lively patterned fills.",
+      "tags": [
+        "two-color",
+        "green",
+        "lime"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "oxblood-sand",
+      "name": "Oxblood & Sand",
+      "colors": [
+        "#57202a",
+        "#e8cf9e"
+      ],
+      "category": "duotone",
+      "description": "A deep wine-red ink and light sandstone ground give poster work a grounded, antique warmth.",
+      "tags": [
+        "two-color",
+        "wine",
+        "sand"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "violet-lilac",
+      "name": "Violet & Lilac",
+      "colors": [
+        "#392763",
+        "#e1d8f3"
+      ],
+      "category": "duotone",
+      "description": "Ink violet and frosted lilac create a gentle monochrome-like screen with purple depth.",
+      "tags": [
+        "two-color",
+        "violet",
+        "lilac"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "midnight-peach",
+      "name": "Midnight & Peach",
+      "colors": [
+        "#152d45",
+        "#fbd4b8"
+      ],
+      "category": "duotone",
+      "description": "Midnight navy and pale peach pair strong nighttime shadows with warm human highlights.",
+      "tags": [
+        "two-color",
+        "navy",
+        "peach"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "petrol-celadon",
+      "name": "Petrol & Celadon",
+      "colors": [
+        "#153f4b",
+        "#d6e7cd"
+      ],
+      "category": "duotone",
+      "description": "Deep petrol and pale celadon give technical line art a cool, ceramic-like two-color finish.",
+      "tags": [
+        "two-color",
+        "teal",
+        "celadon"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "midnight-orchid",
+      "name": "Midnight Orchid",
+      "colors": [
+        "#171c2b",
+        "#3b304d",
+        "#6a4f79",
+        "#a678a8",
+        "#d2accc",
+        "#f0dedb",
+        "#3d665d",
+        "#7d9f7d"
+      ],
+      "category": "botanical",
+      "description": "Black plum, orchid violet, and pale petal pink frame green leaves in a nighttime flower study.",
+      "tags": [
+        "orchid",
+        "night",
+        "petal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "fern-study",
+      "name": "Fern Study",
+      "colors": [
+        "#142c25",
+        "#345441",
+        "#5e8056",
+        "#95ac73",
+        "#c5d19b",
+        "#efe8c3"
+      ],
+      "category": "botanical",
+      "description": "Fern fronds move from deep green shadows through yellow-green leaf light to warm botanical paper.",
+      "tags": [
+        "fern",
+        "green",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "eucalyptus",
+      "name": "Eucalyptus",
+      "colors": [
+        "#213c3c",
+        "#496466",
+        "#7b9692",
+        "#b1c3b1",
+        "#dce3c9",
+        "#907762"
+      ],
+      "category": "botanical",
+      "description": "Blue-green foliage, silver leaf and pale sage contrast gently with the warm brown of bark.",
+      "tags": [
+        "sage",
+        "blue-green",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "rose-garden",
+      "name": "Rose Garden",
+      "colors": [
+        "#392333",
+        "#78394d",
+        "#bd5d79",
+        "#e98fa0",
+        "#f4c2b8",
+        "#fae7d3",
+        "#31594b",
+        "#74956a"
+      ],
+      "category": "botanical",
+      "description": "Wine petals, bright rose and peach light bloom against two clear leaf greens and soft cream.",
+      "tags": [
+        "rose",
+        "petal",
+        "garden"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "magnolia",
+      "name": "Magnolia",
+      "colors": [
+        "#22332d",
+        "#4c6250",
+        "#8e9b75",
+        "#b5aea1",
+        "#d8cab9",
+        "#f6ebd8",
+        "#b77d82"
+      ],
+      "category": "botanical",
+      "description": "Creamy magnolia petals and rose-tinted shadows sit against dark glossy foliage and brown branches.",
+      "tags": [
+        "flower",
+        "cream",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "moss-and-lichen",
+      "name": "Moss & Lichen",
+      "colors": [
+        "#232b23",
+        "#4b5635",
+        "#7b8248",
+        "#a8aa65",
+        "#d1cb9c",
+        "#eae5bd",
+        "#847052"
+      ],
+      "category": "botanical",
+      "description": "Velvety forest brown, moss green and pale lichen offer a richly textured woodland palette.",
+      "tags": [
+        "moss",
+        "forest",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "nettle",
+      "name": "Nettle",
+      "colors": [
+        "#172d21",
+        "#35553a",
+        "#618549",
+        "#9eb963",
+        "#dbe299",
+        "#f6edc6"
+      ],
+      "category": "botanical",
+      "description": "A compact bright-green leaf palette balances shaded nettle stems with creamy warm sunlight.",
+      "tags": [
+        "leaf",
+        "green",
+        "compact"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lavender-stem",
+      "name": "Lavender Stem",
+      "colors": [
+        "#302b49",
+        "#655479",
+        "#9988b7",
+        "#c6b5d8",
+        "#e9dbec",
+        "#4c7165",
+        "#91a184",
+        "#f4edd7"
+      ],
+      "category": "botanical",
+      "description": "Lavender flowers cross cool purple shadows, gray-green stems and a sun-washed cream ground.",
+      "tags": [
+        "lavender",
+        "petal",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "desert-bloom",
+      "name": "Desert Bloom",
+      "colors": [
+        "#33362d",
+        "#63715a",
+        "#9baa7c",
+        "#d2d7a4",
+        "#905040",
+        "#c9796d",
+        "#eab190",
+        "#f4e1b8"
+      ],
+      "category": "botanical",
+      "description": "Rose-red flowers interrupt sage cactus, ochre soil and pale desert light for a dry botanical study.",
+      "tags": [
+        "cactus",
+        "rose",
+        "desert"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "carnivorous-garden",
+      "name": "Carnivorous Garden",
+      "colors": [
+        "#132c2a",
+        "#245345",
+        "#4f8b59",
+        "#93bb63",
+        "#cde696",
+        "#7c2942",
+        "#c04c64",
+        "#f0a58b"
+      ],
+      "category": "botanical",
+      "description": "Deep emerald leaves, vivid chartreuse, and crimson pitchers create a contrasting palette for exotic plant studies.",
+      "tags": [
+        "tropical",
+        "green",
+        "crimson"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "bluebell-wood",
+      "name": "Bluebell Wood",
+      "colors": [
+        "#1e3040",
+        "#43566b",
+        "#766c9f",
+        "#a598ce",
+        "#d2c9e7",
+        "#3f6251",
+        "#86a77c",
+        "#ece6c6"
+      ],
+      "category": "botanical",
+      "description": "Bluebell violet and pale blue contrast with shaded forest greens and soft spring sunlight.",
+      "tags": [
+        "bluebell",
+        "woodland",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lotus-pond",
+      "name": "Lotus Pond",
+      "colors": [
+        "#183d3b",
+        "#3f7270",
+        "#7ea49a",
+        "#bad0b7",
+        "#ece4ca",
+        "#984c6b",
+        "#d48aa3",
+        "#e2c071"
+      ],
+      "category": "botanical",
+      "description": "Water green, pink lotus petals and yellow pollen reflect together in a calm eight-color flower palette.",
+      "tags": [
+        "lotus",
+        "water",
+        "pink"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "olive-grove",
+      "name": "Olive Grove",
+      "colors": [
+        "#28352c",
+        "#53644b",
+        "#8b9871",
+        "#bac49b",
+        "#e4dfb6",
+        "#86634c",
+        "#b59067"
+      ],
+      "category": "botanical",
+      "description": "Silvery olive leaves and ochre bark rest in deep blue-green shade beneath warm Mediterranean light.",
+      "tags": [
+        "olive",
+        "silver",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "saffron-crocus",
+      "name": "Saffron Crocus",
+      "colors": [
+        "#25263b",
+        "#584977",
+        "#9875b4",
+        "#d0add8",
+        "#f2dfeb",
+        "#be6c32",
+        "#ebb951",
+        "#45684d"
+      ],
+      "category": "botanical",
+      "description": "Violet petals and saffron-orange stamens pair with emerald foliage and parchment highlights.",
+      "tags": [
+        "crocus",
+        "violet",
+        "saffron"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "fern-moon",
+      "name": "Fern Moon",
+      "colors": [
+        "#102b32",
+        "#28535b",
+        "#568183",
+        "#8fb1a3",
+        "#cad7bd",
+        "#eef1db",
+        "#52677c"
+      ],
+      "category": "botanical",
+      "description": "Moonlit teal fronds and silver-green highlights give botanical silhouettes a cool evening atmosphere.",
+      "tags": [
+        "fern",
+        "moon",
+        "teal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "wildflower-meadow",
+      "name": "Wildflower Meadow",
+      "colors": [
+        "#263e39",
+        "#50795a",
+        "#98b375",
+        "#d9db9b",
+        "#f5e9c3",
+        "#697eb3",
+        "#a79ac9",
+        "#d47b7a",
+        "#e6b457"
+      ],
+      "category": "botanical",
+      "description": "Leaf greens and blue sky meet cornflower, poppy and yellow blossoms for a broad summer bouquet.",
+      "tags": [
+        "flowers",
+        "multicolor",
+        "meadow"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "alpine-morning",
+      "name": "Alpine Morning",
+      "colors": [
+        "#172b42",
+        "#385470",
+        "#698fa8",
+        "#a7c9d0",
+        "#e4eee2",
+        "#f1d9a0",
+        "#526c52",
+        "#8da174"
+      ],
+      "category": "landscape",
+      "description": "Deep blue peaks, glacier blue and soft golden light share mossy meadow green and pale snow.",
+      "tags": [
+        "alpine",
+        "sky",
+        "morning"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "canyon-echo",
+      "name": "Canyon Echo",
+      "colors": [
+        "#382d42",
+        "#755056",
+        "#b17658",
+        "#d7a478",
+        "#e9c799",
+        "#f6e7c4",
+        "#7897a1"
+      ],
+      "category": "landscape",
+      "description": "Plum shadows, rust, clay, and apricot describe canyon walls beneath pale sand and sky.",
+      "tags": [
+        "canyon",
+        "rust",
+        "desert"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "basalt-coast",
+      "name": "Basalt Coast",
+      "colors": [
+        "#18262a",
+        "#374a54",
+        "#617b81",
+        "#97aba6",
+        "#c8d4c2",
+        "#e8ebd5",
+        "#a4785e"
+      ],
+      "category": "landscape",
+      "description": "Basalt black and storm blue contrast with sage surf, cool foam, and a small copper shore accent.",
+      "tags": [
+        "coast",
+        "stone",
+        "storm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "desert-caravan",
+      "name": "Desert Caravan",
+      "colors": [
+        "#2e2c4c",
+        "#66526b",
+        "#a77467",
+        "#cc9c62",
+        "#e2bf82",
+        "#f5e3b6",
+        "#71898a"
+      ],
+      "category": "landscape",
+      "description": "Indigo night shade, baked ochre and rose sand carry the warm light of a desert crossing.",
+      "tags": [
+        "desert",
+        "ochre",
+        "travel"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "rolling-prairie",
+      "name": "Rolling Prairie",
+      "colors": [
+        "#263b39",
+        "#526958",
+        "#8a9c69",
+        "#c0bd82",
+        "#e5d49f",
+        "#f4ecd0",
+        "#617f99",
+        "#a6c1cc"
+      ],
+      "category": "landscape",
+      "description": "Wide green grassland and mellow yellow fields sit under dusty blue sky with cream cloud light.",
+      "tags": [
+        "prairie",
+        "grass",
+        "sky"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "misty-valley",
+      "name": "Misty Valley",
+      "colors": [
+        "#183437",
+        "#38595b",
+        "#668080",
+        "#97ad9e",
+        "#c4d1bb",
+        "#e8ecda",
+        "#858b94"
+      ],
+      "category": "landscape",
+      "description": "Layered teal mountains and fog-gray light let distant silhouettes soften into a pale green sky.",
+      "tags": [
+        "valley",
+        "fog",
+        "teal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "redwood-trail",
+      "name": "Redwood Trail",
+      "colors": [
+        "#262c26",
+        "#485542",
+        "#7c8155",
+        "#a9a774",
+        "#dbd09a",
+        "#754737",
+        "#b87c53",
+        "#ebd8b0"
+      ],
+      "category": "landscape",
+      "description": "Red-brown bark and deep forest shade meet moss, filtered gold and pale trail dust.",
+      "tags": [
+        "redwood",
+        "forest",
+        "bark"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "fjord-light",
+      "name": "Fjord Light",
+      "colors": [
+        "#142938",
+        "#365665",
+        "#6a8791",
+        "#a6bec0",
+        "#dfe6d6",
+        "#627b62",
+        "#a4b18a",
+        "#cca8a4"
+      ],
+      "category": "landscape",
+      "description": "Navy fjord water, slate cliffs and frosted cyan span mossy land and pink northern light.",
+      "tags": [
+        "fjord",
+        "water",
+        "north"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "highland-rain",
+      "name": "Highland Rain",
+      "colors": [
+        "#29323a",
+        "#52616a",
+        "#87928d",
+        "#b9bda9",
+        "#e5dfcc",
+        "#69546f",
+        "#a38199",
+        "#7d8c58"
+      ],
+      "category": "landscape",
+      "description": "Heather purple, wet moss and granite gray form an atmospheric muted highland scene.",
+      "tags": [
+        "highland",
+        "rain",
+        "heather"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "salt-flat",
+      "name": "Salt Flat",
+      "colors": [
+        "#364452",
+        "#73818d",
+        "#a9b7bc",
+        "#d5ded9",
+        "#f6f1df",
+        "#947886",
+        "#c3a59f",
+        "#d9c398"
+      ],
+      "category": "landscape",
+      "description": "Blue-gray reflections, dusty mauve and chalk-white salt sit beside pale straw light.",
+      "tags": [
+        "salt",
+        "reflection",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "volcanic-island",
+      "name": "Volcanic Island",
+      "colors": [
+        "#1d282c",
+        "#44565a",
+        "#688778",
+        "#9bba94",
+        "#e3dfb1",
+        "#8f4137",
+        "#d4744d",
+        "#f0b974"
+      ],
+      "category": "landscape",
+      "description": "Charcoal lava rock, hot clay and tropical teal create strong island silhouettes under warm cloud light.",
+      "tags": [
+        "volcanic",
+        "island",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "savanna-dusk",
+      "name": "Savanna Dusk",
+      "colors": [
+        "#30293a",
+        "#635362",
+        "#967d70",
+        "#c4a173",
+        "#e0c78f",
+        "#f3dfb0",
+        "#555d43"
+      ],
+      "category": "landscape",
+      "description": "Acacia silhouettes and dusty gold grasses fade into mauve twilight and peach horizon light.",
+      "tags": [
+        "savanna",
+        "dusk",
+        "gold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "badlands",
+      "name": "Badlands",
+      "colors": [
+        "#342838",
+        "#62404a",
+        "#965a51",
+        "#c38869",
+        "#dab396",
+        "#eed9b8",
+        "#857e8c"
+      ],
+      "category": "landscape",
+      "description": "Purple shale, brick-red strata and ochre dust create richly stepped warm rock formations.",
+      "tags": [
+        "rock",
+        "red",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lake-reflection",
+      "name": "Lake Reflection",
+      "colors": [
+        "#172d3d",
+        "#36596e",
+        "#64909d",
+        "#a6c0bd",
+        "#e4e6cb",
+        "#526c4b",
+        "#96a16f",
+        "#c99588"
+      ],
+      "category": "landscape",
+      "description": "Lake blues and forest greens meet muted rose sky in an evenly shaded waterside palette.",
+      "tags": [
+        "lake",
+        "reflection",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "monsoon-ridge",
+      "name": "Monsoon Ridge",
+      "colors": [
+        "#1b2c3d",
+        "#39596b",
+        "#5f8790",
+        "#96b7b2",
+        "#d9debf",
+        "#365e4b",
+        "#71985a",
+        "#b4bf77",
+        "#99715e"
+      ],
+      "category": "landscape",
+      "description": "Ink-blue rain clouds and lush emerald hills hold yellow-green breaks of light above warm earth.",
+      "tags": [
+        "monsoon",
+        "rain",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "tidal-glass",
+      "name": "Tidal Glass",
+      "colors": [
+        "#123a43",
+        "#276c78",
+        "#5aa0a3",
+        "#94c8bb",
+        "#d5e6d0",
+        "#f6efdb",
+        "#d89c93"
+      ],
+      "category": "ocean",
+      "description": "Deep petrol, sea-glass teal and luminous foam hold a gentle shell-pink accent in a clear coastal palette.",
+      "tags": [
+        "sea-glass",
+        "teal",
+        "foam"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "coral-reef",
+      "name": "Coral Reef",
+      "colors": [
+        "#16364d",
+        "#2e6e85",
+        "#53acb3",
+        "#9ad7cf",
+        "#e7edce",
+        "#9e4c68",
+        "#e78278",
+        "#e9b76a"
+      ],
+      "category": "ocean",
+      "description": "Aquatic navy and turquoise balance hot coral, soft shell and golden reef light.",
+      "tags": [
+        "reef",
+        "coral",
+        "tropical"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "kelp-forest",
+      "name": "Kelp Forest",
+      "colors": [
+        "#0e2c31",
+        "#2c5351",
+        "#547e63",
+        "#8fa174",
+        "#c8c68e",
+        "#e7e3b8",
+        "#9c8054"
+      ],
+      "category": "ocean",
+      "description": "Kelp green and amber fronds move through blue-green depths into sun-filtered pale water.",
+      "tags": [
+        "kelp",
+        "green",
+        "underwater"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "abyssal",
+      "name": "Abyssal",
+      "colors": [
+        "#070f23",
+        "#152d4e",
+        "#2a5277",
+        "#547d9c",
+        "#98b6c5",
+        "#dde5da",
+        "#665b8d"
+      ],
+      "category": "ocean",
+      "description": "Midnight blue and electric cold light make a deep-sea palette with muted violet and pale cyan.",
+      "tags": [
+        "deep-sea",
+        "blue",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "saltwater-pearl",
+      "name": "Saltwater Pearl",
+      "colors": [
+        "#2f454a",
+        "#678283",
+        "#a0b5ae",
+        "#ced4bd",
+        "#ece8d3",
+        "#f7e4d8",
+        "#bc9796"
+      ],
+      "category": "ocean",
+      "description": "Pearl cream, shell rose and silver teal create soft pale highlights over deep marine shadow.",
+      "tags": [
+        "pearl",
+        "shell",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "storm-surge",
+      "name": "Storm Surge",
+      "colors": [
+        "#14202e",
+        "#304455",
+        "#577282",
+        "#8da8b0",
+        "#c6d8d1",
+        "#e5eedf",
+        "#c3ad6d"
+      ],
+      "category": "ocean",
+      "description": "Navy-black, steel blue and cold pale spray hold a small yellow signal accent for stormy water.",
+      "tags": [
+        "storm",
+        "steel",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "turquoise-lagoon",
+      "name": "Turquoise Lagoon",
+      "colors": [
+        "#143d4d",
+        "#237482",
+        "#3baaa6",
+        "#7ed1b4",
+        "#cce7bf",
+        "#f5e6b3",
+        "#db987c"
+      ],
+      "category": "ocean",
+      "description": "Saturated turquoise water crosses shallow lime-green light and pale sand with warm coral detail.",
+      "tags": [
+        "lagoon",
+        "turquoise",
+        "tropical"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "arctic-current",
+      "name": "Arctic Current",
+      "colors": [
+        "#122b43",
+        "#345873",
+        "#6f99b0",
+        "#a9cad3",
+        "#d5e7df",
+        "#f3f2dd",
+        "#a6a8c0"
+      ],
+      "category": "ocean",
+      "description": "Polar navy and glacier blue ease into frozen mint, snow cream and a pale violet edge.",
+      "tags": [
+        "arctic",
+        "ice",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "octopus-ink",
+      "name": "Octopus Ink",
+      "colors": [
+        "#201c30",
+        "#45405a",
+        "#7a5f82",
+        "#ab88ab",
+        "#d5bccc",
+        "#efe1df",
+        "#3e7575",
+        "#85a9a0"
+      ],
+      "category": "ocean",
+      "description": "Deep plum-black, indigo and warm violet trace tentacle shadows against teal water and pearl light.",
+      "tags": [
+        "ink",
+        "plum",
+        "deep-sea"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "tidepool",
+      "name": "Tidepool",
+      "colors": [
+        "#273d40",
+        "#526e6c",
+        "#91a68d",
+        "#c8c9a2",
+        "#ece4bd",
+        "#826958",
+        "#b38b76",
+        "#d8b0a1"
+      ],
+      "category": "ocean",
+      "description": "Stone brown, kelp green and blue pool reflections share pink shell and warm pale sand.",
+      "tags": [
+        "tidepool",
+        "stone",
+        "shell"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "harbor-sunset",
+      "name": "Harbor Sunset",
+      "colors": [
+        "#252c42",
+        "#51526d",
+        "#7e8190",
+        "#aabeb0",
+        "#e9dfbb",
+        "#ad6a76",
+        "#dd977b",
+        "#edbf86"
+      ],
+      "category": "ocean",
+      "description": "Purple harbor silhouettes and cool teal water catch amber, salmon and apricot evening reflections.",
+      "tags": [
+        "harbor",
+        "sunset",
+        "reflection"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "pelagic",
+      "name": "Pelagic",
+      "colors": [
+        "#112947",
+        "#214e7f",
+        "#367caf",
+        "#5aa5c6",
+        "#93cbd1",
+        "#d2e6dd",
+        "#f2f0d4"
+      ],
+      "category": "ocean",
+      "description": "Clear open-water blues range from deep cobalt through blue-green currents to pale ocean light.",
+      "tags": [
+        "open-water",
+        "cobalt",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sea-spray",
+      "name": "Sea Spray",
+      "colors": [
+        "#344f57",
+        "#66878c",
+        "#9fb7b2",
+        "#c7d7c7",
+        "#e7ecd9",
+        "#f5efdf",
+        "#b8c7dc"
+      ],
+      "category": "ocean",
+      "description": "Soft green foam and cloudy aqua create an airy coastal ramp rooted in cool slate shadows.",
+      "tags": [
+        "foam",
+        "aqua",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "deep-coral",
+      "name": "Deep Coral",
+      "colors": [
+        "#152d43",
+        "#3a5577",
+        "#647ba0",
+        "#a37d9d",
+        "#d095a5",
+        "#f0c8ba",
+        "#f5e8d0",
+        "#913e51"
+      ],
+      "category": "ocean",
+      "description": "Coral red, wine and warm pink glow within deep blue water and a softly lit cream highlight.",
+      "tags": [
+        "coral",
+        "red",
+        "underwater"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "midnight-swell",
+      "name": "Midnight Swell",
+      "colors": [
+        "#0b1b2f",
+        "#273b58",
+        "#4b5978",
+        "#748a9c",
+        "#a8bec4",
+        "#dfe7df",
+        "#4a817c"
+      ],
+      "category": "ocean",
+      "description": "Dark ocean navy, slate violet, and muted turquoise describe nighttime waves with a moon-white crest.",
+      "tags": [
+        "waves",
+        "night",
+        "navy"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "malachite",
+      "name": "Malachite",
+      "colors": [
+        "#132d27",
+        "#225943",
+        "#43875e",
+        "#79b27b",
+        "#b9d2a0",
+        "#e6e6bb",
+        "#957d55"
+      ],
+      "category": "mineral",
+      "description": "Black-green veins, vivid malachite bands and pale stone create rich patterned emerald textures.",
+      "tags": [
+        "green",
+        "stone",
+        "banded"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lapis-lazuli",
+      "name": "Lapis Lazuli",
+      "colors": [
+        "#1e254d",
+        "#334675",
+        "#526b9e",
+        "#89a4c5",
+        "#c7d7df",
+        "#eeeada",
+        "#a78b46",
+        "#d6b866"
+      ],
+      "category": "mineral",
+      "description": "Deep ultramarine stone, cobalt flecks and pyrite gold meet pale mineral grain.",
+      "tags": [
+        "lapis",
+        "blue",
+        "gold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "amethyst",
+      "name": "Amethyst",
+      "colors": [
+        "#29223f",
+        "#50405f",
+        "#806184",
+        "#b291bb",
+        "#d9c4e2",
+        "#efe3eb",
+        "#768e87"
+      ],
+      "category": "mineral",
+      "description": "Dark violet facets and lavender crystal light share a cool gray-green mineral base.",
+      "tags": [
+        "amethyst",
+        "violet",
+        "crystal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "rose-quartz",
+      "name": "Rose Quartz",
+      "colors": [
+        "#4d374b",
+        "#876778",
+        "#b598a2",
+        "#d9bec3",
+        "#ecd9d7",
+        "#f8eee1",
+        "#aca8a0"
+      ],
+      "category": "mineral",
+      "description": "Wine-gray shadow, dusty rose and soft cream let crystal facets feel warm and translucent.",
+      "tags": [
+        "quartz",
+        "rose",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "obsidian",
+      "name": "Obsidian",
+      "colors": [
+        "#10151e",
+        "#29303f",
+        "#4c5365",
+        "#7d8090",
+        "#b7b8ba",
+        "#e0dfd2",
+        "#5d485b"
+      ],
+      "category": "mineral",
+      "description": "Black volcanic glass moves through blue-gray and plum reflections into a pale sharp edge.",
+      "tags": [
+        "obsidian",
+        "black",
+        "glass"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "pyrite",
+      "name": "Pyrite",
+      "colors": [
+        "#302d24",
+        "#61573a",
+        "#97864a",
+        "#c2ad64",
+        "#e0d18d",
+        "#f1e7bd",
+        "#7b806e"
+      ],
+      "category": "mineral",
+      "description": "Bronze shadow, muted olive-gold and bright pale brass capture small faceted metallic forms.",
+      "tags": [
+        "pyrite",
+        "gold",
+        "metal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "fluorite",
+      "name": "Fluorite",
+      "colors": [
+        "#2b3049",
+        "#565078",
+        "#967fb2",
+        "#c9b7d7",
+        "#e7e4da",
+        "#417d70",
+        "#7bb79c",
+        "#b5d9bb"
+      ],
+      "category": "mineral",
+      "description": "Green, aqua and lavender bands stretch through shaded purple crystal into cool pale highlights.",
+      "tags": [
+        "fluorite",
+        "crystal",
+        "multicolor"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "azurite",
+      "name": "Azurite",
+      "colors": [
+        "#162943",
+        "#284e81",
+        "#497cbd",
+        "#84add4",
+        "#cadde3",
+        "#f1ead2",
+        "#4d7852",
+        "#9bb07a"
+      ],
+      "category": "mineral",
+      "description": "Vivid blue mineral and small malachite-green flecks contrast with warm pale rock and deep slate.",
+      "tags": [
+        "azurite",
+        "blue",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "tiger-eye",
+      "name": "Tiger Eye",
+      "colors": [
+        "#29231d",
+        "#5f4126",
+        "#996332",
+        "#c18d46",
+        "#e0b76d",
+        "#f4dba3"
+      ],
+      "category": "mineral",
+      "description": "Espresso bands, warm amber and honey reflections create a compact golden-brown stone palette.",
+      "tags": [
+        "amber",
+        "brown",
+        "banded"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "opal",
+      "name": "Opal",
+      "colors": [
+        "#374654",
+        "#75828b",
+        "#b7c2bd",
+        "#e4e8d9",
+        "#f8f1dd",
+        "#d5a4b5",
+        "#89c7c1",
+        "#b9a6d5",
+        "#e6c88b"
+      ],
+      "category": "mineral",
+      "description": "Pearl gray and cream hold softly luminous coral, aqua, lavender and pale gold flashes.",
+      "tags": [
+        "opal",
+        "iridescent",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "garnet",
+      "name": "Garnet",
+      "colors": [
+        "#291a27",
+        "#592337",
+        "#8b354d",
+        "#b85b65",
+        "#db9090",
+        "#efbdae",
+        "#f4e2c9"
+      ],
+      "category": "mineral",
+      "description": "Near-black burgundy rises through ruby facets and warm red light into soft rose highlights.",
+      "tags": [
+        "garnet",
+        "red",
+        "crystal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "turquoise-stone",
+      "name": "Turquoise Stone",
+      "colors": [
+        "#1e3e43",
+        "#38777c",
+        "#6bb2ae",
+        "#abd5c1",
+        "#e2e8c5",
+        "#8a6550",
+        "#c39c6d"
+      ],
+      "category": "mineral",
+      "description": "Turquoise veins and blue-green mineral meet warm sandstone, amber and cream.",
+      "tags": [
+        "turquoise",
+        "stone",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "hematite",
+      "name": "Hematite",
+      "colors": [
+        "#242d35",
+        "#465660",
+        "#768891",
+        "#aab6b5",
+        "#d8dfd4",
+        "#785b61",
+        "#b58575"
+      ],
+      "category": "mineral",
+      "description": "Cold iron-gray facets carry subtle mauve reflection and warm rust at the stone edge.",
+      "tags": [
+        "iron",
+        "gray",
+        "rust"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "citrine",
+      "name": "Citrine",
+      "colors": [
+        "#3f3427",
+        "#80603a",
+        "#b78a43",
+        "#d7b55f",
+        "#eadb92",
+        "#f8edc8",
+        "#a2aa8c"
+      ],
+      "category": "mineral",
+      "description": "Smoky honey and amber crystal rise into lemon light and a bright creamy mineral highlight.",
+      "tags": [
+        "citrine",
+        "yellow",
+        "crystal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "moonstone",
+      "name": "Moonstone",
+      "colors": [
+        "#384752",
+        "#6e8796",
+        "#a9bdc6",
+        "#d5e1de",
+        "#f3efdf",
+        "#c4aaa3",
+        "#e7ccc0"
+      ],
+      "category": "mineral",
+      "description": "Blue-gray shadows and frosted cyan sheen rest against milky pearl and a soft peach edge.",
+      "tags": [
+        "moonstone",
+        "pearl",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "agate",
+      "name": "Agate",
+      "colors": [
+        "#332835",
+        "#68505d",
+        "#9d6c6e",
+        "#c69985",
+        "#dec1a4",
+        "#f0dfc6",
+        "#82949a",
+        "#b8c6c3"
+      ],
+      "category": "mineral",
+      "description": "Dark plum, red earth and muted amber alternate with pale gray bands in a richly striped stone study.",
+      "tags": [
+        "agate",
+        "banded",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "autumn-orchard",
+      "name": "Autumn Orchard",
+      "colors": [
+        "#30262f",
+        "#674143",
+        "#a35245",
+        "#cc8757",
+        "#e5b578",
+        "#f4dfad",
+        "#596143",
+        "#929258"
+      ],
+      "category": "seasonal",
+      "description": "Apple red, olive leaves and ochre grass share plum shadow and cream harvest light.",
+      "tags": [
+        "autumn",
+        "orchard",
+        "earth"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "winter-solstice",
+      "name": "Winter Solstice",
+      "colors": [
+        "#17243c",
+        "#3b4b69",
+        "#6a809a",
+        "#a7bac8",
+        "#dce4df",
+        "#f5f0d7",
+        "#bca36a"
+      ],
+      "category": "seasonal",
+      "description": "Blue-black winter night, frozen aqua and pearl snow hold one quiet gold light.",
+      "tags": [
+        "winter",
+        "night",
+        "snow"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "spring-rain",
+      "name": "Spring Rain",
+      "colors": [
+        "#28414a",
+        "#527b80",
+        "#91a9a5",
+        "#ced5bd",
+        "#ecedd2",
+        "#687c52",
+        "#a6bc77",
+        "#b999ba"
+      ],
+      "category": "seasonal",
+      "description": "Fresh green shoots and cool rain-blue shadows blend with lilac petals and pale overcast light.",
+      "tags": [
+        "spring",
+        "rain",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "summer-solstice",
+      "name": "Summer Solstice",
+      "colors": [
+        "#254d48",
+        "#4e9175",
+        "#96c489",
+        "#d4e8af",
+        "#f8ecc8",
+        "#3276a2",
+        "#6bb3d1",
+        "#e7b15e"
+      ],
+      "category": "seasonal",
+      "description": "Leaf green, lake blue and golden midsummer sunshine make a bright long-day palette.",
+      "tags": [
+        "summer",
+        "sun",
+        "bright"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cherry-blossom",
+      "name": "Cherry Blossom",
+      "colors": [
+        "#423341",
+        "#856374",
+        "#bd929b",
+        "#e8bac4",
+        "#f5dce0",
+        "#faf0df",
+        "#809da6",
+        "#a9bb91"
+      ],
+      "category": "seasonal",
+      "description": "Dark cherry branches, soft pink petals and blue spring air retain green buds and warm cream.",
+      "tags": [
+        "spring",
+        "blossom",
+        "pink"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "late-harvest",
+      "name": "Late Harvest",
+      "colors": [
+        "#342539",
+        "#694258",
+        "#9e685f",
+        "#c29865",
+        "#e5c890",
+        "#f1dfbd",
+        "#535c38",
+        "#98995f"
+      ],
+      "category": "seasonal",
+      "description": "Wine-purple berries and bronze fields sit against olive leaves and soft autumn paper.",
+      "tags": [
+        "autumn",
+        "harvest",
+        "wine"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "first-snow",
+      "name": "First Snow",
+      "colors": [
+        "#243744",
+        "#516773",
+        "#8295a4",
+        "#b6cad2",
+        "#dfe9e5",
+        "#f9f4e4",
+        "#867568"
+      ],
+      "category": "seasonal",
+      "description": "Slate forest and dusky violet lighten through powder blue to near-white snow, with a warm bark accent.",
+      "tags": [
+        "winter",
+        "snow",
+        "slate"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "midsummer-field",
+      "name": "Midsummer Field",
+      "colors": [
+        "#365446",
+        "#729b61",
+        "#b7ca83",
+        "#e8dc9f",
+        "#f6edc7",
+        "#688eb0",
+        "#abcadd",
+        "#c87869"
+      ],
+      "category": "seasonal",
+      "description": "Warm straw, meadow green and clear blue share poppy-red accents for a sunny open-field study.",
+      "tags": [
+        "summer",
+        "meadow",
+        "straw"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "april-garden",
+      "name": "April Garden",
+      "colors": [
+        "#294a42",
+        "#598775",
+        "#99b788",
+        "#d3ddad",
+        "#f5efcf",
+        "#7c666f",
+        "#c292a4"
+      ],
+      "category": "seasonal",
+      "description": "Fresh lime leaves, spring teal and pale yellow light brighten mauve soil and pink emerging flowers.",
+      "tags": [
+        "spring",
+        "garden",
+        "fresh"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "november-fog",
+      "name": "November Fog",
+      "colors": [
+        "#303735",
+        "#5f6760",
+        "#92998b",
+        "#c0c2ad",
+        "#e8e4cc",
+        "#805f54",
+        "#b18a6c"
+      ],
+      "category": "seasonal",
+      "description": "Rain-dark brown and olive fade into gray mist, pale straw and a small muted brick accent.",
+      "tags": [
+        "autumn",
+        "fog",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "october-lantern",
+      "name": "October Lantern",
+      "colors": [
+        "#282337",
+        "#574051",
+        "#98554b",
+        "#d18742",
+        "#ecb663",
+        "#f5df9f",
+        "#45634b"
+      ],
+      "category": "seasonal",
+      "description": "Charcoal violet, pumpkin orange and golden candlelight glow beside deep pine and warm cream.",
+      "tags": [
+        "autumn",
+        "pumpkin",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "january-dawn",
+      "name": "January Dawn",
+      "colors": [
+        "#29354f",
+        "#566985",
+        "#92a9bd",
+        "#c8dbe0",
+        "#eaf0e4",
+        "#9f829d",
+        "#d5b0b3",
+        "#eaceb4"
+      ],
+      "category": "seasonal",
+      "description": "Muted indigo and blue-gray snow catch the quiet pink and peach light of a cold morning.",
+      "tags": [
+        "winter",
+        "dawn",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "september-plum",
+      "name": "September Plum",
+      "colors": [
+        "#30273f",
+        "#665074",
+        "#9b7193",
+        "#c8a0b3",
+        "#e6c8cb",
+        "#f1e4c9",
+        "#667a53",
+        "#b4ad68"
+      ],
+      "category": "seasonal",
+      "description": "Ripe purple fruit, dusty rose and gold leaves sit beside cool green shade and creamy daylight.",
+      "tags": [
+        "autumn",
+        "plum",
+        "orchard"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "december-pine",
+      "name": "December Pine",
+      "colors": [
+        "#153b30",
+        "#356653",
+        "#6b9379",
+        "#adc5a0",
+        "#e0e6c8",
+        "#f4edce",
+        "#8b4050",
+        "#d3b070"
+      ],
+      "category": "seasonal",
+      "description": "Deep fir green, icy sage and snow cream share quiet cranberry and gold holiday accents.",
+      "tags": [
+        "winter",
+        "pine",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "may-pollen",
+      "name": "May Pollen",
+      "colors": [
+        "#38583f",
+        "#739b57",
+        "#b8ce7c",
+        "#e5e899",
+        "#f9f1c7",
+        "#8d7154",
+        "#a9c9c6"
+      ],
+      "category": "seasonal",
+      "description": "Lime-green leaves, pollen yellow and soft cream meet warm brown stems and pale blue spring air.",
+      "tags": [
+        "spring",
+        "pollen",
+        "yellow"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "august-cicada",
+      "name": "August Cicada",
+      "colors": [
+        "#36433c",
+        "#6c7751",
+        "#a9a866",
+        "#d4c37b",
+        "#f0dfb0",
+        "#86563d",
+        "#bd8856",
+        "#779caa"
+      ],
+      "category": "seasonal",
+      "description": "Hot ochre sunlight and dry grass cross olive shade, brown branches and the blue of a late-summer sky.",
+      "tags": [
+        "summer",
+        "ochre",
+        "grass"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ultraviolet-city",
+      "name": "Ultraviolet City",
+      "colors": [
+        "#0c1630",
+        "#28335b",
+        "#6a4aa1",
+        "#b164c6",
+        "#f074b0",
+        "#39b7c9",
+        "#9be5d4",
+        "#f4d886"
+      ],
+      "category": "neon",
+      "description": "Inky blue, ultraviolet purple and hot magenta combine neon cyan with warm lit-window yellow.",
+      "tags": [
+        "ultraviolet",
+        "city",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "laser-lime",
+      "name": "Laser Lime",
+      "colors": [
+        "#0a202b",
+        "#224d62",
+        "#3c8799",
+        "#60ccbf",
+        "#a5ed75",
+        "#e3f49e",
+        "#f5eed2"
+      ],
+      "category": "neon",
+      "description": "Navy screen shadows carry electric lime, vivid turquoise and pale laser yellow.",
+      "tags": [
+        "lime",
+        "laser",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "electric-papaya",
+      "name": "Electric Papaya",
+      "colors": [
+        "#241a3c",
+        "#603b75",
+        "#b3577e",
+        "#ed896d",
+        "#f8ba69",
+        "#f3dc90",
+        "#8ed8bb"
+      ],
+      "category": "neon",
+      "description": "Deep violet and electric coral contrast with papaya orange, sunny yellow, and mint-green light.",
+      "tags": [
+        "orange",
+        "coral",
+        "electric"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "nightclub-iris",
+      "name": "Nightclub Iris",
+      "colors": [
+        "#14182e",
+        "#323764",
+        "#70519e",
+        "#b278cb",
+        "#e9a7df",
+        "#50bfc6",
+        "#b8e9dc"
+      ],
+      "category": "neon",
+      "description": "Iris violet and saturated pink contrast with deep indigo, aqua, and pale stage highlights.",
+      "tags": [
+        "violet",
+        "pink",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "neon-monsoon",
+      "name": "Neon Monsoon",
+      "colors": [
+        "#092838",
+        "#1c5870",
+        "#38998e",
+        "#76d6b0",
+        "#cbefd0",
+        "#785198",
+        "#cc7395",
+        "#f0b995"
+      ],
+      "category": "neon",
+      "description": "Blue-black rain and emerald signs meet purple reflection, coral lamps and bright humid cream.",
+      "tags": [
+        "rain",
+        "green",
+        "city"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "synthwave-salmon",
+      "name": "Synthwave Salmon",
+      "colors": [
+        "#261b46",
+        "#52366e",
+        "#8a528d",
+        "#cd799c",
+        "#f7afa8",
+        "#f8d3a0",
+        "#4274ab",
+        "#79c2d2"
+      ],
+      "category": "neon",
+      "description": "Violet dusk, cobalt shadows and warm salmon light create a bright retro-future sunset study.",
+      "tags": [
+        "synthwave",
+        "salmon",
+        "sky"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "acid-aquarium",
+      "name": "Acid Aquarium",
+      "colors": [
+        "#0b2535",
+        "#175d77",
+        "#29a6b5",
+        "#68ded1",
+        "#bcf39b",
+        "#f0efc5",
+        "#7864b9"
+      ],
+      "category": "neon",
+      "description": "Black teal, vivid aquatic cyan and acid chartreuse mix with lavender and glowing pearl.",
+      "tags": [
+        "aqua",
+        "lime",
+        "electric"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "hologram-rose",
+      "name": "Hologram Rose",
+      "colors": [
+        "#1c2445",
+        "#4d4c84",
+        "#9179bd",
+        "#cea4dc",
+        "#f8d8eb",
+        "#5dbdcc",
+        "#ace8e5",
+        "#f4e7a9"
+      ],
+      "category": "neon",
+      "description": "Deep blue-purple and luminous rose cross icy cyan, lavender and a pale gold holographic sheen.",
+      "tags": [
+        "hologram",
+        "pink",
+        "ice"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "arcade-sherbet",
+      "name": "Arcade Sherbet",
+      "colors": [
+        "#20234a",
+        "#544a89",
+        "#9c70b5",
+        "#e792b9",
+        "#f3ba88",
+        "#ebd979",
+        "#7acdbe",
+        "#a5dbe4"
+      ],
+      "category": "neon",
+      "description": "Ink-blue outlines hold vivid cherry, tangerine, mint and lavender for a cheerful neon sprite palette.",
+      "tags": [
+        "arcade",
+        "multicolor",
+        "bright"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "chromatic-rain",
+      "name": "Chromatic Rain",
+      "colors": [
+        "#0e2438",
+        "#294860",
+        "#49778e",
+        "#78adb3",
+        "#bed7cd",
+        "#8461b4",
+        "#dc7d9a",
+        "#f3d484"
+      ],
+      "category": "neon",
+      "description": "Navy rain shadows and muted teal puddles reflect intense violet, rose and lemon signs.",
+      "tags": [
+        "rain",
+        "reflection",
+        "multicolor"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ultraviolet-lime",
+      "name": "Ultraviolet Lime",
+      "colors": [
+        "#221736",
+        "#54347d",
+        "#9b62c3",
+        "#d19ce8",
+        "#74b66a",
+        "#b6df76",
+        "#f1ed9e"
+      ],
+      "category": "neon",
+      "description": "A tight saturated violet-and-lime palette moves from deep plum to bright lemon-cream.",
+      "tags": [
+        "violet",
+        "lime",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "night-market",
+      "name": "Night Market",
+      "colors": [
+        "#172e39",
+        "#385b66",
+        "#6b9290",
+        "#b8cabb",
+        "#ede2b8",
+        "#ac4a63",
+        "#e27958",
+        "#f2b56d"
+      ],
+      "category": "neon",
+      "description": "Petrol night, lantern orange and red-pink signs share teal reflections and pale streetlight cream.",
+      "tags": [
+        "night",
+        "lantern",
+        "orange"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "hot-pink-carbon",
+      "name": "Hot Pink Carbon",
+      "colors": [
+        "#172633",
+        "#3b4b62",
+        "#788394",
+        "#b8c0c5",
+        "#ecddd6",
+        "#9c3265",
+        "#ef72a4"
+      ],
+      "category": "neon",
+      "description": "Graphite blue, saturated hot pink and pale blush create strong fluorescent fashion-like dot treatments.",
+      "tags": [
+        "pink",
+        "graphite",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "poolside-laser",
+      "name": "Poolside Laser",
+      "colors": [
+        "#102f4c",
+        "#2c6595",
+        "#51a3cf",
+        "#89dede",
+        "#d3f0cb",
+        "#f6e0ac",
+        "#e4976f"
+      ],
+      "category": "neon",
+      "description": "Night cobalt, radiant pool cyan and lime highlights contrast with sunny orange and light peach.",
+      "tags": [
+        "pool",
+        "cyan",
+        "laser"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "signal-flare",
+      "name": "Signal Flare",
+      "colors": [
+        "#102b3a",
+        "#3a5c6d",
+        "#7794a1",
+        "#bfccc6",
+        "#eeecd1",
+        "#ab3e4c",
+        "#ec7956",
+        "#f5bd68"
+      ],
+      "category": "neon",
+      "description": "Blue-black and cool steel shadows frame brilliant red-orange, amber and pale emergency light.",
+      "tags": [
+        "signal",
+        "orange",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "pistachio-rose",
+      "name": "Pistachio Rose",
+      "colors": [
+        "#39463b",
+        "#79977a",
+        "#b7caa0",
+        "#e4e7c0",
+        "#f7edda",
+        "#bc859b",
+        "#e6b6bc"
+      ],
+      "category": "pastel",
+      "description": "Deep olive anchors pistachio cream, dusty rose and pale peach for a gentle garden confection palette.",
+      "tags": [
+        "pistachio",
+        "rose",
+        "soft"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lilac-cloud",
+      "name": "Lilac Cloud",
+      "colors": [
+        "#46405f",
+        "#88809e",
+        "#b9afcf",
+        "#ddd3e8",
+        "#f4eee6",
+        "#a7c5d0",
+        "#d6e3d6"
+      ],
+      "category": "pastel",
+      "description": "Indigo-gray shadows lift lavender, powder blue and warm ivory into softly colored cloud layers.",
+      "tags": [
+        "lilac",
+        "cloud",
+        "soft"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "peach-sorbet",
+      "name": "Peach Sorbet",
+      "colors": [
+        "#62444a",
+        "#a67875",
+        "#dca594",
+        "#f3c6a9",
+        "#f8e2bf",
+        "#f8f0dd",
+        "#b8ccb2"
+      ],
+      "category": "pastel",
+      "description": "Warm rose-brown grounds peach, apricot and cream alongside a small pale mint accent.",
+      "tags": [
+        "peach",
+        "apricot",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "chalk-garden",
+      "name": "Chalk Garden",
+      "colors": [
+        "#495960",
+        "#929f9b",
+        "#c4d3bc",
+        "#e8e6c9",
+        "#f6f0de",
+        "#b7a9ce",
+        "#e5bfc6",
+        "#e2c79f"
+      ],
+      "category": "pastel",
+      "description": "Slate-blue outlines hold pale sage, lilac, butter and rose like chalk on softly textured paper.",
+      "tags": [
+        "chalk",
+        "garden",
+        "multicolor"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "baby-blue-coral",
+      "name": "Baby Blue Coral",
+      "colors": [
+        "#41596e",
+        "#85a6bf",
+        "#b9d4df",
+        "#e1eae0",
+        "#f5e7d6",
+        "#d99097",
+        "#efb8aa"
+      ],
+      "category": "pastel",
+      "description": "Gentle blue-gray and powder blue balance light coral, rosy peach and warm off-white.",
+      "tags": [
+        "blue",
+        "coral",
+        "soft"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sage-meringue",
+      "name": "Sage Meringue",
+      "colors": [
+        "#435749",
+        "#839a7c",
+        "#b9cb9f",
+        "#dee1b9",
+        "#f4efd8",
+        "#cfaa9d"
+      ],
+      "category": "pastel",
+      "description": "Gray-green shadows and soft sage contrast with buttery meringue and a small peach blush.",
+      "tags": [
+        "sage",
+        "cream",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "vanilla-lavender",
+      "name": "Vanilla Lavender",
+      "colors": [
+        "#594762",
+        "#9983a7",
+        "#c7b0d4",
+        "#e7d6ea",
+        "#f6efd9",
+        "#c5d9dd"
+      ],
+      "category": "pastel",
+      "description": "Violet-brown depth supports lavender cream, vanilla light and a quiet cool-blue accent.",
+      "tags": [
+        "vanilla",
+        "lavender",
+        "cream"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "apricot-mist",
+      "name": "Apricot Mist",
+      "colors": [
+        "#4b606b",
+        "#8aa4ac",
+        "#c0d0cd",
+        "#e4e5d5",
+        "#f8edd7",
+        "#c58e7c",
+        "#e6b9a5"
+      ],
+      "category": "pastel",
+      "description": "Muted blue-gray shadows meet dusty apricot, pale sand and gently pink mist.",
+      "tags": [
+        "apricot",
+        "mist",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "seafoam-candy",
+      "name": "Seafoam Candy",
+      "colors": [
+        "#365965",
+        "#76a6a8",
+        "#b2d1c3",
+        "#dcedd1",
+        "#f5f1df",
+        "#c0aed5",
+        "#e9ccd9"
+      ],
+      "category": "pastel",
+      "description": "Deep blue-teal grounds soft aqua and pale mint with a small lavender-sugar accent.",
+      "tags": [
+        "seafoam",
+        "aqua",
+        "candy"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "periwinkle-pearl",
+      "name": "Periwinkle Pearl",
+      "colors": [
+        "#48526f",
+        "#8593b9",
+        "#b8c3df",
+        "#dde2e8",
+        "#f4efdf",
+        "#d5b8ce"
+      ],
+      "category": "pastel",
+      "description": "Cool indigo-gray and periwinkle melt into pearly pink, powder blue and luminous cream.",
+      "tags": [
+        "periwinkle",
+        "pearl",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blush-linen",
+      "name": "Blush Linen",
+      "colors": [
+        "#5b4d56",
+        "#9b858b",
+        "#cab0af",
+        "#e5d0c4",
+        "#f4e9da",
+        "#a7b5a0"
+      ],
+      "category": "pastel",
+      "description": "Mauve-brown, dusty blush and warm linen make a soft portrait palette with muted sage relief.",
+      "tags": [
+        "blush",
+        "linen",
+        "portrait"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sherbet-sky",
+      "name": "Sherbet Sky",
+      "colors": [
+        "#435674",
+        "#869fbd",
+        "#bbd4df",
+        "#e7eddd",
+        "#f9edbf",
+        "#efc2a1",
+        "#dba6bc"
+      ],
+      "category": "pastel",
+      "description": "Blue-violet shadow and pale cloud blue share pastel orange, rose and sunlit yellow.",
+      "tags": [
+        "sky",
+        "sherbet",
+        "multicolor"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "porcelain-pink",
+      "name": "Porcelain Pink",
+      "colors": [
+        "#5a566c",
+        "#9690a4",
+        "#c9b3ca",
+        "#e6ccd8",
+        "#f5e7e7",
+        "#f7f1df",
+        "#b4d2cc"
+      ],
+      "category": "pastel",
+      "description": "Cool plum-gray edges, delicate rose and ceramic cream support subtle pale-aqua reflections.",
+      "tags": [
+        "porcelain",
+        "pink",
+        "pale"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "macaroon-mint",
+      "name": "Macaroon Mint",
+      "colors": [
+        "#545447",
+        "#94977d",
+        "#c2d0ad",
+        "#e2ebcb",
+        "#f6eed7",
+        "#d2b49f",
+        "#e7c4cd"
+      ],
+      "category": "pastel",
+      "description": "Toasted nut shadows, creamy mint and pale rose compose an airy bakery-window palette.",
+      "tags": [
+        "mint",
+        "rose",
+        "cream"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "petal-paper",
+      "name": "Petal Paper",
+      "colors": [
+        "#574653",
+        "#94828a",
+        "#c2adb1",
+        "#e0cbd0",
+        "#f1e2dd",
+        "#f8f0db",
+        "#acbaab"
+      ],
+      "category": "pastel",
+      "description": "Dusty plum and warm gray carry muted mauve, pale rose and creamy handmade-paper light.",
+      "tags": [
+        "petal",
+        "paper",
+        "muted"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "soft-confetti",
+      "name": "Soft Confetti",
+      "colors": [
+        "#4d535b",
+        "#969fa8",
+        "#d0d8d1",
+        "#f3ecdc",
+        "#e2adc0",
+        "#efcba3",
+        "#e6dfad",
+        "#b6d5bd",
+        "#a8cbdc",
+        "#c2b8dc"
+      ],
+      "category": "pastel",
+      "description": "Warm charcoal grounds eight pastel pink, aqua, green, blue and yellow notes for playful broad artwork.",
+      "tags": [
+        "confetti",
+        "multicolor",
+        "soft"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "nebula-rose",
+      "name": "Nebula Rose",
+      "colors": [
+        "#141c3a",
+        "#353a69",
+        "#70577f",
+        "#ad779b",
+        "#db9cb2",
+        "#f1c9bc",
+        "#f5e6cc",
+        "#5d959a"
+      ],
+      "category": "cosmic",
+      "description": "Deep indigo space and violet dust contrast with rose nebulae, peach starlight, and small cool teal wisps.",
+      "tags": [
+        "nebula",
+        "rose",
+        "space"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "lunar-dust",
+      "name": "Lunar Dust",
+      "colors": [
+        "#29323c",
+        "#505d68",
+        "#81908f",
+        "#b6bdb0",
+        "#dedccb",
+        "#f4eddc",
+        "#736778"
+      ],
+      "category": "cosmic",
+      "description": "Cold slate, warm gray and pale regolith offer subtle lunar terrain with a restrained blue shadow.",
+      "tags": [
+        "moon",
+        "gray",
+        "terrain"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "mars-survey",
+      "name": "Mars Survey",
+      "colors": [
+        "#342530",
+        "#733d3c",
+        "#aa6250",
+        "#d49772",
+        "#e4bc91",
+        "#f1dfbd",
+        "#586a7c"
+      ],
+      "category": "cosmic",
+      "description": "Wine-black craters, oxidized red soil and dusty orange span pale beige light and blue instrument shadow.",
+      "tags": [
+        "mars",
+        "rust",
+        "terrain"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "saturn-rings",
+      "name": "Saturn Rings",
+      "colors": [
+        "#1d2941",
+        "#4e566b",
+        "#8a8491",
+        "#b9b09d",
+        "#e0c995",
+        "#f2e5c8",
+        "#668c8c"
+      ],
+      "category": "cosmic",
+      "description": "Soft gold, smoky mauve and creamy ring light orbit deep navy and gray-teal space shadows.",
+      "tags": [
+        "saturn",
+        "rings",
+        "gold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cosmic-ray",
+      "name": "Cosmic Ray",
+      "colors": [
+        "#10182d",
+        "#293e69",
+        "#546ba1",
+        "#85b8cb",
+        "#c8e4d7",
+        "#f3f1dc",
+        "#7ec580",
+        "#b381d1"
+      ],
+      "category": "cosmic",
+      "description": "Deep space blue flashes through cool cyan, fluorescent green and violet with a star-white highlight.",
+      "tags": [
+        "space",
+        "signal",
+        "bright"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "aurora-borealis",
+      "name": "Aurora Borealis",
+      "colors": [
+        "#0b2238",
+        "#204e60",
+        "#398575",
+        "#75c391",
+        "#b4e1a7",
+        "#e8eed0",
+        "#6f5895",
+        "#b698c2"
+      ],
+      "category": "cosmic",
+      "description": "Inky winter blue frames emerald curtains, pale lime and violet sky light beneath bright snow cream.",
+      "tags": [
+        "aurora",
+        "green",
+        "night"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "deep-orbit",
+      "name": "Deep Orbit",
+      "colors": [
+        "#111f32",
+        "#2b4059",
+        "#526d83",
+        "#89a4af",
+        "#c8d4cc",
+        "#efead1",
+        "#9c806d",
+        "#d4ad67"
+      ],
+      "category": "cosmic",
+      "description": "Navy and graphite space shadows hold desaturated cyan, warm metal and a tiny amber thruster accent.",
+      "tags": [
+        "orbit",
+        "navy",
+        "metal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "comet-tail",
+      "name": "Comet Tail",
+      "colors": [
+        "#1e2443",
+        "#414d78",
+        "#7388af",
+        "#adc4da",
+        "#d9e7df",
+        "#f6efd8",
+        "#a190b2"
+      ],
+      "category": "cosmic",
+      "description": "Dark violet night trails through frosted blue and pale mint into warm star-cream light.",
+      "tags": [
+        "comet",
+        "ice",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "eclipse-gold",
+      "name": "Eclipse Gold",
+      "colors": [
+        "#171c2c",
+        "#45424b",
+        "#80634d",
+        "#b88a4e",
+        "#e4bc68",
+        "#f4e3aa",
+        "#738b93"
+      ],
+      "category": "cosmic",
+      "description": "Near-black navy and smoky brown silhouettes face copper corona, luminous gold and pale cream.",
+      "tags": [
+        "eclipse",
+        "gold",
+        "contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "stellar-nursery",
+      "name": "Stellar Nursery",
+      "colors": [
+        "#182c40",
+        "#3a566e",
+        "#6c8098",
+        "#a0adb0",
+        "#d5d9ca",
+        "#f1e6cc",
+        "#8a5d82",
+        "#c894a7",
+        "#55938a"
+      ],
+      "category": "cosmic",
+      "description": "Teal clouds, dusty violet and rose star-forming haze mingle under cream points of light.",
+      "tags": [
+        "stars",
+        "multicolor",
+        "dust"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "solar-wind",
+      "name": "Solar Wind",
+      "colors": [
+        "#34202d",
+        "#792f40",
+        "#ba554e",
+        "#e99159",
+        "#f0c36b",
+        "#f7e6a8",
+        "#f9f2d8",
+        "#375771"
+      ],
+      "category": "cosmic",
+      "description": "Burgundy shade and fiery coral stretch into orange, lemon and white light with a dark blue counterpoint.",
+      "tags": [
+        "solar",
+        "orange",
+        "fire"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "europa-ice",
+      "name": "Europa Ice",
+      "colors": [
+        "#183849",
+        "#3b6475",
+        "#759aab",
+        "#b2cbcf",
+        "#e4e9dd",
+        "#f6f0d9",
+        "#a18875"
+      ],
+      "category": "cosmic",
+      "description": "Dark ocean-blue fissures cross frozen aqua, chalky ice and pale tan surface streaks.",
+      "tags": [
+        "europa",
+        "ice",
+        "moon"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ion-drive",
+      "name": "Ion Drive",
+      "colors": [
+        "#161d39",
+        "#37436e",
+        "#5f71b0",
+        "#85afd9",
+        "#b1e4e5",
+        "#e7f2e3",
+        "#8b769e"
+      ],
+      "category": "cosmic",
+      "description": "Deep violet hull shadow, cobalt ion light and electric cyan meet soft silver and pale mint exhaust.",
+      "tags": [
+        "ion",
+        "cobalt",
+        "technology"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "red-giant",
+      "name": "Red Giant",
+      "colors": [
+        "#341d2c",
+        "#792b40",
+        "#b74850",
+        "#dd7b64",
+        "#f1b184",
+        "#f6dbb0",
+        "#f7edd5",
+        "#546079"
+      ],
+      "category": "cosmic",
+      "description": "Dark wine and ember red grow through peach-orange to buttery star light with a faint smoky blue edge.",
+      "tags": [
+        "star",
+        "red",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "asteroid-belt",
+      "name": "Asteroid Belt",
+      "colors": [
+        "#232c39",
+        "#4d5b6a",
+        "#7b8b92",
+        "#aebab8",
+        "#dadac7",
+        "#f0e9d6",
+        "#927e72",
+        "#c0a387"
+      ],
+      "category": "cosmic",
+      "description": "Dark basalt, steel-gray fragments and warm dust provide a quiet broad space-rock palette.",
+      "tags": [
+        "asteroid",
+        "stone",
+        "neutral"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "midnight-zodiac",
+      "name": "Midnight Zodiac",
+      "colors": [
+        "#17233e",
+        "#3c3e69",
+        "#706080",
+        "#a496a8",
+        "#d5c5bf",
+        "#efe4cd",
+        "#648e86",
+        "#c7ad68"
+      ],
+      "category": "cosmic",
+      "description": "Celestial indigo and violet surround muted teal, antique gold and pale constellation light.",
+      "tags": [
+        "zodiac",
+        "indigo",
+        "gold"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "apple-ii",
+      "name": "Apple II Lo-res",
+      "colors": [
+        "#000000",
+        "#9d0966",
+        "#2a2ae5",
+        "#c734ff",
+        "#007a20",
+        "#808080",
+        "#0d9fff",
+        "#a0afff",
+        "#555500",
+        "#f96400",
+        "#ffa0d0",
+        "#14f53c",
+        "#d7ff83",
+        "#78ffd8",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "An sRGB approximation of the Apple II low-resolution analog colors, with the two equivalent gray indices represented once.",
+      "tags": [
+        "hardware",
+        "analog",
+        "apple"
+      ],
+      "origin": "approximation",
+      "source": "https://apple2history.org/dl/a2refmanorig.pdf"
+    },
+    {
+      "id": "zx-spectrum",
+      "name": "ZX Spectrum",
+      "colors": [
+        "#000000",
+        "#0000d7",
+        "#d70000",
+        "#d700d7",
+        "#00d700",
+        "#00d7d7",
+        "#d7d700",
+        "#d7d7d7",
+        "#0000ff",
+        "#ff0000",
+        "#ff00ff",
+        "#00ff00",
+        "#00ffff",
+        "#ffff00",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The palette approximates fifteen unique normal and bright Spectrum colors in sRGB. Shared black appears once.",
+      "tags": [
+        "hardware",
+        "primary",
+        "spectrum"
+      ],
+      "origin": "approximation",
+      "source": "https://worldofspectrum.org/ZXBasicManual/zxmanchap16.html"
+    },
+    {
+      "id": "msx",
+      "name": "MSX TMS9918",
+      "colors": [
+        "#000000",
+        "#21c842",
+        "#5edc78",
+        "#5455ed",
+        "#7d76fc",
+        "#d4524d",
+        "#42ebf5",
+        "#fc5554",
+        "#ff7978",
+        "#d4c154",
+        "#e6ce80",
+        "#21b03b",
+        "#c95bba",
+        "#cccccc",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The palette follows MAME's TMS9928A sRGB approximation with fifteen unique display colors. Transparent and black indices share one opaque black.",
+      "tags": [
+        "hardware",
+        "msx",
+        "analog"
+      ],
+      "origin": "approximation",
+      "source": "https://github.com/mamedev/mame/blob/master/src/devices/video/tms9928a.cpp"
+    },
+    {
+      "id": "teletext",
+      "name": "Teletext RGB",
+      "colors": [
+        "#000000",
+        "#ff0000",
+        "#00ff00",
+        "#ffff00",
+        "#0000ff",
+        "#ff00ff",
+        "#00ffff",
+        "#ffffff"
+      ],
+      "category": "retro",
+      "description": "The eight ideal binary RGB combinations used by classic teletext character generators, from black to white.",
+      "tags": [
+        "hardware",
+        "teletext",
+        "primary"
+      ],
+      "origin": "reference",
+      "source": "https://github.com/mamedev/mame/blob/master/src/devices/video/saa5050.cpp"
+    },
+    {
+      "id": "nes",
+      "name": "NES Classic",
+      "colors": [
+        "#7c7c7c",
+        "#0000fc",
+        "#0000bc",
+        "#4428bc",
+        "#940084",
+        "#a80020",
+        "#a81000",
+        "#881400",
+        "#503000",
+        "#007800",
+        "#006800",
+        "#005800",
+        "#004058",
+        "#000000",
+        "#bcbcbc",
+        "#0078f8",
+        "#0058f8",
+        "#6844fc",
+        "#d800cc",
+        "#e40058",
+        "#f83800",
+        "#e45c10",
+        "#ac7c00",
+        "#00b800",
+        "#00a800",
+        "#00a844",
+        "#008888",
+        "#f8f8f8",
+        "#3cbcfc",
+        "#6888fc",
+        "#9878f8",
+        "#f878f8",
+        "#f85898",
+        "#f87858",
+        "#fca044",
+        "#f8b800",
+        "#b8f818",
+        "#58d854",
+        "#58f898",
+        "#00e8d8",
+        "#787878",
+        "#fcfcfc",
+        "#a4e4fc",
+        "#b8b8f8",
+        "#d8b8f8",
+        "#f8b8f8",
+        "#f8a4c0",
+        "#f0d0b0",
+        "#fce0a8",
+        "#f8d878",
+        "#d8f878",
+        "#b8f8b8",
+        "#b8f8d8",
+        "#00fcfc",
+        "#f8d8f8"
+      ],
+      "category": "retro",
+      "description": "The palette approximates NES base colors with a conventional NTSC emulator interpretation in sRGB. It removes repeated black entries. Analog appearance varies by decoder.",
+      "tags": [
+        "hardware",
+        "nes",
+        "analog"
+      ],
+      "origin": "approximation",
+      "source": "https://fceux.com/web/help/Palette.html"
+    },
+    {
+      "id": "black-sesame",
+      "name": "Black Sesame",
+      "colors": [
+        "#171819",
+        "#44403b",
+        "#71685c",
+        "#a89881",
+        "#d0c1a6",
+        "#f4ead4"
+      ],
+      "category": "food",
+      "description": "Warm ivory and toasted gray bring a quiet ceramic character to food photographs and still life.",
+      "tags": [
+        "sesame",
+        "ivory",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "saffron-market",
+      "name": "Saffron Market",
+      "colors": [
+        "#291b27",
+        "#6a2934",
+        "#a7482c",
+        "#d88924",
+        "#f2bd42",
+        "#f7df91",
+        "#56806b"
+      ],
+      "category": "food",
+      "description": "Saffron yellow, paprika red and deep spice shadows make a rich market scene.",
+      "tags": [
+        "spice",
+        "gold",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "matcha-ceremony",
+      "name": "Matcha Ceremony",
+      "colors": [
+        "#192f29",
+        "#3d5040",
+        "#697853",
+        "#9aa56a",
+        "#cdd4a0",
+        "#f1f0d7"
+      ],
+      "category": "food",
+      "description": "Earthy tea greens and pale rice paper form a gentle six-tone study.",
+      "tags": [
+        "tea",
+        "green",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blood-orange",
+      "name": "Blood Orange",
+      "colors": [
+        "#321328",
+        "#701d34",
+        "#b83c3a",
+        "#eb7147",
+        "#f6a963",
+        "#fce0ac"
+      ],
+      "category": "food",
+      "description": "Deep burgundy, vermilion and citrus cream celebrate translucent fruit and bright highlights.",
+      "tags": [
+        "citrus",
+        "red",
+        "juicy"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blueberry-tart",
+      "name": "Blueberry Tart",
+      "colors": [
+        "#171b38",
+        "#333a6a",
+        "#66679b",
+        "#a4a1c8",
+        "#e0d8e3",
+        "#f6ead2",
+        "#bc884e"
+      ],
+      "category": "food",
+      "description": "Ink-blue berries meet toasted pastry and lavender cream in a balanced dessert palette.",
+      "tags": [
+        "berry",
+        "blue",
+        "pastry"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "pistachio-gelato",
+      "name": "Pistachio Gelato",
+      "colors": [
+        "#344c46",
+        "#68866a",
+        "#a5ba89",
+        "#d9dfb4",
+        "#f6ebd3",
+        "#d9a8a0"
+      ],
+      "category": "food",
+      "description": "Pistachio, blush and almond cream lend soft illustrations a fresh confectionery color.",
+      "tags": [
+        "gelato",
+        "green",
+        "pastel"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cocoa-and-cherry",
+      "name": "Cocoa and Cherry",
+      "colors": [
+        "#241918",
+        "#52332b",
+        "#885340",
+        "#c08867",
+        "#e3ba91",
+        "#f7dfbd",
+        "#722239",
+        "#bc3d54"
+      ],
+      "category": "food",
+      "description": "Chocolate browns and cherry reds create a deep, warm dessert palette with cream highlights.",
+      "tags": [
+        "chocolate",
+        "cherry",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sardine-tin",
+      "name": "Sardine Tin",
+      "colors": [
+        "#102e49",
+        "#276488",
+        "#6ca8bc",
+        "#c2d8d5",
+        "#f1ead0",
+        "#c73f35"
+      ],
+      "category": "food",
+      "description": "Marine blue, silvery gray and tomato red evoke illustrated pantry labels.",
+      "tags": [
+        "pantry",
+        "blue",
+        "red"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "fig-and-honey",
+      "name": "Fig and Honey",
+      "colors": [
+        "#2e1c35",
+        "#62425d",
+        "#9d6680",
+        "#c798a1",
+        "#e6c7b0",
+        "#f4deb3",
+        "#c9943f",
+        "#637f55"
+      ],
+      "category": "food",
+      "description": "Fig-purple shadows open into honey gold, pale flesh and a leaf-green accent.",
+      "tags": [
+        "fig",
+        "purple",
+        "honey"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "plum-wine",
+      "name": "Plum Wine",
+      "colors": [
+        "#261b32",
+        "#65415e",
+        "#af788a",
+        "#e7b8b5"
+      ],
+      "category": "food",
+      "description": "A compact four-color plum ramp gives portraits and folded fabric a rich, velvety tone.",
+      "tags": [
+        "plum",
+        "wine",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "wasabi-nori",
+      "name": "Wasabi Nori",
+      "colors": [
+        "#101f21",
+        "#3b5140",
+        "#849347",
+        "#d2d871",
+        "#f4efd0"
+      ],
+      "category": "food",
+      "description": "Dark seaweed and bright yellow-green create contrasting colors for graphic food studies.",
+      "tags": [
+        "seaweed",
+        "green",
+        "high-contrast"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "persimmon-tea",
+      "name": "Persimmon Tea",
+      "colors": [
+        "#302723",
+        "#6b4635",
+        "#b2603d",
+        "#e79553",
+        "#f4c880",
+        "#f9e6bc"
+      ],
+      "category": "food",
+      "description": "Roasted tea brown and persimmon orange glow against a warm ceramic cream.",
+      "tags": [
+        "tea",
+        "orange",
+        "ceramic"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "salted-caramel",
+      "name": "Salted Caramel",
+      "colors": [
+        "#34221d",
+        "#785036",
+        "#b58250",
+        "#d8b27b",
+        "#f4dfba"
+      ],
+      "category": "food",
+      "description": "Five caramel tones carry luminous highlights through amber midtones into dark sugar.",
+      "tags": [
+        "caramel",
+        "amber",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "raspberry-sorbet",
+      "name": "Raspberry Sorbet",
+      "colors": [
+        "#461d47",
+        "#913568",
+        "#d85e8c",
+        "#f2a3b5",
+        "#f9d8d4",
+        "#709f91",
+        "#bce0bc"
+      ],
+      "category": "food",
+      "description": "Berry pinks and cool mint give playful prints a refreshing, bright finish.",
+      "tags": [
+        "berry",
+        "pink",
+        "mint"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "oolong-steam",
+      "name": "Oolong Steam",
+      "colors": [
+        "#263439",
+        "#5b6c6d",
+        "#95a4a0",
+        "#d8ded0",
+        "#f4f0df",
+        "#9c724c"
+      ],
+      "category": "food",
+      "description": "Smoky blue-gray, tea amber and porcelain white bring a restrained warmth to interiors.",
+      "tags": [
+        "tea",
+        "porcelain",
+        "smoky"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "espresso-crema",
+      "name": "Espresso Crema",
+      "colors": [
+        "#251b17",
+        "#e9c79a"
+      ],
+      "category": "food",
+      "description": "Espresso black and warm crema form a two-ink palette for strong silhouettes.",
+      "tags": [
+        "coffee",
+        "duotone",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "brutalist-sun",
+      "name": "Brutalist Sun",
+      "colors": [
+        "#1e2930",
+        "#48575c",
+        "#81908d",
+        "#bcc6ba",
+        "#e8e7d1",
+        "#d89839"
+      ],
+      "category": "architecture",
+      "description": "Concrete grays and a clear ochre accent give architectural planes a sunlit graphic finish.",
+      "tags": [
+        "concrete",
+        "ochre",
+        "graphic"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "terracotta-courtyard",
+      "name": "Terracotta Courtyard",
+      "colors": [
+        "#382a29",
+        "#7a4338",
+        "#b56e51",
+        "#da9d78",
+        "#edc7a5",
+        "#f4e5ce",
+        "#6c826b"
+      ],
+      "category": "architecture",
+      "description": "Clay reds, dusty pink and pale plaster pair with a quiet garden green.",
+      "tags": [
+        "clay",
+        "plaster",
+        "courtyard"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "bauhaus-primary",
+      "name": "Bauhaus Primary",
+      "colors": [
+        "#1c252c",
+        "#596369",
+        "#a6ada7",
+        "#f2eada",
+        "#c73a32",
+        "#d9b637",
+        "#245893"
+      ],
+      "category": "architecture",
+      "description": "Red, blue and yellow share balanced dark, gray and cream supports for geometric studies.",
+      "tags": [
+        "primary",
+        "geometric",
+        "poster"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cobalt-tile",
+      "name": "Cobalt Tile",
+      "colors": [
+        "#111e42",
+        "#23417b",
+        "#3d71b2",
+        "#6ca3c8",
+        "#b6d4d4",
+        "#f2ecdc",
+        "#368e8d"
+      ],
+      "category": "architecture",
+      "description": "Glazed cobalt, turquoise and warm grout give repeating patterns crisp depth and sparkle.",
+      "tags": [
+        "tile",
+        "cobalt",
+        "ceramic"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "limestone-light",
+      "name": "Limestone Light",
+      "colors": [
+        "#35332e",
+        "#666359",
+        "#979181",
+        "#c6bcaa",
+        "#e7decd",
+        "#faf3e7"
+      ],
+      "category": "architecture",
+      "description": "Warm stone grays progress into chalk white for soft architectural modeling.",
+      "tags": [
+        "stone",
+        "warm",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "copper-roof",
+      "name": "Copper Roof",
+      "colors": [
+        "#203933",
+        "#41675b",
+        "#719889",
+        "#acc3a6",
+        "#e2e3c5",
+        "#8e4d35",
+        "#c47c50"
+      ],
+      "category": "architecture",
+      "description": "Oxidized copper greens and roof-red accents capture the color of aged urban surfaces.",
+      "tags": [
+        "copper",
+        "patina",
+        "roof"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "venetian-facade",
+      "name": "Venetian Facade",
+      "colors": [
+        "#393445",
+        "#755263",
+        "#ab7775",
+        "#d5a28d",
+        "#f1d0ad",
+        "#efe5cc",
+        "#407b80",
+        "#89b4a5"
+      ],
+      "category": "architecture",
+      "description": "Faded rose, lagoon green and golden plaster make a colorful waterside streetscape.",
+      "tags": [
+        "plaster",
+        "rose",
+        "lagoon"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "nocturne-window",
+      "name": "Nocturne Window",
+      "colors": [
+        "#111d31",
+        "#2a3e5a",
+        "#506d89",
+        "#8dabbc",
+        "#9b663a",
+        "#e5aa58",
+        "#f9dda0"
+      ],
+      "category": "architecture",
+      "description": "Deep blue city silhouettes carry amber and cream window lights.",
+      "tags": [
+        "night",
+        "window",
+        "blue"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "sandstone-arch",
+      "name": "Sandstone Arch",
+      "colors": [
+        "#3b2630",
+        "#754140",
+        "#b66c53",
+        "#dba074",
+        "#f0c99b",
+        "#fae7c3"
+      ],
+      "category": "architecture",
+      "description": "Sandstone reds and pale apricot highlights echo a warm desert archway.",
+      "tags": [
+        "sandstone",
+        "desert",
+        "orange"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "porcelain-station",
+      "name": "Porcelain Station",
+      "colors": [
+        "#172e30",
+        "#325b50",
+        "#6d8b77",
+        "#aebbac",
+        "#e8e2cb",
+        "#f8f1db",
+        "#648897"
+      ],
+      "category": "architecture",
+      "description": "Subway cream, deep green and blue-gray suggest glazed tile and cast-iron signs.",
+      "tags": [
+        "tile",
+        "transport",
+        "green"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "brick-and-mortar",
+      "name": "Brick and Mortar",
+      "colors": [
+        "#302b2e",
+        "#663c37",
+        "#a15b4b",
+        "#cd8d6c",
+        "#92958a",
+        "#c9cabe",
+        "#ece7d5"
+      ],
+      "category": "architecture",
+      "description": "Warm brick reds and cool mortar grays describe a familiar urban texture.",
+      "tags": [
+        "brick",
+        "red",
+        "gray"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "art-deco-lobby",
+      "name": "Art Deco Lobby",
+      "colors": [
+        "#182c28",
+        "#345a49",
+        "#79906b",
+        "#c5b56d",
+        "#e6d6a2",
+        "#604235"
+      ],
+      "category": "architecture",
+      "description": "Emerald, polished gold and dark walnut create a compact ornamental palette.",
+      "tags": [
+        "emerald",
+        "gold",
+        "ornament"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "glass-tower",
+      "name": "Glass Tower",
+      "colors": [
+        "#152734",
+        "#284b61",
+        "#487990",
+        "#74a9b6",
+        "#a9ced0",
+        "#d5e4df",
+        "#f0f4e8",
+        "#777f89"
+      ],
+      "category": "architecture",
+      "description": "Blue glass and silver reflections create a cool eight-tone palette for city studies.",
+      "tags": [
+        "glass",
+        "blue",
+        "silver"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "rose-stucco",
+      "name": "Rose Stucco",
+      "colors": [
+        "#92545e",
+        "#f8ead7"
+      ],
+      "category": "architecture",
+      "description": "Dusty rose and chalk form a warm two-color surface study.",
+      "tags": [
+        "rose",
+        "plaster",
+        "duotone"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "basalt-bungalow",
+      "name": "Basalt Bungalow",
+      "colors": [
+        "#232d30",
+        "#536164",
+        "#889693",
+        "#bac2b4",
+        "#e4e4d0",
+        "#937557",
+        "#c3a578"
+      ],
+      "category": "architecture",
+      "description": "Volcanic stone, weathered timber and pale linen give domestic scenes a grounded palette.",
+      "tags": [
+        "stone",
+        "timber",
+        "linen"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "poolside-modern",
+      "name": "Poolside Modern",
+      "colors": [
+        "#22424a",
+        "#3a7e87",
+        "#79bec0",
+        "#b8ded4",
+        "#f1e9d2",
+        "#e9997d",
+        "#bb5960"
+      ],
+      "category": "architecture",
+      "description": "Aqua water, coral upholstery and pale concrete capture a bright modern courtyard.",
+      "tags": [
+        "aqua",
+        "coral",
+        "summer"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "oat-and-ink",
+      "name": "Oat and Ink",
+      "colors": [
+        "#242629",
+        "#6b6860",
+        "#b7ad96",
+        "#f1e7cf"
+      ],
+      "category": "neutral",
+      "description": "Charcoal, oatmeal and paper cream form a versatile warm four-tone palette.",
+      "tags": [
+        "oat",
+        "warm",
+        "paper"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "warm-grays-6",
+      "name": "Warm Grays 6",
+      "colors": [
+        "#25211f",
+        "#514a45",
+        "#81776e",
+        "#b0a497",
+        "#d7ccbd",
+        "#f6eee2"
+      ],
+      "category": "neutral",
+      "description": "Six warm grays preserve a gentle brown cast from shadow to soft paper light.",
+      "tags": [
+        "grayscale",
+        "warm",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "cool-grays-6",
+      "name": "Cool Grays 6",
+      "colors": [
+        "#18232b",
+        "#3b4b58",
+        "#677b88",
+        "#9bacb6",
+        "#ced9de",
+        "#f1f6f4"
+      ],
+      "category": "neutral",
+      "description": "Six slate grays carry a cool blue cast through crisp photographic highlights.",
+      "tags": [
+        "grayscale",
+        "cool",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "ivory-and-slate",
+      "name": "Ivory and Slate",
+      "colors": [
+        "#283c4b",
+        "#f5ecd5"
+      ],
+      "category": "neutral",
+      "description": "Deep slate and warm ivory create a clean two-tone pairing for lettering and silhouettes.",
+      "tags": [
+        "duotone",
+        "ivory",
+        "slate"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "mushroom-paper",
+      "name": "Mushroom Paper",
+      "colors": [
+        "#393234",
+        "#756667",
+        "#ac9b93",
+        "#d4c8b9",
+        "#f3eadd"
+      ],
+      "category": "neutral",
+      "description": "Mushroom taupes and softly tinted paper give quiet still life a natural warmth.",
+      "tags": [
+        "taupe",
+        "paper",
+        "soft"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "blue-black-study",
+      "name": "Blue Black Study",
+      "colors": [
+        "#0c1724",
+        "#202d3d",
+        "#394b5e",
+        "#5a7183",
+        "#8499a5",
+        "#b0bec4",
+        "#d9e0df",
+        "#f4f5ea"
+      ],
+      "category": "neutral",
+      "description": "An eight-step blue-black ramp opens smoothly into cool porcelain highlights.",
+      "tags": [
+        "blue",
+        "tonal",
+        "ink"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "linen-graphite",
+      "name": "Linen Graphite",
+      "colors": [
+        "#272c2c",
+        "#636662",
+        "#a7a99a",
+        "#d6d5be",
+        "#f5efd8"
+      ],
+      "category": "neutral",
+      "description": "Graphite darks and creamy linen midtones create a soft five-color monochrome study.",
+      "tags": [
+        "linen",
+        "graphite",
+        "warm"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "olive-charcoal",
+      "name": "Olive Charcoal",
+      "colors": [
+        "#222d26",
+        "#4c5947",
+        "#829072",
+        "#b9c3a0",
+        "#e7ead0"
+      ],
+      "category": "neutral",
+      "description": "Green-tinted charcoal and olive gray lend tonal drawings a subdued organic cast.",
+      "tags": [
+        "olive",
+        "charcoal",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "pewter-rose",
+      "name": "Pewter Rose",
+      "colors": [
+        "#333840",
+        "#616875",
+        "#92939b",
+        "#c3b7b7",
+        "#e6d1c9",
+        "#f8ebe1"
+      ],
+      "category": "neutral",
+      "description": "Pewter grays and restrained rose tones bring a subtle warmth to portraits.",
+      "tags": [
+        "pewter",
+        "rose",
+        "portrait"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "carbon-fog",
+      "name": "Carbon Fog",
+      "colors": [
+        "#101518",
+        "#424b50",
+        "#808e94",
+        "#bbc8c9",
+        "#ecf1ea"
+      ],
+      "category": "neutral",
+      "description": "Dense carbon and pale fog shape a clear five-value range for graphic forms.",
+      "tags": [
+        "carbon",
+        "grayscale",
+        "graphic"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "parchment-12",
+      "name": "Parchment 12",
+      "colors": [
+        "#211c19",
+        "#362c25",
+        "#4d3e32",
+        "#66513f",
+        "#81684f",
+        "#9e8161",
+        "#b89b76",
+        "#ceb38e",
+        "#dfc8a7",
+        "#ecdbbf",
+        "#f5e9d6",
+        "#fbf4e8"
+      ],
+      "category": "neutral",
+      "description": "Twelve warm parchment tones support detailed tonal work and delicate paper texture.",
+      "tags": [
+        "parchment",
+        "12-color",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "silver-halide",
+      "name": "Silver Halide",
+      "colors": [
+        "#1a1e25",
+        "#39414c",
+        "#606d78",
+        "#909da5",
+        "#c1cace",
+        "#eceee7"
+      ],
+      "category": "neutral",
+      "description": "A cool silver ramp with warm-white highlights gives photographs a classic print atmosphere.",
+      "tags": [
+        "silver",
+        "photography",
+        "tonal"
+      ],
+      "origin": "original"
+    },
+    {
+      "id": "grayscale-16",
+      "name": "Grayscale 16",
+      "colors": [
+        "#000000",
+        "#111111",
+        "#222222",
+        "#333333",
+        "#444444",
+        "#555555",
+        "#666666",
+        "#777777",
+        "#888888",
+        "#999999",
+        "#aaaaaa",
+        "#bbbbbb",
+        "#cccccc",
+        "#dddddd",
+        "#eeeeee",
+        "#ffffff"
+      ],
+      "category": "neutral",
+      "description": "Sixteen evenly spaced gray values give monochrome photographs and diagrams a detailed tonal range.",
+      "tags": [
+        "grayscale",
+        "16-color",
+        "tonal"
+      ],
+      "origin": "original"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+schema: spec-driven
+context: |
+  dither-mcp is a local-first Go image-processing CLI and MCP server.
+  The primary interaction is structured MCP tools. The CLI uses the same service.
+  The image engine has no filesystem, process, or network access.
+  The service may read or write only local files under a configured root.
+  Runtime networking, telemetry, and remote image fetching are out of scope.
+  Seeded output, bounded resource use, atomic publication, explicit limitations,
+  reproducible demos, and useful errors are release requirements.
+  Quint models specify abstract safety contracts. Go tests check their refinement.
+rules:
+  specs:
+    - Every requirement must have concrete WHEN/THEN scenarios.
+    - Distinguish implemented behavior from future reference capabilities.
+  tasks:
+    - Mark a task complete only after implementation and relevant verification.

@@ -1,0 +1,9 @@
+/bin/
+/node_modules/
+/work/
+/demos/work/
+/demos/.mcp-session-*/
+coverage.out
+*.test
+.DS_Store
+/.spec-results/

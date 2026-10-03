@@ -1,0 +1,813 @@
+{
+  "status": "passed",
+  "date": "2026-10-03",
+  "environment": {
+    "go": "go1.27.0",
+    "os": "darwin",
+    "arch": "arm64",
+    "node": "24.19.0",
+    "ffmpeg": "9.0.1",
+    "vhs": "0.12.1",
+    "quint": "0.33.0",
+    "openspec": "1.14.0"
+  },
+  "scope": "Local verification evidence for the source and showcase. Cross-builds do not establish native OS behavior. Hosted CI and external audit results are outside this record.",
+  "checks": [
+    {
+      "command": "make verify",
+      "result": "pass",
+      "includes": [
+        "gofmt",
+        "go vet",
+        "Go tests",
+        "Go race tests",
+        "native build",
+        "relative Markdown links",
+        "schema snapshot consistency",
+        "palette reference consistency",
+        "real stdio MCP subprocess"
+      ]
+    },
+    {
+      "command": "make schemas-check",
+      "result": "pass",
+      "note": "Generated tool descriptors match the snapshot. Protocol tests validate every successful non-video tool result against its output schema. Video uses the same Artifact schema."
+    },
+    {
+      "command": "make fuzz",
+      "result": "pass",
+      "process_executions": 102038,
+      "strict_json_executions": 165636,
+      "seconds_per_target": 5,
+      "parallel": 2,
+      "evidence_stage": "input-normalization",
+      "metadata_executions": 463609,
+      "icc_profile_executions": 18,
+      "note": "Bounded smoke runs. The ICC run completed with limited executions and does not establish broad malformed-profile coverage."
+    },
+    {
+      "command": "go test ./engine -run ^$ -fuzz FuzzParseHex -fuzztime 10s",
+      "result": "pass",
+      "executions": 383646,
+      "note": "The initial implementation passed this bounded run. The hexadecimal parser is unchanged.",
+      "evidence_stage": "initial-suite"
+    },
+    {
+      "command": "node spec/check.mjs",
+      "result": "pass",
+      "openspec_validations": 9,
+      "quint_typechecks": 4,
+      "quint_tests": 43,
+      "seeded_traces": 43000,
+      "steps_per_trace_max": 30,
+      "detail": "../spec/verification.json",
+      "negative_mutations_detected": 3
+    },
+    {
+      "command": "DITHER_TEST_VIDEO=1 go test -race -timeout 1m ./internal/app -run 'TestVideoIntegration|TestVideoInputContainers' -v",
+      "result": "pass",
+      "formats": [
+        "gif",
+        "png sprite sheet",
+        "mp4 H.264",
+        "webm VP9"
+      ],
+      "evidence_stage": "input-normalization",
+      "input_fixtures": [
+        "MP4/H.264 with AAC audio",
+        "MOV/H.264",
+        "WebM/VP9",
+        "Matroska/FFV1",
+        "AVI/MPEG-4",
+        "MP4 with a .bin extension"
+      ],
+      "assertions": [
+        "output codecs",
+        "frame counts",
+        "dimensions and even padding",
+        "silent output from an audio source",
+        "content-based input detection"
+      ]
+    },
+    {
+      "command": "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...",
+      "result": "No vulnerabilities found",
+      "note": "The initial implementation passed this advisory check. Go module dependencies are unchanged. This is a dated result, not a guarantee about later advisories.",
+      "evidence_stage": "initial-suite"
+    },
+    {
+      "command": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./cmd/dither-mcp",
+      "result": "pass"
+    },
+    {
+      "command": "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ./cmd/dither-mcp",
+      "result": "pass"
+    },
+    {
+      "command": "VHS recordings + ffprobe + visual review",
+      "result": "pass",
+      "recordings": 4,
+      "note": "Render and MCP recordings were refreshed for input normalization. Comparison and palette recordings retain the verified clay-style versions. All four recordings use real commands. The MP4 files report 25 fps; the tapes request 20 fps."
+    },
+    {
+      "command": "Static site desktop/mobile browser checks",
+      "result": "pass",
+      "mobile_viewport": "390x844",
+      "checks": [
+        "no horizontal overflow",
+        "all assets load",
+        "keyboard comparison slider",
+        "algorithm selection",
+        "animation pause and play",
+        "reduced-motion support",
+        "256-entry palette catalog",
+        "query, category, and color-count filters",
+        "pagination",
+        "selection, exact clipboard text, and copy fallback",
+        "palette treatment images",
+        "format table on desktop and mobile",
+        "clay theme and readable color contrast",
+        "self-hosted fonts",
+        "orientation and input-color disclosure",
+        "normalization image and caption at desktop and mobile sizes"
+      ],
+      "note": "The normalization disclosure and responsive layout were checked after the input-normalization update. Earlier palette and media controls retain their verified implementation."
+    },
+    {
+      "command": "MCP protocol compatibility tests",
+      "result": "pass",
+      "protocol_versions": [
+        "2026-07-28",
+        "2025-11-25"
+      ],
+      "checks": [
+        "modern server/discover and request metadata",
+        "legacy initialize and initialized notification",
+        "tool listing and calls",
+        "structured JSON with text fallback",
+        "native preview image content",
+        "accurate tool annotations",
+        "strict input validation",
+        "tool errors and protocol errors",
+        "protocol-only stdout",
+        "metadata cannot enable video"
+      ]
+    },
+    {
+      "command": "Editorial and contract review",
+      "result": "pass",
+      "style": "Google developer documentation style and STE-flavored guidance",
+      "checks": [
+        "authored Markdown, code comments, CLI help, MCP descriptions, palette descriptions, and website copy",
+        "relative Markdown targets and heading anchors",
+        "palette IDs, names, colors, order, tags, and provenance unchanged",
+        "legal notices preserved",
+        "normalization guide, specifications, code comments, and site caption"
+      ],
+      "note": "The style checker provides review prompts. Technical vocabulary and precise requirements take precedence over advisory vocabulary findings."
+    },
+    {
+      "command": "Clean repository checkout: make verify",
+      "result": "pass",
+      "checks": [
+        "build with github.com/lennrt/dither-mcp module imports",
+        "Go tests and race checks",
+        "relative documentation targets",
+        "schema and palette consistency",
+        "real stdio MCP session"
+      ],
+      "note": "The prepared repository excludes local dependencies, build outputs, scratch files, and the separate website."
+    },
+    {
+      "command": "Normalization regression and independent color tests",
+      "result": "pass",
+      "checks": [
+        "all eight EXIF orientations and both byte orders",
+        "JPEG, PNG, WebP, TIFF, and supported BMP metadata",
+        "45 independent LittleCMS 2.19 RGB16 vectors",
+        "published CSS Color 4 reference values",
+        "8-bit and 16-bit alpha preservation",
+        "bounded metadata and explicit unsupported-profile errors",
+        "PNG metadata precedence",
+        "crop, masks, inspection, extraction, preview, comparison, animation, and print paths"
+      ],
+      "limitations": "Matrix/TRC RGB normalization with media-relative colorimetric conversion and clipping. No LUT profiles, CMYK conversion, HDR mapping, printer calibration, or perceptual gamut mapping."
+    }
+  ],
+  "source_sha256": {
+    ".gitattributes": "66477a0d309443c637cef47f14c9b10ef0216596ea7d05b289aa100837c9ca9b",
+    ".gitignore": "ad9926d359ccf232a359707174b1beac8e745b4350c9b3431643bc9096addee5",
+    "CHANGELOG.md": "5b1fa8eeec416b5c9c6b2a6494b207fec4cc13124981a77a74de3a14ec976119",
+    "CONTRIBUTING.md": "3f96dda4445ca08c1436ede19a398a4dc2e02e9b67e48b732169fe6234a9023d",
+    "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
+    "Makefile": "16ddfa69b6b92dc48e445a9b7095160e26cf85d9ef7be1e788387acb15261ea7",
+    "README.md": "c3a31d6adb6bfaa7c9629dba526a242279545957aa124a2cba8c6adb2540b7cb",
+    "SECURITY.md": "9491e2b9e6e2b1b522c30158209599ca84cfc31ddb827caa9a5e090306bda024",
+    "THIRD_PARTY_LICENSES/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
+    "THIRD_PARTY_LICENSES/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
+    "THIRD_PARTY_LICENSES/OFL-source-serif-4.txt": "e10247b156f9d26f268773f29f25c5a3084e68d5b447809863ef79096e8df27e",
+    "THIRD_PARTY_LICENSES/github.com_google_jsonschema-go@v0.4.2-LICENSE": "2d56c53449691d85d9aea245eb8dac12713e9075d70d5557b82ae1e94805b357",
+    "THIRD_PARTY_LICENSES/github.com_google_uuid@v1.6.0-LICENSE": "0a8d61ed3cbfd5312326e8126c31ce9c627a283adc99131b56896d29ada04b2d",
+    "THIRD_PARTY_LICENSES/github.com_mark3labs_mcp-go@v1.1.1-LICENSE": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+    "THIRD_PARTY_LICENSES/github.com_santhosh-tekuri_jsonschema_v6@v6.0.2-LICENSE": "c8858a5a76440bbca484e134cf7df46385d090dd18b2c58e650f939258802e5b",
+    "THIRD_PARTY_LICENSES/github.com_spf13_cast@v1.7.1-LICENSE": "feb6d17a0e7a64e5ab0f7e2b0e0ee3e69c1a6396626fd554dc0cddaa06851b44",
+    "THIRD_PARTY_LICENSES/github.com_yosida95_uritemplate_v3@v3.0.2-LICENSE": "0761aadfb1921103752869ee942d4a71bdd54494697684d4b13dc17ad9781191",
+    "THIRD_PARTY_LICENSES/golang.org_x_image@v0.46.0-LICENSE": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+    "THIRD_PARTY_LICENSES/golang.org_x_text@v0.42.0-LICENSE": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+    "THIRD_PARTY_NOTICES.md": "bfd13cc2b348f0454cdbe33a5bdfe0d4e15a7767e9b246ac603d2e441873a309",
+    "cmd/dither-mcp/main.go": "2bafb0ee74a2c43688ec1e854359cc0998d141573b060e0de24ac32e8e55d47a",
+    "demos/compare.tape": "b2d2f9eaf776da46439175542e37bb35a80e18c9e12fe298d418ca0e2f7e6c4a",
+    "demos/mcp.tape": "d0bfccda7c8b1ef3b4b788e5d361f2c3f48a204a494ad817938263f14b4ba153",
+    "demos/palettes.tape": "f0f831139440e2669e50b4831e01f36e4bb6d89af9edaaf48ddd1f5e26be7b1f",
+    "demos/render.tape": "4a8610170b678f1971f257409e6bd3e026a4daa4cb5b43bbc75cac4f96d150ed",
+    "docs/README.md": "4a04dc5ebffe84c8fe1910ecd2006373e12bdce59cd48c91966caed4a690fa1a",
+    "docs/architecture.md": "e428656d47b7662448f14845a2f8e12a715d84f9f90959357af2bb3855007943",
+    "docs/cli.md": "a1dae1dde1a2edbe0103cf34b749cbbe239f25be4d15cef18014bf67580106fb",
+    "docs/feature-matrix.md": "2de3eb12cab3cd5839889fa1b34936eabf885f7ed23aa0b7d5f25b8e157f60b4",
+    "docs/formats.md": "9d5edcbf359abfde7b7821fd9862f232f6e5454c2ba6114eb44a2567c016c87c",
+    "docs/mcp.md": "e88a4416d5c377d35dbcae4226e6fa443bc2b2244a01edf45704c2451bfb137c",
+    "docs/palettes.md": "d50d9ecbce8c4d5875e28ec962a58d4ef61f9c4a50db66a588f1ebc30d9e065b",
+    "docs/security.md": "18351db525ba991363a0476c149415560b638bf55014fd73b79af937dd5e80c3",
+    "docs/showcase.md": "b1ad3a96214246a480ceb36f8b892da5443f3a78746fb931412d6fb221feb76a",
+    "docs/sources.md": "a73018a26ab01e212a0a5b53cd050a878bc203fb75b344b45b6fa219f45c9ac7",
+    "docs/testing.md": "fcab2d39198bbc1b74e01ed75f52aa78a54dbbe1906dd40b3ae902bba08dea33",
+    "docs/tool-schemas.json": "884a3eba05157f4e5baec13e8333262bcc6d54e9a7308d72d5d9b6f7442dca62",
+    "docs/writing-style.md": "87cfc74b82f80dfff71be7686b26565e54df685dd079a7663f9b6400986bdec1",
+    "engine/SOURCES.md": "d3b25ab0be9a14b94b62b99772cd7238894d0fc1e96ca1c12ccf61f0ead8c3c4",
+    "engine/algorithms.go": "765d829cc94731f200d308dcefc5dc9c0b028f6a9167c8f493bed9db4d85616e",
+    "engine/effects.go": "f0c876cfa388eb7334591db89eb0c35bb7ca599519a27bc8d6fb3d100b233872",
+    "engine/encode.go": "625b531a762ed4c15871e7c18f776680b8d80a06d4bf9cecad5adee96ac43943",
+    "engine/engine_test.go": "083e8d26ca42e39a612f46326d398767d922fc521ad5beb46b27a67d25a8ccd2",
+    "engine/fuzz_test.go": "b91f65ee1558dac94a56c5fcf705ebb6face1704fa8f41314d9ed37404dcb161",
+    "engine/palette.go": "a9f330e539f3ca96488ed470f2ce4820173b4bfb575b6ef02feb1a1f050c65f0",
+    "engine/palette_catalog.go": "fadbe1d43f8dad75fc9c1ba8e952424c670d8357000b7c07b78910fe09682db9",
+    "engine/palette_catalog_test.go": "3fd38b8236f92f9e0733d3fe2c16cd0a16348ed9fc9be66cf38fca0951681423",
+    "engine/palettes.json": "721ee4020acceee302b2e176cab4441e98c6c427e182cbc1c091d58b43dec6fa",
+    "engine/pixels.go": "a7cde06c9c9313809be14225e01c777b3f5a09b92abfab51a30ad20df0601fc8",
+    "engine/process.go": "4e458c1f8a9cbd12d9ee3d90338ab615859450d169cbaed49ef778565e4555cc",
+    "engine/screens.go": "a4fd6d9ac447122ee03a2830d905ac67b61f18e877bdded91fa897e0ae25810f",
+    "engine/testdata/legacy-palettes.json": "0597a26ec72ddc6d2a3450f5125b1d4c3498c3439483efcfe0028bea62557e32",
+    "engine/types.go": "feb9831a886ca9ad03458b84303e11b8345850c69292c2702982ee1d5af22270",
+    "go.mod": "cfc9bd0daa1a3b222da0b04bf3f081606c1d411717460bb2cb12c6d2009f97c3",
+    "go.sum": "b11157aa8570282ffe3cb3ac373848d154058f50dbb1923b2164968a052fd89d",
+    "internal/app/animation_test.go": "4f1541e2b932bc2e7543773120a6d6dc3e9f0329e6be37040577e55be23f4418",
+    "internal/app/catalog.go": "875270266c7c788271d1492cc39b92e50c9e74955795ba13f256fff88caf1a00",
+    "internal/app/catalog_test.go": "d4e4d8582afb2abbbc7055dce2dbc7c1721e7989e14a97408d967be36d5bf340",
+    "internal/app/export.go": "6323b89d51faf3defeb40af536034bcedb989f7d4405d9f9bc199004d37d27d5",
+    "internal/app/fuzz_test.go": "58b3e3dfbb1fc198581f2a156e27b40cc82aba13c84e4b3fd86753242d097f83",
+    "internal/app/normalization_test.go": "dee4df1a884d8206c7dfe62d92acaf4b3cda481f469f4682a35ef24e853d3ce4",
+    "internal/app/open_other.go": "57290bdf60ea4c48f9d313301e2675df0cd6b4de884d01a45f04eedbcc684f79",
+    "internal/app/open_unix.go": "70e71a094d76c4c743dbe4db2e096f58ec70d5b4375b74520524cb66832858d6",
+    "internal/app/palettes.go": "a8d7214c72ae16628717d29563409b35786842fa1840a2918306ee3acfcafd60",
+    "internal/app/palettes_test.go": "6b67c9fccfd7ef88535d13044c932972a891848b3e0caa790d9b10027e169d3d",
+    "internal/app/preview.go": "a480a3c613f0be0e1381a914654dc5073bf308192224b3a120bb2f3ef3f275f6",
+    "internal/app/review_test.go": "f2ddbfa85ad3c1ae0ca83b96c100d5144d8be0a0147694e117664f8e77112a7d",
+    "internal/app/security_test.go": "bf6c34928ef55fd2de88eb023a11a8e4f0b1c35ddef8de66db00b37b1c298c44",
+    "internal/app/service.go": "4c9d0d9285183400d3254c9a93f4738e9dd98584f54e81421dc8d29e7fee41f6",
+    "internal/app/types.go": "d35197f5e01a841b1e6a97d576611892b07b6284109413070e4d4f90e0769008",
+    "internal/app/video.go": "81ed7ac1cba99c1778995cc516dd724d6c065a0d6dd857523006de53b9586451",
+    "internal/app/video_test.go": "c9839f34e7ea00ca566316bf41faef1a6de10b820cfdb1ab0c4e4b8d19e1e55a",
+    "internal/app/workflow_test.go": "137251e5ad047d02870d693abf9b5094c253d163ab9f9ed70613d3870e8d26b0",
+    "internal/cli/cli.go": "95e46be60e342987592c04fe00e02f27ae7fe57f9f2758e86263f4f0ba71b772",
+    "internal/cli/cli_test.go": "246366c36eef4ac2f63ec74adeccb5413eb6a04ea74b35ce0c5e07f021485e8b",
+    "internal/cli/lines.go": "3c75b0e33c706c0420427fd2d75552f0f3cae21e694fcaeaf71f5e6b9116f22f",
+    "internal/colorprofile/SOURCES.md": "398f78af74063cb7e02b9cfd6ae004270b79fb3eba268950f176e14a4949cfa4",
+    "internal/colorprofile/apply.go": "a844afae8b46621594f213af51857509d080993816be52cbd01906c71cab1939",
+    "internal/colorprofile/curve.go": "2d40e2fdd093c8bfc8ef6291a4522fbd9077dc88d6706a66c32f33010ee964b3",
+    "internal/colorprofile/curve_test.go": "b31eb779d55cf6c8305c2fcb15bd3f0c7549ce82cbdd15a1122ef67ce8a0f571",
+    "internal/colorprofile/fuzz_test.go": "f012ee466e7048309f88ca1f382465921ae7893e510e104d7c87fd8edc183075",
+    "internal/colorprofile/matrix.go": "cd151fefb1a1925804a6c5bd3376f7567cc3aa9dd81cdb5e6d930ffcf7bca4c2",
+    "internal/colorprofile/png_test.go": "51cc22b690a056eb2865f97c233243cadd24427ccdeac2f1e47ce313e28a1b2d",
+    "internal/colorprofile/profile.go": "5587a05172726649fc347663836456eb3677b0f4be786394f5d878140376b62f",
+    "internal/colorprofile/profile_test.go": "2495c7e657b0c490dc87afcdc321ba79831f77491cb5f8b05d2b1791be379e8e",
+    "internal/colorprofile/testdata/adobe-rgb.icc": "e44f0e53d73b3178cbe411cad8d8580e82e7ec33b1875cce3ce68feeaa9ea208",
+    "internal/colorprofile/testdata/display-p3.icc": "d271d980431ee81681693156abb9a3852731cb30a489d2ff163d6070c3d75351",
+    "internal/colorprofile/testdata/littlecms-vectors.json": "ea43b8e7fde984aa950f5b660ef0e2592a06f7d26f0e84db0bca3265f8757b4f",
+    "internal/colorprofile/testdata/oracle.py": "7a7fb72cb73d1ef55dfa274958478e370cbd5ce27271e9e6ff12330cdd2e7455",
+    "internal/colorprofile/testdata/srgb.icc": "0c18cebce709c5182c3d25bd08b3ac8206b90d02b80340837dad866cf1227762",
+    "internal/imagemeta/containers.go": "c14928990c506ad85cf170fcd8d4c1bd4dc8fe75ab0dcdfe1f4cd9010e4af608",
+    "internal/imagemeta/exif.go": "77fd00a2e6e0b603f70526e92d8c29396bd01cc698e4555fb3f2577613c74f94",
+    "internal/imagemeta/normalize.go": "420101ec14304b3c7e93dd0eacc66f4261b285431067ea97d2c77de03ce59a9b",
+    "internal/imagemeta/normalize_test.go": "64242173e90f4e827dc4b288ce5b70b3c0ac3a67ead533e8af75bc07fbe7da96",
+    "internal/imagemeta/review_test.go": "5dea26633f95bb6a4cff51a64d8279ffd3fd883a1d6b1fb1215e139af6424dd0",
+    "internal/imagemeta/testdata/README.md": "46f92a584037a9dcb97aed7414e69aeb0cbc31ff963a9b216343f7deaaf51aae",
+    "internal/imagemeta/testdata/linear-srgb.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
+    "internal/imagemeta/testdata/oriented.webp": "82dd5d08496cdc2794404f0ea3deadae7995bd38dcd31501811227f26574c22c",
+    "internal/mcpserver/server.go": "9d4bb2fad82476d77ea7c216424a3e7bdb720de1f73455a4ce4565a5f7122e43",
+    "internal/mcpserver/server_test.go": "954f70de03f7125c13351ec23baa831c146e93f1fb44c59805a4aa513d2d641f",
+    "internal/mcpserver/transport_test.go": "3862bed92269f88b2db0f440187d793343b9c0ea3495a25e53f66c70235b01f4",
+    "openspec/changes/image-normalization/design.md": "d04fa5be8cdc19abdb56f6589b2d7cabbece612726f7818d40788f90921d4d48",
+    "openspec/changes/image-normalization/proposal.md": "a5682b8811ab7c14b63e0b76840536f65d124380a47f6e42899ab4372c809822",
+    "openspec/changes/image-normalization/specs/image-pipeline/spec.md": "6170ef091cd771723a95ba164a6f18f54b063f91f72490c04f8b1a09145ae37f",
+    "openspec/changes/image-normalization/tasks.md": "58471a3c342f941bd65eba9d73368d80ccb6e8683b39c95dd32761bbc4571a46",
+    "openspec/changes/initial-suite/.openspec.yaml": "df4fb22c89b17a0d45d8ca25e98028a2244dceafe5a64ecbbc3bae35db97ccbc",
+    "openspec/changes/initial-suite/design.md": "84a0a13518e5461790a4e375fc1b4d1009e8b87a6afd21649c01b451db2588a5",
+    "openspec/changes/initial-suite/proposal.md": "801c26c512b8a359ad88085dff03b490a68e99d15224d1073f6506dca0224998",
+    "openspec/changes/initial-suite/specs/agent-workflows/spec.md": "f4cba1f04b1a1208182caa1838c796fb3e7da7a9292dc0a93173745a10dbdfcc",
+    "openspec/changes/initial-suite/specs/delivery-quality/spec.md": "a1be09154d6dc8d7211424201d451d915a071a3407712241a11efa057cf1b531",
+    "openspec/changes/initial-suite/specs/image-pipeline/spec.md": "28c4b9616372f19cb0a2c5fa2b48f35b85ac07b13a79203e1406972080edab8c",
+    "openspec/changes/initial-suite/specs/local-workspace/spec.md": "1918fdac6e1b2d704d0fc179075167a2a60fe1cfc9662a9ea48b15591a37f7b0",
+    "openspec/changes/initial-suite/specs/motion-print/spec.md": "a498e57528b5d53d7a0536a66086332b90cf2f37fc6156359951dc65f9713306",
+    "openspec/changes/initial-suite/tasks.md": "0e3e7e58fd5c684b3f0ace5affecbb0f7f710838ff9bb6e4a4899940e3f60fbf",
+    "openspec/changes/palette-library/.openspec.yaml": "df4fb22c89b17a0d45d8ca25e98028a2244dceafe5a64ecbbc3bae35db97ccbc",
+    "openspec/changes/palette-library/design.md": "0cb49358336ebebe8fcf2d3af3dece304de8443631cd9950d596e363f99833bc",
+    "openspec/changes/palette-library/proposal.md": "a284a188cffdbcb9750e9de6509c3daad5e6757b6581b7929210c5462d96583b",
+    "openspec/changes/palette-library/specs/palette-library/spec.md": "5f3cf9e96d85b59333dfcec0ad0a2b4a148133476bbed6bc35678b9997eaaf3c",
+    "openspec/changes/palette-library/tasks.md": "a3be8650ed956978c4323af55edb3b283a2bcaa27dd39a634028868fd0a41388",
+    "openspec/config.yaml": "fdd97c6a88cf4b8264311bf777f648e112414b590da61ecc9d206f43e631afbc",
+    "openspec/specs/agent-workflows/spec.md": "13c924d3bc8fe2dc80c60cb7c48de55ab779009199d22ed368457d0c2307a285",
+    "openspec/specs/delivery-quality/spec.md": "5dd244c15b6059f9ccc6e97883843bc1d2510c60b154aadf32a437ddcc397750",
+    "openspec/specs/image-pipeline/spec.md": "2cb38ce2a0b2c752a8143ba7d8bb7c44b4fd060f9843886cc5d542096900f8c0",
+    "openspec/specs/local-workspace/spec.md": "6d645380e91a05ea8ee795a910bda1b8ade4b37591add8f2457f04eda1721dcf",
+    "openspec/specs/motion-print/spec.md": "471753c833195cee20c28ec9956548655af3234aec08bf7db3615ea288845903",
+    "openspec/specs/palette-library/spec.md": "16017f1b8f115baf2bca9af66bf1969e93de1c59235ce315ee20e291642c19d2",
+    "package.json": "58da953e46ac9f71ae729e30be9d52bcfb94f44665a06487566521637f79e320",
+    "pnpm-lock.yaml": "01033ce8b5267f13a23ddaa05c44ef77d9fd1947283ef6dec25c8b7bc7dbe44f",
+    "scripts/brand-banner/main.go": "641973eb70dd02e3c4ccf2155eed96692e022963ed1f7d7cff8ecba156e88b6c",
+    "scripts/check-docs/main.go": "2dcefddb1ecef4fc42e1d8a981241ed56835e3d71d5abc542a806dc94f05e57e",
+    "scripts/demo-prepare.sh": "70c7c7ce1e0c6525eed9a47e0f9650158cf6a8799255f6adfbadee4b09cae1c6",
+    "scripts/demo-summary/main.go": "fbac0cb1d5e684d0967bcdcddffe4db96e880f3b993f74ec26d4076fa3bdff32",
+    "scripts/mcp-demo/main.go": "621ccd17e1fd4384d1076db2215a2b329c5125338ddec65ee98ee129bf53882d",
+    "scripts/normalization-showcase/main.go": "ae0ebc09ba0eb0f1d729ff8813ee7ec3ed2bd6a166e4c5919dded4a3675eed06",
+    "scripts/palette-atlas/main.go": "203666a0a4fe326480248c66335b154add0e8471e9c5f184f331d53ef7a935f2",
+    "scripts/palette-docs/main.go": "a58eebb1fa556f229f0ebb20c44aedab218a73fa1b6b9a56d823bd58fbeabd27",
+    "scripts/schema/main.go": "c06b2b3d830aa9af1c39dbc4f75366efb359c6cc1a9ccda4cca501041e31327a",
+    "scripts/showcase-record.sh": "b98deaa8fed80c77bc46b0848fdeff02c922f54bec16f2539d23a4c38ad317e0",
+    "scripts/showcase-render/main.go": "305473bdea6902e4e0465208b809a7b612886f38b39389fc9359d55d02892ce5",
+    "scripts/showcase-site.sh": "913aa16c73c7d52bbfeba4da809fb0d53ee784e3303e1fc12e3502afb8973f53",
+    "scripts/showcase-source/main.go": "b049cfcee96bacde0cffb8985f9372c0045551c1c968335b8de0e5130decb870",
+    "scripts/showcase.sh": "bf4ad05758ea0f02951b0ff2a13d44810c115450a65d121fc39df0040cea4653",
+    "spec/README.md": "4244f2ff464773daf74fdda01a8dcf10b07cf4a8e5d8e19d4abe23bf1358821b",
+    "spec/check.mjs": "71962e4074343019668bbc21bf23b3397af7efb75dfccf1d0aca2b1c3e359279",
+    "spec/normalization.qnt": "911018c49955f50c37af5d8278f1a1482245b68c869040de352c0f8eacf58d57",
+    "spec/palette_discovery.qnt": "54697f37b5d3d3ebbc3bc5e68f94ef9c5dc970e23238251db5e46a36fe512efd",
+    "spec/publication.qnt": "28b53c3fe7174f2dde45287f9f7117123a905558b0ee1186da47cb6871f75133",
+    "spec/quantization.qnt": "1066276acbdefa598e8c90df039551a1abab82415cc2f8a68e98ad36d0df9695",
+    "spec/verification.json": "7f67a3561a6a7a556c055087d3758d148aef981d828381fc7f8ebc03406e3c91"
+  },
+  "media": {
+    "GO-FONTS-LICENSE.txt": {
+      "bytes": 1913,
+      "sha256": "dc588a7ba9130043b67c2380cc03cc6644ed3557f6d5e8589b96acba1c64e343"
+    },
+    "algorithm-study.png": {
+      "bytes": 149189,
+      "sha256": "4b43be03215f29c0f126eed2ebda1cbe61bc91dbadba6e0a92732ba666ad4164"
+    },
+    "banner.png": {
+      "bytes": 43589,
+      "sha256": "bcc857cc8011f536e8137e1afbeac383bc0c267c73749599b9afff44a1cb1706"
+    },
+    "banner.svg": {
+      "bytes": 146135,
+      "sha256": "b3a67f9258e24b0a6d1057a43fd2c9b31b5d6b249cc2ec67c9a7a1ec66ca7698"
+    },
+    "compare.gif": {
+      "bytes": 258282,
+      "sha256": "a06df6c25bd069c35075e645842dfd3ba4b4a37d65a7f79d735572bf953cd140",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "gif",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "720"
+          }
+        ],
+        "format": {
+          "duration": "28.800000"
+        }
+      }
+    },
+    "compare.mp4": {
+      "bytes": 253015,
+      "sha256": "4533169ffc94087ea8d54fd13c886bccb46fd3876dc1d5d735dcd7933fde109d",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "720"
+          }
+        ],
+        "format": {
+          "duration": "28.800000"
+        }
+      }
+    },
+    "demo-compare-poster.png": {
+      "bytes": 174996,
+      "sha256": "6bd2210341e948a6a2bc23c237b501fc451fd7019b76de1255180a887c27d19f"
+    },
+    "demo-mcp-poster.png": {
+      "bytes": 229708,
+      "sha256": "63c544bc7da59c37cf9d885114eaaaa8aad0eb14d940f23b9f22e885ff8ef308"
+    },
+    "demo-palettes-poster.png": {
+      "bytes": 254271,
+      "sha256": "622f7edadaf53958161826ee91f51120f7b864be5d161b50fe3daf27f07998ca"
+    },
+    "demo-render-poster.png": {
+      "bytes": 285798,
+      "sha256": "88bf3fd4aac4ed3c859aadde013eb423b97e608fd3624d2744d832d892cba070"
+    },
+    "garden-cga.png": {
+      "bytes": 29730,
+      "sha256": "38ef531ff151f82c8a4c57c7e9d76140c9d66d632aa90fd834df2f8a6b182703"
+    },
+    "garden-clay.png": {
+      "bytes": 78724,
+      "sha256": "b1e746ccfa66ca92c6c768eeb80a507e1ad8bfbabf65cf280b53af569683d4e2"
+    },
+    "garden-gameboy.png": {
+      "bytes": 56424,
+      "sha256": "19c5cd85f174f857613d362721099614df4b324a157c1530c9fa240b47a08386"
+    },
+    "garden-paper.png": {
+      "bytes": 59230,
+      "sha256": "4abdfecab4d120e38a13009662497298a4d8c9a9d55e0e42ae8ac1347d45bd0f"
+    },
+    "garden-wave-still.png": {
+      "bytes": 6745,
+      "sha256": "3fc995787514a2bae114021a94f04d4ed196d4f2da87d025ca9d90925690b90e"
+    },
+    "garden-wave.gif": {
+      "bytes": 376013,
+      "sha256": "64a8b3a544095a44e2940057e752bad0e5e4853e8f2b1ebad5a47291fa8bb56a",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "gif",
+            "width": 480,
+            "height": 320,
+            "avg_frame_rate": "25/2",
+            "nb_frames": "24"
+          }
+        ],
+        "format": {
+          "duration": "2.000000"
+        }
+      }
+    },
+    "hero.png": {
+      "bytes": 290212,
+      "sha256": "b9d3127ec29a4c0a0962c3283c5164fa07b4361d193446aa933fbf3e1745648d"
+    },
+    "mcp.gif": {
+      "bytes": 148127,
+      "sha256": "091e7c8f96885940e37716afabf790cb72b394d38c4eedc8594879e22f5ee4f4",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "gif",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "525"
+          }
+        ],
+        "format": {
+          "duration": "21.000000"
+        }
+      }
+    },
+    "mcp.mp4": {
+      "bytes": 220211,
+      "sha256": "002fe1beaf7f97402cabb4b34460610d136330406f707fbc4e2298c2fc677435",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "525"
+          }
+        ],
+        "format": {
+          "duration": "21.000000"
+        }
+      }
+    },
+    "mineral-ember.png": {
+      "bytes": 76458,
+      "sha256": "1c81cd458f30f79e096e361f826ffd08ae9068e68f6af3b989294d7553d51a73"
+    },
+    "normalization-inspection.json": {
+      "bytes": 1356,
+      "sha256": "a943caa03bb2cf9223c4808464d82eeaa845686805fdca24cb69d87aa7245d63"
+    },
+    "normalization-linear-preview.png": {
+      "bytes": 8313,
+      "sha256": "3ca2ad83c8e3b9313ec352f1b6bebd4d82ec46a95c3574f7db1245a40476bb23"
+    },
+    "normalization-oriented-preview.png": {
+      "bytes": 8239,
+      "sha256": "c161136473cdc2043b53ad258aa3c609e51883c33d344ba91b4ba45bd35a2db0"
+    },
+    "normalization.png": {
+      "bytes": 96380,
+      "sha256": "08037d2c4aa646cf30373fdf296afbeb6db392d49426650e144447b4e418b5ad"
+    },
+    "palette-alpine-morning.png": {
+      "bytes": 58099,
+      "sha256": "6756187325272bcff3f7fa7f8fdf57a81d7560e4a199b311e5b963f0a96a42ad"
+    },
+    "palette-atlas.png": {
+      "bytes": 438614,
+      "sha256": "971f0f9e19d39aa03dcf75999193955539e6ba2071487c6b71c5953a3163bbd9"
+    },
+    "palette-autumn-orchard.png": {
+      "bytes": 77489,
+      "sha256": "aacbf649f10e313ac7a7284684d1469b115fc4b9f2936032afd32a80de14b89a"
+    },
+    "palette-black-sesame.png": {
+      "bytes": 52297,
+      "sha256": "4c329ed00a44b7c786bfb1abb8a085d329eb37b8afac7279c7016221b29ddef5"
+    },
+    "palette-brutalist-sun.png": {
+      "bytes": 77984,
+      "sha256": "ac92764f78c70a9ae9cd12a608ee3d443edecca9c5ba8d72da23e17756a93365"
+    },
+    "palette-copperplate.png": {
+      "bytes": 87763,
+      "sha256": "9dec248da45d4db10e5cb4f3a58c29165ba658f75d47f7115cdd4a44c3a555f2"
+    },
+    "palette-malachite.png": {
+      "bytes": 60408,
+      "sha256": "d9e9dfeafa8ab0ce2ae1b644eb71c3663b64c97a24c60844f26cb0fe8ea0e441"
+    },
+    "palette-midnight-orchid.png": {
+      "bytes": 62266,
+      "sha256": "bff45597761034d16850bc879eb477250ea5d0a4e4443c83a7f0c2d541e73889"
+    },
+    "palette-nebula-rose.png": {
+      "bytes": 97635,
+      "sha256": "b9631568f2305861ab6be5ce06fe716cfa125e7ff4cf1fdd532748d6c12ad863"
+    },
+    "palette-oat-and-ink.png": {
+      "bytes": 45095,
+      "sha256": "7cb18b42a05897780b91377af6c0674e7fe7fcee2d2d6f8d281ea74ffe77f410"
+    },
+    "palette-pistachio-rose.png": {
+      "bytes": 78307,
+      "sha256": "5e3c070ce78fe637ecbc525a5b0ed3b7f197583e522429f20dc632b5f557fed0"
+    },
+    "palette-study.png": {
+      "bytes": 131470,
+      "sha256": "cb5d6e5c1ddd866a8787e528f63125ae859eb07456240a5d2ffc7baec9cfe326"
+    },
+    "palette-tidal-glass.png": {
+      "bytes": 67038,
+      "sha256": "0825d25e01762c98131abafbb4d1d8596203aa83909f616087ec9b62a40bb9a3"
+    },
+    "palette-treatments.png": {
+      "bytes": 791862,
+      "sha256": "29d6318f3b88c2ed3ea49441ef2f707e37c5eca1fa1e4908031c126194526a78"
+    },
+    "palette-ultraviolet-city.png": {
+      "bytes": 81715,
+      "sha256": "e440d93a79294dd7860c008b3858a3fceb3f30a5d9a87d5bc3339b559a1ac688"
+    },
+    "palettes.gif": {
+      "bytes": 286702,
+      "sha256": "18cd9822e42768a66f62d055e46f186cc1447445c5f3aa511daf2a0395d1a426",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "gif",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "767"
+          }
+        ],
+        "format": {
+          "duration": "30.680000"
+        }
+      }
+    },
+    "palettes.json": {
+      "bytes": 137878,
+      "sha256": "906a5f577c9d2e7ae1b5d63300cb07f47f7f0acdca2457ab5542106fba265488"
+    },
+    "palettes.mp4": {
+      "bytes": 313299,
+      "sha256": "6155a2a8aa3b85681ee76020033b8c2bf609776e18ed94581495046b090ff641",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "767"
+          }
+        ],
+        "format": {
+          "duration": "30.680000"
+        }
+      }
+    },
+    "render.gif": {
+      "bytes": 198371,
+      "sha256": "2279c687243269fc2607fc3f6462d2e04781785be3dd40bc2f8dc691a491eaee",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "gif",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "540"
+          }
+        ],
+        "format": {
+          "duration": "21.600000"
+        }
+      }
+    },
+    "render.mp4": {
+      "bytes": 264143,
+      "sha256": "aeaf740f2502799a28f61b54bbaa3c49b0ae252b7791ebddf3bdeb8acaf21981",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1200,
+            "height": 750,
+            "avg_frame_rate": "25/1",
+            "nb_frames": "540"
+          }
+        ],
+        "format": {
+          "duration": "21.600000"
+        }
+      }
+    },
+    "study-atkinson.png": {
+      "bytes": 35310,
+      "sha256": "90e588b785f76d20033f76eb28ffb67860a90cacf61301befd32ba2a03ffe5e4"
+    },
+    "study-bayer-8.png": {
+      "bytes": 16330,
+      "sha256": "ee15197ebdb4aa306fbfc266edb4c436d1bbd0c42cd95852eb5742d8779ef92e"
+    },
+    "study-blue-noise.png": {
+      "bytes": 28496,
+      "sha256": "87bf46b14eb55565f99ad6b2854e1c91b87091a07ad9bd4ad38164d4b1e00e2f"
+    },
+    "study-floyd-steinberg.png": {
+      "bytes": 30405,
+      "sha256": "b16c2c3432771a3b76186996533c2465df4a43ea078066850e91ec795473306d"
+    },
+    "study-halftone.png": {
+      "bytes": 17210,
+      "sha256": "39910d1052cdb0856ca09d51f3a2b23d90478fb67eeb9b2a99597446cc230785"
+    },
+    "study-riemersma.png": {
+      "bytes": 35582,
+      "sha256": "6f36cb03286e5021ba56c93cc1113b7ec03342069374695b3d82ca3879e17d4f"
+    }
+  },
+  "revision": "input-normalization-and-repository-preparation",
+  "palette_library": {
+    "palettes": 256,
+    "categories": 16,
+    "legacy_palettes_preserved": 22,
+    "default_page_size": 32,
+    "maximum_page_size": 256,
+    "registry": "../engine/palettes.json",
+    "origins": {
+      "original": 239,
+      "reference": 7,
+      "approximation": 10
+    },
+    "distinct_color_counts": 17,
+    "coverage": [
+      "normalized unique colors and IDs",
+      "distinct unordered color sets",
+      "metadata and provenance",
+      "every palette rendered",
+      "legacy ordered colors",
+      "AND search and composed filters",
+      "stable full pagination",
+      "maximum integer offset",
+      "CLI discovery",
+      "MCP input and output schemas"
+    ]
+  },
+  "site_sha256": {
+    ".gitignore": "8d2576114a8dc036ff4b2d42bb532c6088bf68e87d360028d538c1566fa1c5c7",
+    ".nojekyll": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
+    "README.md": "bc7f0ecf77a6068dd7ba4e45d7f7f884ba6a27abb4e925f594082ccee8fd1dcc",
+    "app.js": "03ee2d307f2f7542f7afb44a9f0bcc51f2c3543390d652ac5d6fd24c10248d23",
+    "assets/GO-FONTS-LICENSE.txt": "dc588a7ba9130043b67c2380cc03cc6644ed3557f6d5e8589b96acba1c64e343",
+    "assets/banner.png": "bcc857cc8011f536e8137e1afbeac383bc0c267c73749599b9afff44a1cb1706",
+    "assets/banner.svg": "b3a67f9258e24b0a6d1057a43fd2c9b31b5d6b249cc2ec67c9a7a1ec66ca7698",
+    "assets/compare.mp4": "4533169ffc94087ea8d54fd13c886bccb46fd3876dc1d5d735dcd7933fde109d",
+    "assets/demo-compare-poster.png": "6bd2210341e948a6a2bc23c237b501fc451fd7019b76de1255180a887c27d19f",
+    "assets/demo-mcp-poster.png": "63c544bc7da59c37cf9d885114eaaaa8aad0eb14d940f23b9f22e885ff8ef308",
+    "assets/demo-palettes-poster.png": "622f7edadaf53958161826ee91f51120f7b864be5d161b50fe3daf27f07998ca",
+    "assets/demo-render-poster.png": "88bf3fd4aac4ed3c859aadde013eb423b97e608fd3624d2744d832d892cba070",
+    "assets/favicon.svg": "0b3e12925ee7c60619c7a9f7c9471d71447ce3b88b162fa8bcf0ee8ab455f69e",
+    "assets/fonts/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
+    "assets/fonts/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
+    "assets/fonts/OFL-source-serif-4.txt": "e10247b156f9d26f268773f29f25c5a3084e68d5b447809863ef79096e8df27e",
+    "assets/fonts/inter-latin-wght.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+    "assets/fonts/jetbrains-mono-latin-wght.woff2": "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
+    "assets/fonts/source-serif-4-latin-opsz.woff2": "f2ea9c12d2fe9bd3a9589b02ad2c0909da88f30938c91adc838c4f4098f9f9e0",
+    "assets/garden-cga.png": "38ef531ff151f82c8a4c57c7e9d76140c9d66d632aa90fd834df2f8a6b182703",
+    "assets/garden-clay.png": "b1e746ccfa66ca92c6c768eeb80a507e1ad8bfbabf65cf280b53af569683d4e2",
+    "assets/garden-gameboy.png": "19c5cd85f174f857613d362721099614df4b324a157c1530c9fa240b47a08386",
+    "assets/garden-wave-still.png": "3fc995787514a2bae114021a94f04d4ed196d4f2da87d025ca9d90925690b90e",
+    "assets/garden-wave.gif": "64a8b3a544095a44e2940057e752bad0e5e4853e8f2b1ebad5a47291fa8bb56a",
+    "assets/mcp.mp4": "002fe1beaf7f97402cabb4b34460610d136330406f707fbc4e2298c2fc677435",
+    "assets/mineral-ember.png": "1c81cd458f30f79e096e361f826ffd08ae9068e68f6af3b989294d7553d51a73",
+    "assets/moon-garden.png": "6ade867ff51c3f12f6aea102bac8e02c2f9b115fd9ee07db676e47f47434579c",
+    "assets/normalization.png": "08037d2c4aa646cf30373fdf296afbeb6db392d49426650e144447b4e418b5ad",
+    "assets/palette-alpine-morning.png": "6756187325272bcff3f7fa7f8fdf57a81d7560e4a199b311e5b963f0a96a42ad",
+    "assets/palette-atlas.png": "971f0f9e19d39aa03dcf75999193955539e6ba2071487c6b71c5953a3163bbd9",
+    "assets/palette-autumn-orchard.png": "aacbf649f10e313ac7a7284684d1469b115fc4b9f2936032afd32a80de14b89a",
+    "assets/palette-black-sesame.png": "4c329ed00a44b7c786bfb1abb8a085d329eb37b8afac7279c7016221b29ddef5",
+    "assets/palette-brutalist-sun.png": "ac92764f78c70a9ae9cd12a608ee3d443edecca9c5ba8d72da23e17756a93365",
+    "assets/palette-copperplate.png": "9dec248da45d4db10e5cb4f3a58c29165ba658f75d47f7115cdd4a44c3a555f2",
+    "assets/palette-malachite.png": "d9e9dfeafa8ab0ce2ae1b644eb71c3663b64c97a24c60844f26cb0fe8ea0e441",
+    "assets/palette-midnight-orchid.png": "bff45597761034d16850bc879eb477250ea5d0a4e4443c83a7f0c2d541e73889",
+    "assets/palette-nebula-rose.png": "b9631568f2305861ab6be5ce06fe716cfa125e7ff4cf1fdd532748d6c12ad863",
+    "assets/palette-oat-and-ink.png": "7cb18b42a05897780b91377af6c0674e7fe7fcee2d2d6f8d281ea74ffe77f410",
+    "assets/palette-pistachio-rose.png": "5e3c070ce78fe637ecbc525a5b0ed3b7f197583e522429f20dc632b5f557fed0",
+    "assets/palette-tidal-glass.png": "0825d25e01762c98131abafbb4d1d8596203aa83909f616087ec9b62a40bb9a3",
+    "assets/palette-treatments.png": "29d6318f3b88c2ed3ea49441ef2f707e37c5eca1fa1e4908031c126194526a78",
+    "assets/palette-ultraviolet-city.png": "e440d93a79294dd7860c008b3858a3fceb3f30a5d9a87d5bc3339b559a1ac688",
+    "assets/palettes.json": "906a5f577c9d2e7ae1b5d63300cb07f47f7f0acdca2457ab5542106fba265488",
+    "assets/palettes.mp4": "6155a2a8aa3b85681ee76020033b8c2bf609776e18ed94581495046b090ff641",
+    "assets/render.mp4": "aeaf740f2502799a28f61b54bbaa3c49b0ae252b7791ebddf3bdeb8acaf21981",
+    "assets/study-atkinson.png": "90e588b785f76d20033f76eb28ffb67860a90cacf61301befd32ba2a03ffe5e4",
+    "assets/study-bayer-8.png": "ee15197ebdb4aa306fbfc266edb4c436d1bbd0c42cd95852eb5742d8779ef92e",
+    "assets/study-blue-noise.png": "87bf46b14eb55565f99ad6b2854e1c91b87091a07ad9bd4ad38164d4b1e00e2f",
+    "assets/study-floyd-steinberg.png": "b16c2c3432771a3b76186996533c2465df4a43ea078066850e91ec795473306d",
+    "assets/study-halftone.png": "39910d1052cdb0856ca09d51f3a2b23d90478fb67eeb9b2a99597446cc230785",
+    "formats.css": "7780a6e1d82bae6831224ce086a0909098de8aacdf0dbca9af28dd9442679c82",
+    "index.html": "d0c0c9f7da65953fce2e2c39cf211aafac69e84ba071b146dbfba0ce4555a0f3",
+    "palettes.css": "f479e39ef52171df762b2685baded1b8eb9b7254e583a7304d81649e0569514c",
+    "palettes.js": "d9bfa9c14c5a497e8088ef366106538ef260b8d48464c6e5a90fcd4b1ab81b07",
+    "styles.css": "3b68571cde72ffeac238971af797c89063e1db769ab64295c9d30d6d2cb8f59a"
+  },
+  "asset_sources_sha256": {
+    "fonts/SOURCE-SERIF-LICENSE.md": "c21d7293d87b6d7ab1d0229a2f55b77f33a7613a6a4e66f6693d68d7d8d09464",
+    "fonts/SourceSerif4-Regular.ttf": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+    "recipes/garden-cga.json": "33c058b7ba733a767d39431d99b38b026b930d220e73d9c010f3f5f384c95962",
+    "recipes/garden-clay.json": "53cbaaa3c9db0907768eb5fec7e4ce24f23cba83ea92a996f29ea6485d5e4e12",
+    "recipes/garden-gameboy.json": "0117e57c92ae8441af13a36d4c60535a08608ec1ea2d872ef40887f356d9b501",
+    "recipes/garden-paper.json": "50c298c58c4a3acc0445fbd7fde3e01ea817c54ff971cf3e19e7c4ce1041e857",
+    "recipes/mineral-ember.json": "11d486ca6622b241c41d4e0c5db27cff1163d81d6b29af582f2bd565e4f08ebd",
+    "recipes/palette-alpine-morning.json": "740f960ac9d2e7487a99b742d08d640bedd5b342426f5820ce78e2c4e9cfe35d",
+    "recipes/palette-autumn-orchard.json": "780ab04c3e98f803db05e6f7324b8eb73a2b85fb989cea590bc96b0108bffa21",
+    "recipes/palette-black-sesame.json": "70a1254b765500978133cd1b29c3e220afc8036e69a82ad568bc7b91d21a9472",
+    "recipes/palette-brutalist-sun.json": "fd799eb2e34bf9d5d31e6af3bf1e6fbeac5da55ee27b6e8e1830a9ccc3325c91",
+    "recipes/palette-copperplate.json": "7ecbbb04da26c79cde20748d9283d0c4b343caf01fd72bc124b5182297a4c91c",
+    "recipes/palette-malachite.json": "62ad0ec102ca2708265bb97c9aea041304139bd09a0123855be81915b39017e4",
+    "recipes/palette-midnight-orchid.json": "910c890d17f450ff3fdf78664f44dca2d579efa1bb8e19e49ace600f0a301277",
+    "recipes/palette-nebula-rose.json": "8f1666bb9af8e748ad3a5d0284fbf06180b4b8aa275143175f36a8e90e093292",
+    "recipes/palette-oat-and-ink.json": "8c3986ae945c30429e830158c748897bb3b5b61805bb596a108310495db87b87",
+    "recipes/palette-pistachio-rose.json": "8250e30684b9dca3d8a755834be584f16220528debe5f19783ad5023fe0bcc95",
+    "recipes/palette-tidal-glass.json": "2a44bcc8765834e5d8726f974f49d91f153d818e9ca5485908a7e82be93f08d2",
+    "recipes/palette-ultraviolet-city.json": "f484b8b39be22b744a99c44988da02f42b71a54bb0e98a0a0b2b0ed22bf2a86e",
+    "recipes/study-atkinson.json": "7162545e0aac5fa9ed7d14fac69f54c4b911047a8c246d0dadf0c5d5ecfc128f",
+    "recipes/study-bayer-8.json": "10bb55becaf2d7fc96d9090cb4078364e549bb5759a296b2164df67f89b633cb",
+    "recipes/study-blue-noise.json": "50d4ba5cc8bad6b0b2f1807a67d47952b82a7c5904ef2763456f9af03bdf58cb",
+    "recipes/study-floyd-steinberg.json": "d6084f5cb58366ccff3ecb7277861592cb2af7911fec2f2c0a26d9924582efa4",
+    "recipes/study-halftone.json": "2feb2b6c88e991aed31ef3ead3e73d448ff597262c71db8b8d645f452b16be59",
+    "recipes/study-riemersma.json": "0ccba6b8bea019025fbf9d2c3671c06fa4ba9e63cde551f8c7883864064a9c08",
+    "source/mineral-nocturne.png": "4e84871e2d870f8bcb958622a7b521701df367a20b4626c90cbe2e4273fc44b9",
+    "source/moon-garden-detail.png": "068a880337e729c4e4edbf7ec92f4e52640d6990000c4f42921e9921aa1c758c",
+    "source/moon-garden.png": "6ade867ff51c3f12f6aea102bac8e02c2f9b115fd9ee07db676e47f47434579c",
+    "source/normalization-chart.png": "c161136473cdc2043b53ad258aa3c609e51883c33d344ba91b4ba45bd35a2db0",
+    "source/normalization-linear.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
+    "source/normalization-linear.png": "97ea01cc668a71106ed9ad68d17978c46548a6f5377d5b7e533a66db19135610",
+    "source/normalization-oriented.png": "6c500ec08ac480a1286c77089b1356479cf32c3e24a81a7593dd4187bc4fddef"
+  }
+}

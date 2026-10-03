@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "palette": "nebula-rose",
+  "options": {
+    "algorithm": "floyd-steinberg",
+    "width": 960,
+    "height": 640,
+    "pixel_scale": 2,
+    "brightness": 0.06,
+    "contrast": 1.1,
+    "seed": 42,
+    "effects": {}
+  }
+}

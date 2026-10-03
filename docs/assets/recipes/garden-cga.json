@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "palette": "cga",
+  "options": {
+    "algorithm": "bayer-4",
+    "width": 960,
+    "pixel_scale": 2,
+    "brightness": 0.06,
+    "contrast": 1.1,
+    "seed": 42,
+    "effects": {}
+  }
+}

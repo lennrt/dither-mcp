@@ -1,0 +1,16 @@
+{
+  "name": "dither-mcp-specifications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenSpec and Quint specifications for dither-mcp development.",
+  "scripts": {
+    "spec:check": "node spec/check.mjs",
+    "spec:quint": "quint",
+    "spec:openspec": "openspec"
+  },
+  "engines": { "node": ">=20.19.0" },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.0",
+    "@informalsystems/quint": "0.33.0"
+  }
+}
