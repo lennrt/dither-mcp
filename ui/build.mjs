@@ -12,7 +12,8 @@ const [template, css, result] = await Promise.all([
   build({ absWorkingDir: root, entryPoints: ['ui/app.mjs'], bundle: true, write: false, metafile: true, minify: true, format: 'iife', platform: 'browser', target: ['es2022'], legalComments: 'inline', charset: 'utf8', logLevel: 'silent' }),
 ]);
 const script = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-const html = template.replace('<!-- UI_CSS -->', `<style>${css.trim()}</style>`).replace('<!-- UI_JS -->', `<script>${script.trim()}</script>`);
+// Function replacements preserve dollar sequences in bundled JavaScript.
+const html = template.replace('<!-- UI_CSS -->', () => `<style>${css.trim()}</style>`).replace('<!-- UI_JS -->', () => `<script>${script.trim()}</script>`);
 const mapping = JSON.stringify(result.metafile, null, 2) + '\n';
 if (process.argv.includes('--check')) {
   const [checked, checkedMapping] = await Promise.all([readFile(target, 'utf8').catch(() => ''), readFile(mappingTarget, 'utf8').catch(() => '')]);

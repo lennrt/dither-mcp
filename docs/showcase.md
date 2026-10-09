@@ -70,7 +70,20 @@ The generator creates an original arrow chart with EXIF orientation 6 and a synt
 
 The generator checks upright dimensions, selected-profile metadata, conversion of neutral 128 to sRGB 188, and preservation of alpha 160. It saves source images, the original profile, preview PNGs, and inspection receipts. See [the format guide](formats.md#reproduce-the-comparison) for the image and results.
 
-## Studio workflow illustration
+## Studio screenshots and workflow illustration
+
+The [browser check](mcp-apps.md#browser-verification-and-screenshots) captures the
+actual embedded studio through the official MCP Apps bridge and local Go server.
+Its desktop view uses Atkinson with Oat and Ink. The mobile view uses Bayer 8×8
+with the six clay colors. Both use the original Moon Garden source.
+
+After a successful browser check, refresh the published screenshots:
+
+```sh
+cp work/browser-check/studio-desktop.png docs/assets/mcp-app-studio.png
+cp work/browser-check/studio-mobile.png docs/assets/mcp-app-studio-mobile.png
+./scripts/showcase-site.sh ../dither-mcp-site
+```
 
 The studio workflow uses a separate, editable SVG illustration at
 `docs/assets/mcp-app-workflow.svg`. It embeds the original Moon Garden and
@@ -150,6 +163,6 @@ The wave artwork contains 24 frames with a total duration of exactly 2.00 s. All
 - Empty-result behavior, Escape reset, and featured treatment selection.
 - Keyboard disclosure and image loading for the normalization comparison.
 
-All observed gallery images loaded, and the browser console remained clear. These browser observations apply to the October 3 showcase. Browser rendering of the October 8 MCP Apps update remains unverified.
+All observed gallery images loaded, and the browser console remained clear. These browser observations apply to the October 3 showcase. On October 8, the Playwright check verified the MCP Apps studio and the updated showcase at desktop and mobile sizes.
 
 The Go showcase programs compile, shell scripts pass syntax checks, and VHS checks all four tapes. These checks establish the recorded local behavior and media integrity. They do not establish compatibility with every MCP host or browser.

@@ -93,3 +93,32 @@ go test ./...
 `ui:build` bundles the pinned SDK and application assets. `ui:check` verifies that the checked-in embedded document matches its sources. `make ui-test` builds the Go binary, exercises the concrete interaction state and official SDK bridge, and checks preview/save behavior through the real stdio server. After `make build`, `pnpm ui:harness` starts a loopback-only browser test host with an isolated copy of the original sample artwork. Open the localhost URL that it prints. Its outputs stay in an ignored `work/apps-host-*` directory. This development harness is not part of the production server.
 
 The [OpenSpec change](../openspec/changes/mcp-apps/proposal.md) records the contract. The [Quint interaction model](../spec/mcp_apps.qnt) checks abstract preview, stale-result, and save sequencing. The [specification guide](../spec/README.md#mcp-apps-interaction-model) separates model evidence from implementation tests. Neither finite simulation nor a local browser harness proves compatibility with every MCP Apps host.
+
+## Browser verification and screenshots
+
+The optional browser check starts its own loopback host and Go stdio server with
+an isolated copy of the original artwork. Install Chromium once, then run:
+
+```sh
+pnpm exec playwright install chromium
+make ui-browser
+```
+
+The check uses the actual embedded HTML with external connections and native
+form submission blocked. It covers initial rendering, palette search, changed
+previews, exact PNG saving, overwrite rejection, custom-color validation,
+keyboard saving, cancellation, dark mode, narrow layouts, and hosts without
+`serverTools`. Screenshots and a JSON report go to `work/browser-check/`.
+
+To include the separate showcase, serve its directory locally and set
+`DITHER_SITE_TEST_URL` to that loopback URL:
+
+```sh
+DITHER_SITE_TEST_URL=http://localhost:8080 make ui-browser
+```
+
+The browser check verifies navigation to the studio section, visible image
+loading, and desktop/mobile overflow. It fails on browser script errors,
+unexpected request failures, or external requests. On October 8, 2026, it passed
+with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local
+SDK test host, not every third-party MCP host.

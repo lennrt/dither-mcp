@@ -12,6 +12,7 @@ cp docs/assets/source/moon-garden.png "$destination/assets/moon-garden.png"
 cp docs/assets/banner.svg docs/assets/banner.png "$destination/assets/"
 cp docs/assets/normalization.png "$destination/assets/"
 cp docs/assets/mcp-app-workflow.svg "$destination/assets/"
+cp docs/assets/mcp-app-studio.png docs/assets/mcp-app-studio-mobile.png "$destination/assets/"
 for name in garden-clay garden-gameboy garden-cga mineral-ember study-atkinson study-floyd-steinberg study-bayer-8 study-halftone study-blue-noise; do
   cp "docs/assets/$name.png" "$destination/assets/$name.png"
 done

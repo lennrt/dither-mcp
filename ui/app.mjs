@@ -142,7 +142,7 @@ $('custom-colors').addEventListener('input', () => { customDirty = true; state.e
 $('options-json').addEventListener('input', () => { jsonDirty = true; state.edit(clone(state.draft)); render(); });
 document.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => setZoom(button.dataset.zoom)));
 $('preview').addEventListener('error', () => { state.validPreview = false; state.fail(new Error('The PNG preview could not be displayed. Apply preview to try again.')); render(); });
-$('controls').addEventListener('submit', async (event) => {
+$('apply').addEventListener('click', async (event) => {
   event.preventDefault();
   if (!state.canPreview) return;
   let operation;
@@ -160,7 +160,7 @@ $('controls').addEventListener('submit', async (event) => {
 });
 $('cancel').addEventListener('click', () => { abortController?.abort(); state.cancel(); render(); });
 $('output').addEventListener('input', () => render());
-$('save-form').addEventListener('submit', async (event) => {
+$('save').addEventListener('click', async (event) => {
   event.preventDefault();
   if (!state.canSave || jsonDirty || customDirty) return;
   let operation;
@@ -170,6 +170,17 @@ $('save-form').addEventListener('submit', async (event) => {
     state.finishSave(operation, result); render();
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+
+// MCP Apps hosts can omit allow-forms. Route explicit actions through buttons.
+for (const [form, button] of [['controls', 'apply'], ['save-form', 'save']]) {
+  $(form).addEventListener('submit', (event) => event.preventDefault());
+  $(form).addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+      event.preventDefault();
+      $(button).click();
+    }
+  });
+}
 
 function applyContext(context) {
   if (!context) return;

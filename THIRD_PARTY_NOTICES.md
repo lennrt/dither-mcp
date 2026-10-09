@@ -4,7 +4,7 @@ The Go executable uses the modules in the following table. This repository
 preserves their original license notices. The Go standard library uses the Go
 BSD license.
 
-FFmpeg, VHS, Node.js, OpenSpec, and Quint are optional external or development
+FFmpeg, VHS, Node.js, Playwright, OpenSpec, and Quint are optional external or development
 tools. The runtime binary does not include them. Their own licenses apply.
 
 The palette atlas and artwork labels use the Go font family from `golang.org/x/image`.

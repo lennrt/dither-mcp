@@ -3116,7 +3116,7 @@
       "format": "esm"
     },
     "ui/app.mjs": {
-      "bytes": 15230,
+      "bytes": 15642,
       "imports": [
         {
           "path": "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js",
@@ -3451,10 +3451,10 @@
           "bytesInOutput": 6668
         },
         "ui/app.mjs": {
-          "bytesInOutput": 9950
+          "bytesInOutput": 10169
         }
       },
-      "bytes": 547213
+      "bytes": 547432
     }
   }
 }

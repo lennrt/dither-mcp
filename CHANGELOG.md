@@ -1,12 +1,21 @@
 # Changes
 
+## Browser verification follow-up
+
+- Preserve JavaScript dollar sequences when building the embedded HTML. Add a
+  regression check that compiles the delivered script.
+- Use explicit button actions for preview and save in sandboxes without native
+  form permission. Support Enter in input fields.
+- Add an optional Playwright check with an isolated Go-backed host and publish
+  actual desktop and mobile studio screenshots.
+
 ## 0.1.0-dev · MCP Apps studio
 
 - Add `dither_studio`, the fourteenth MCP tool, for read-only dithered previews.
 - Add `ui://dither/studio.html`, the third resource, with MIME type
   `text/html;profile=mcp-app` and official MCP Apps tool metadata.
 - Provide algorithm, palette, and adjustment controls, Apply preview, zoom,
-  palette swatches, and an explicit Save PNG action in supporting hosts.
+  palette swatches, and an explicit Save image action in supporting hosts.
 - Use all 41 algorithms, 256 palettes, custom colors, and the shared Go engine.
 - Fit omitted preview dimensions within 512 × 512 without enlarging the source.
   Bound all studio previews to 1,024 pixels per axis and 2 MiB PNG.

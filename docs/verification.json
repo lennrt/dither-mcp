@@ -11,9 +11,11 @@
     "quint": "0.33.0",
     "openspec": "1.14.0",
     "pnpm": "11.19.0",
-    "mcp_apps_sdk": "2.0.3"
+    "mcp_apps_sdk": "2.0.3",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34"
   },
-  "scope": "Local automated verification of MCP Apps, the Go implementation, specifications, and static showcase assets. Browser rendering and external host compatibility remain unverified for this update. Cross-builds do not establish native OS behavior.",
+  "scope": "Local automated verification of MCP Apps, the Go implementation, specifications, and static showcase assets. Chromium rendering was checked through the local official SDK host; external host compatibility remains unverified. Cross-builds do not establish native OS behavior.",
   "checks": [
     {
       "command": "make verify",
@@ -29,14 +31,15 @@
         "palette reference",
         "real stdio MCP subprocess",
         "embedded UI freshness",
-        "23 JavaScript state and bridge tests"
+        "24 JavaScript bundle, state, and bridge tests"
       ]
     },
     {
       "command": "node --test ui/*.test.mjs",
       "result": "pass",
-      "tests": 23,
+      "tests": 24,
       "coverage": [
+        "delivered embedded JavaScript syntax",
         "20 concrete UI controller cases",
         "2 official App/AppBridge transport tests",
         "1 official SDK bridge test against the actual Go stdio server"
@@ -90,19 +93,31 @@
       "note": "Advisory names 3.0.4 as fixed; registry returned no matching version during verification. This package is absent from the Go runtime and embedded browser bundle. Quint adm-zip is pinned to patched 0.6.1."
     },
     {
-      "command": "Browser rendering and live MCP host review",
-      "result": "not-run",
-      "note": "Computer-use permissions were unavailable. The new showcase asset is a labeled workflow illustration, not a captured UI. Protocol and concrete controller tests do not replace browser or host rendering checks."
+      "command": "DITHER_SITE_TEST_URL=<loopback showcase URL> make ui-browser",
+      "result": "pass",
+      "browser_report": "mcp-apps-browser-verification.json",
+      "checks": [
+        "Initial preview, complete catalogs, and explicit save gating",
+        "Dirty settings reject late initial results; filtered palette library and real preview call",
+        "Zoom, byte-identical PNG save, and overwrite rejection",
+        "Custom-color validation and real custom-palette preview",
+        "Host theme changes, 370px host and 390px viewport without horizontal overflow",
+        "Host cancellation invalidates saving and a fresh preview recovers",
+        "Keyboard save works without sandbox form permission",
+        "Host without serverTools displays result and disables mutations",
+        "Showcase studio navigation, all visible images loaded, desktop/mobile layout without overflow"
+      ],
+      "note": "Actual Chromium DOM, screenshots, and official SDK bridge to the real Go server. Reviewed desktop, mobile, and dark-mode captures. This is local host evidence, not a claim about every MCP Apps client."
     }
   ],
   "source_sha256": {
     ".gitattributes": "66477a0d309443c637cef47f14c9b10ef0216596ea7d05b289aa100837c9ca9b",
     ".gitignore": "ad9926d359ccf232a359707174b1beac8e745b4350c9b3431643bc9096addee5",
-    "CHANGELOG.md": "96640578f6990cb6944b1822b37b1c89cba584c9886068e07095d8508c57a90f",
-    "CONTRIBUTING.md": "c868093a19ed86541a81fd9f6bd45681999b15ecbcfdea362a59ff681e89355e",
+    "CHANGELOG.md": "ddfa1cf331a2015ae8043ddb0465b33476e1beb9eb258dd4217ef17eae6d38bf",
+    "CONTRIBUTING.md": "57a2950c9003436ff99f53910bc2edf7d4e0dbd6ed351e8ae2b0df82b138a4ca",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "Makefile": "d2c09603e94017fa6c53dc7bb2fa35a8e150a96867efeb543d723af8af91e01a",
-    "README.md": "a34846889c160231c64177453fe1e5b3b9c0bb6884b2784b63df47fa731577b5",
+    "Makefile": "b538f427315febb7b0fdf724b8c84f7eaf36755f107c95d128c3b61746259c94",
+    "README.md": "1853512c4d5771ba7684fff70c509599c56b261dffb71b27f43886d8e5f02ecf",
     "SECURITY.md": "9491e2b9e6e2b1b522c30158209599ca84cfc31ddb827caa9a5e090306bda024",
     "THIRD_PARTY_LICENSES/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
     "THIRD_PARTY_LICENSES/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
@@ -123,7 +138,7 @@
     "THIRD_PARTY_LICENSES/npm_jose@6.2.12-LICENSE.txt": "8078b0829d6c3e9ecde2f003e1966e4cad3efc6e7a640efbab0313cc166b1af1",
     "THIRD_PARTY_LICENSES/npm_pkce-challenge@5.0.1-LICENSE.txt": "feb87a2e0c305de3464cc44077da5393c52d8ca6362d37427157d04ec6f4510d",
     "THIRD_PARTY_LICENSES/npm_zod@4.6.5-LICENSE.txt": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8",
-    "THIRD_PARTY_NOTICES.md": "dfed3f38ad18826111b3d12ef82b3e76613892b22f7bbceee67396a723f9f3b7",
+    "THIRD_PARTY_NOTICES.md": "107ab4bd9e08841745f534aaf44efe7f4ce8691e4c1be11db462933a1fcd2fb6",
     "cmd/dither-mcp/main.go": "2bafb0ee74a2c43688ec1e854359cc0998d141573b060e0de24ac32e8e55d47a",
     "demos/compare.tape": "b2d2f9eaf776da46439175542e37bb35a80e18c9e12fe298d418ca0e2f7e6c4a",
     "demos/mcp.tape": "d0bfccda7c8b1ef3b4b788e5d361f2c3f48a204a494ad817938263f14b4ba153",
@@ -134,13 +149,14 @@
     "docs/cli.md": "aea87f68b4df3749456eef56fc84a7ec7ac132c43296687d8e44b8958d2c01de",
     "docs/feature-matrix.md": "aecc22fae42bb87b699e0344be53cad9858146b26830cdb77037efb8e675a2f8",
     "docs/formats.md": "9d5edcbf359abfde7b7821fd9862f232f6e5454c2ba6114eb44a2567c016c87c",
-    "docs/mcp-apps.md": "ede61703c263c2a5140cac0de45f3bb6fe9a73e30afffd3bf65fbd0c7a5948c4",
+    "docs/mcp-apps-browser-verification.json": "9be472bfdb147c7eeaed2fc928c6a78b059ba7466b1b7c9942309e998ab0ff26",
+    "docs/mcp-apps.md": "aa7b85fc3c00a33b9d18462f1a815acc9424a26d02289055164b774517b5f007",
     "docs/mcp.md": "cfe3e4878140acfbf0488979a851721f40c3bd451b1b36676c5302b514c8fe02",
     "docs/palettes.md": "d50d9ecbce8c4d5875e28ec962a58d4ef61f9c4a50db66a588f1ebc30d9e065b",
     "docs/security.md": "099061e5de386610176bca3a48f9ffb36404468b716a01c2442513c71a97aff7",
-    "docs/showcase.md": "ee3f10f11da6cdebd98969576d12e2a3e41f96dc0e4c82432bbba3a6b047e34b",
+    "docs/showcase.md": "4ab27d1846ab57688521b117b8c5597389a66aea14c82b65c39f9ee7246c527f",
     "docs/sources.md": "a73018a26ab01e212a0a5b53cd050a878bc203fb75b344b45b6fa219f45c9ac7",
-    "docs/testing.md": "e3ac2681aa63872ea8422f5faeb733d86bd37cbe9af4e1489357547848a240c8",
+    "docs/testing.md": "9a0263538e10ac6cd900d3ebf3e759c657b0f6a40d5b1bd90bcbe8afbae920de",
     "docs/tool-schemas.json": "838466935e225d55f6b35848520128ddcd780e9cdf839cdc7bfc9c7959a4e67f",
     "docs/writing-style.md": "87cfc74b82f80dfff71be7686b26565e54df685dd079a7663f9b6400986bdec1",
     "engine/SOURCES.md": "d3b25ab0be9a14b94b62b99772cd7238894d0fc1e96ca1c12ccf61f0ead8c3c4",
@@ -206,7 +222,7 @@
     "internal/imagemeta/testdata/linear-srgb.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
     "internal/imagemeta/testdata/oriented.webp": "82dd5d08496cdc2794404f0ea3deadae7995bd38dcd31501811227f26574c22c",
     "internal/mcpapp/mcpapp.go": "35ec6d671dd28483a00f8bb3122b7aadf3b5e2e5dc24d738963577a5ea3cc9ce",
-    "internal/mcpapp/studio.html": "bc2b2486032eaa94295c874e14133d04602e9717207952c113b5ea6c68368cd4",
+    "internal/mcpapp/studio.html": "5767c2e6bcb85f601445849535f7539ed60d1c5d862867daa1cb897e7afcfae6",
     "internal/mcpserver/apps.go": "a61a63e27229f034c4208ebb20e50895b36256beeb4b1c93376303baccba5e8f",
     "internal/mcpserver/apps_test.go": "cb9d361a487c35b65fadc11a613f3040118d73bfe7f5889471ae36b41c35bd5e",
     "internal/mcpserver/server.go": "e22a34397e1310ad814beb532e646565691cae06c17ad467a077c4a71483ed5e",
@@ -242,8 +258,8 @@
     "openspec/specs/local-workspace/spec.md": "6d645380e91a05ea8ee795a910bda1b8ade4b37591add8f2457f04eda1721dcf",
     "openspec/specs/motion-print/spec.md": "471753c833195cee20c28ec9956548655af3234aec08bf7db3615ea288845903",
     "openspec/specs/palette-library/spec.md": "16017f1b8f115baf2bca9af66bf1969e93de1c59235ce315ee20e291642c19d2",
-    "package.json": "83238fc54b58483d303da174cb5bab7df84b561fa3a176501b95482f917c9d41",
-    "pnpm-lock.yaml": "947912b7015dbff5766b8cee7174ad0c2ed7ab014a6761e071dfd68ab65cbc5a",
+    "package.json": "1c89ae3af43b6eb76e7ba67ccd8d326cc1ac6ca1651ccbef5ec0b7c9bc6777f4",
+    "pnpm-lock.yaml": "992eac9f1feedad6eec64624574ea8148449438a3743e9fc14a2fed449fcf983",
     "pnpm-workspace.yaml": "c2fdea20a67c0d1369c0b287122109e087452367e5719c5ea50c08e84e7c8240",
     "scripts/brand-banner/main.go": "641973eb70dd02e3c4ccf2155eed96692e022963ed1f7d7cff8ecba156e88b6c",
     "scripts/check-docs/main.go": "2dcefddb1ecef4fc42e1d8a981241ed56835e3d71d5abc542a806dc94f05e57e",
@@ -256,7 +272,7 @@
     "scripts/schema/main.go": "c06b2b3d830aa9af1c39dbc4f75366efb359c6cc1a9ccda4cca501041e31327a",
     "scripts/showcase-record.sh": "b98deaa8fed80c77bc46b0848fdeff02c922f54bec16f2539d23a4c38ad317e0",
     "scripts/showcase-render/main.go": "305473bdea6902e4e0465208b809a7b612886f38b39389fc9359d55d02892ce5",
-    "scripts/showcase-site.sh": "ce6550330853cac9a5a5e4d21a22ac5b9d9b731413d733e1c534960e94ee87e5",
+    "scripts/showcase-site.sh": "99b58a6480aca88bc147580e096fc727e0c3fe25a0a008189ee543a72d3c0930",
     "scripts/showcase-source/main.go": "b049cfcee96bacde0cffb8985f9372c0045551c1c968335b8de0e5130decb870",
     "scripts/showcase.sh": "bf4ad05758ea0f02951b0ff2a13d44810c115450a65d121fc39df0040cea4653",
     "spec/README.md": "bab83e18c695ed5840549d4faf00969fd470dd530866c4c75fe84ccff7d5b62e",
@@ -267,15 +283,17 @@
     "spec/publication.qnt": "28b53c3fe7174f2dde45287f9f7117123a905558b0ee1186da47cb6871f75133",
     "spec/quantization.qnt": "1066276acbdefa598e8c90df039551a1abab82415cc2f8a68e98ad36d0df9695",
     "spec/verification.json": "875046895c81ed37052a1653a2fbf22b3d7820f71908db3461555af672711c4a",
-    "ui/app.mjs": "cd06739987903647e77260c1df9dcf9c86dcad32406ef6423cb78ad568bb165b",
+    "ui/app.mjs": "36f37f110ceae168f39c221e65bd21cd4594808903ccd29e687541c33d97438a",
     "ui/bridge.test.mjs": "7e187bd1f5a4f433078b757749283a464c48eb2f771de78ae73ac1b6e56e9f37",
-    "ui/build.mjs": "f0b2ba9e79f4acaee2299be8180c8487a782bf49eb51961bd42a1b1591ecf3a3",
-    "ui/bundle-meta.json": "60bcee25b234a309262fb5bd37c1bce5441068c8e9e966dc1f5073336fe4690b",
+    "ui/browser-check.mjs": "025b482d8ce06e5ee07d7463f25f5c66fe934528cc40015930c41724d1841fc9",
+    "ui/build.mjs": "04a6c601b8cf5068b9b5d255c3dc7e04d917da3df1e28a8e1663e66c87b72817",
+    "ui/bundle-meta.json": "3d9104417f70c159ef73940f13e825c948d1d0ea88b8e7920596b74fdb0ad0b6",
+    "ui/bundle.test.mjs": "11510658a8e693f02c2c81ff6669c29135727360cfaed377e5f64c5db0399e92",
     "ui/harness-client.mjs": "1c58ef0686c3dbc913f6d744efc4f800c9d23ac36983876cd22dc924c4d3a264",
     "ui/harness-sandbox.html": "1ac31eae884f9d3277c9f3c3892cff914f1740bbcd14cc32480029929cf8de90",
     "ui/harness.html": "9a7e1c9b71ca33202a7599756e4547bb2d961abaa8ff2c6fdf4c3f0ffe13634e",
     "ui/harness.mjs": "3de800b6bb2fe79a72e2d5b74d6fae0b71f54cf167707a4a923da4a3b6e5e474",
-    "ui/index.html": "819d21f8692a4f09fc79e66955c03e8bef51b6ee67e2956514a4eaae265de3db",
+    "ui/index.html": "fdd4f3ce7919bf7a94cd8a75137dbb80747726468f5cfa082d9a42a8e2f6cfe3",
     "ui/server.test.mjs": "ff5b4a228de11d38c8e8eb0ae1d30ef4d47ff742e57aaf4f5d00002058676def",
     "ui/state.mjs": "161fbd6cd52f0a1d24c8ed51aee70eeac54f55cd4ccf67380e6e0978ee6e1da2",
     "ui/state.test.mjs": "cbf9c5c0f95599524dbf2e4f0b3553cd0173cc6efb46291fc63a9c2d967998a2",
@@ -397,6 +415,14 @@
     "hero.png": {
       "bytes": 290212,
       "sha256": "b9d3127ec29a4c0a0962c3283c5164fa07b4361d193446aa933fbf3e1745648d"
+    },
+    "mcp-app-studio-mobile.png": {
+      "bytes": 75679,
+      "sha256": "ec918b352ce22168af75aa6509450b9b562223da9c237e63eeeac5c03c4b413d"
+    },
+    "mcp-app-studio.png": {
+      "bytes": 119562,
+      "sha256": "ca3fce352eccc572ede173a3c85ae9a2f17dd648d513b6b2c20c614a36917e8a"
     },
     "mcp-app-workflow.svg": {
       "bytes": 725316,
@@ -631,7 +657,7 @@
       "sha256": "6f36cb03286e5021ba56c93cc1113b7ec03342069374695b3d82ca3879e17d4f"
     }
   },
-  "revision": "mcp-apps-studio",
+  "revision": "mcp-apps-browser-verification",
   "palette_library": {
     "palettes": 256,
     "categories": 16,
@@ -662,7 +688,7 @@
     ".gitignore": "8d2576114a8dc036ff4b2d42bb532c6088bf68e87d360028d538c1566fa1c5c7",
     ".nojekyll": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "README.md": "e0adf5fc18ce27fe457e6912995ec3beda900054b7156ea45f5a529173f73ca9",
+    "README.md": "7ef091c75bcf808c28be5b6d90ca6e37778d3931bb57fdb12a7b20678382a1cc",
     "app.js": "03ee2d307f2f7542f7afb44a9f0bcc51f2c3543390d652ac5d6fd24c10248d23",
     "apps.css": "0b2ecddb7e8d8c2710008de00fb3c45c868b8dfbadf6e4e60e1556a4d5f4f85d",
     "assets/GO-FONTS-LICENSE.txt": "dc588a7ba9130043b67c2380cc03cc6644ed3557f6d5e8589b96acba1c64e343",
@@ -685,6 +711,8 @@
     "assets/garden-gameboy.png": "19c5cd85f174f857613d362721099614df4b324a157c1530c9fa240b47a08386",
     "assets/garden-wave-still.png": "3fc995787514a2bae114021a94f04d4ed196d4f2da87d025ca9d90925690b90e",
     "assets/garden-wave.gif": "64a8b3a544095a44e2940057e752bad0e5e4853e8f2b1ebad5a47291fa8bb56a",
+    "assets/mcp-app-studio-mobile.png": "ec918b352ce22168af75aa6509450b9b562223da9c237e63eeeac5c03c4b413d",
+    "assets/mcp-app-studio.png": "ca3fce352eccc572ede173a3c85ae9a2f17dd648d513b6b2c20c614a36917e8a",
     "assets/mcp-app-workflow.svg": "6f2694b8b284e707ddb99c5e05d9dbd3e0f2c837ed47453b7a1bc831d8ea7494",
     "assets/mcp.mp4": "002fe1beaf7f97402cabb4b34460610d136330406f707fbc4e2298c2fc677435",
     "assets/mineral-ember.png": "1c81cd458f30f79e096e361f826ffd08ae9068e68f6af3b989294d7553d51a73",
@@ -713,7 +741,7 @@
     "assets/study-floyd-steinberg.png": "b16c2c3432771a3b76186996533c2465df4a43ea078066850e91ec795473306d",
     "assets/study-halftone.png": "39910d1052cdb0856ca09d51f3a2b23d90478fb67eeb9b2a99597446cc230785",
     "formats.css": "7780a6e1d82bae6831224ce086a0909098de8aacdf0dbca9af28dd9442679c82",
-    "index.html": "18d470f6eb4b5568b9c844ed54f5e2e7374d26c1f080e265805319fc38947727",
+    "index.html": "f26e74fea98253acdbf4377c04b8cba3681ffcce7cc3ad028465ec326b024a14",
     "palettes.css": "f479e39ef52171df762b2685baded1b8eb9b7254e583a7304d81649e0569514c",
     "palettes.js": "d9bfa9c14c5a497e8088ef366106538ef260b8d48464c6e5a90fcd4b1ab81b07",
     "styles.css": "3b68571cde72ffeac238971af797c89063e1db769ab64295c9d30d6d2cb8f59a"

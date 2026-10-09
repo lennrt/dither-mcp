@@ -64,7 +64,8 @@ calls tools through the official `@modelcontextprotocol/ext-apps` SDK.
 2. Edit the source files in `ui/`.
 3. Run `pnpm ui:build` to regenerate the self-contained HTML bundle.
 4. Run `pnpm ui:check` and `make ui-test`. The test target builds the Go binary.
-5. Exercise the app bridge harness and review the resulting view.
+5. Run `pnpm exec playwright install chromium`, then `make ui-browser`.
+   Review the generated desktop, mobile, and dark-mode screenshots.
 
 Keep the HTML, CSS, SDK, and scripts bundled locally. Preserve host fallback to
 PNG and structured JSON. Previews must remain read-only and bounded. Save image

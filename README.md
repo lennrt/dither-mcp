@@ -35,9 +35,9 @@ Image processing stays in your configured workspace, with source files and artif
 
 ## An image studio inside your chat
 
-![MCP Apps workflow: open a local image, explore algorithms and palettes, then explicitly save the applied recipe](docs/assets/mcp-app-workflow.svg)
+![Actual MCP Apps studio showing Moon Garden with algorithm and palette controls, adjustments, preview zoom, and an explicit Save image action](docs/assets/mcp-app-studio.png)
 
-*Workflow illustration with actual engine-generated artwork.*
+*Actual studio connected to the local Go server through the official MCP Apps bridge. Atkinson / Oat and Ink.*
 
 Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
 

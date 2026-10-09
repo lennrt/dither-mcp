@@ -53,7 +53,7 @@ palette-docs:
 palette-docs-check:
 	go run ./scripts/palette-docs -check
 
-.PHONY: ui-build ui-check ui-test ui-verify
+.PHONY: ui-build ui-check ui-test ui-verify ui-browser
 ui-build:
 	node ui/build.mjs
 ui-check:
@@ -61,3 +61,5 @@ ui-check:
 ui-test: build
 	node --test ui/*.test.mjs
 ui-verify: ui-check ui-test
+ui-browser: build ui-check
+	node ui/browser-check.mjs
