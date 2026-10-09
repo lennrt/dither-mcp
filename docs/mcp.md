@@ -56,6 +56,14 @@ A comparison's `cells` supply labels and exact rectangles. The contact sheet con
 
 Solid-color sources cannot produce two distinct extracted colors. Extraction returns an actionable error instead of an unusable one-color render palette.
 
+## Guard a render against changed inputs
+
+Render requests accept optional `expected_source_sha256` and `expected_mask_sha256` fields. Each nonempty value must contain 64 hexadecimal digits. The studio supplies these values automatically from its accepted preview. Other callers can copy `source_sha256` and `mask_sha256` from the studio result. These fields belong to requests, so saved recipes remain portable.
+
+The service verifies the exact bytes it will decode. A mismatch returns `isError: true` with `structuredContent.error.code` set to `source_changed` or `mask_changed`, plus `message`, `path`, `expected_sha256`, and `actual_sha256`. If a guarded file cannot be read, the same error code is returned with an empty `actual_sha256`. No artifact is published. Callers must obtain a fresh preview before retrying with new expectations. An empty or omitted expectation keeps the existing unguarded behavior. `expected_mask_sha256` requires `mask_input`.
+
+The same guards apply to `dither_compare`, each `dither_batch` item, `dither_animate`, `dither_video`, and `dither_separate` because these tools share render requests. Video verifies its source buffer before staging that exact buffer for local decoding. A batch reports a changed input in the affected item's `error` string; earlier successful items remain published. The text fallback for a guarded failure starts with `source_changed:` or `mask_changed:`. SHA256 expectations accept upper- or lowercase hexadecimal digits; studio fingerprints use lowercase.
+
 ## MCP Apps studio
 
 Ask your agent to open `dither_studio` for a local image:
@@ -77,7 +85,7 @@ The studio uses all 41 algorithms, 256 palettes, custom colors, and the shared e
 
 `dither_studio` reads the source and renders in memory. It accepts no output path and creates no file. When dimensions are omitted, the preview fits within 512 × 512 pixels without enlarging the source. Explicit or aspect-derived dimensions must fit within 1,024 pixels per axis. Encoded PNG data must fit within 2 MiB. Studio seeds must be safe JavaScript integers, from −9,007,199,254,740,991 through 9,007,199,254,740,991.
 
-Select **Save image** and supply a new relative output path to write a file. The filename extension selects the still-image output format. The app calls `dither_render` with the exact recipe from the last successful preview. Changing a control does not change that saved recipe until **Apply preview** succeeds. Existing destinations remain protected by the service's atomic publication rules.
+Select **Save image** and supply a new relative output path to write a file. The filename extension selects the still-image output format. The app calls `dither_render` with the accepted recipe, source and mask fingerprints, and selected preview, source, or custom export dimensions. Only width and height change for a different export size. Source size includes EXIF orientation and crop. A different resolution can change the dither pattern. Changing a control does not change that saved recipe until **Apply preview** succeeds. Existing destinations remain protected by the service's atomic publication rules.
 
 The tool descriptor associates this view with `ui://dither/studio.html` through `_meta.ui.resourceUri`. The resource has MIME type `text/html;profile=mcp-app`. The original tools keep their normal tool results. Read the [MCP Apps guide](mcp-apps.md) for the host contract, build workflow, and verified behavior.
 

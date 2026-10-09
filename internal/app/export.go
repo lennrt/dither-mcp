@@ -71,7 +71,7 @@ func (s *Service) separate(ctx context.Context, q RenderRequest) (Artifact, erro
 	if c.Mask != nil || c.Effects != (engine.Effects{}) {
 		return Artifact{}, errors.New("separations require no mask or post-effects to preserve exact palette membership")
 	}
-	im, _, _, err := s.decode(ctx, q.Input)
+	im, _, _, err := s.decodeExpected(ctx, q.Input, q.ExpectedSourceSHA256, "source")
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -325,7 +325,7 @@ func (s *Service) animate(ctx context.Context, q AnimateRequest) (Artifact, erro
 	if err != nil {
 		return Artifact{}, err
 	}
-	im, b, f, err := s.decode(ctx, q.Input)
+	im, b, f, err := s.decodeExpected(ctx, q.Input, q.ExpectedSourceSHA256, "source")
 	if err != nil {
 		return Artifact{}, err
 	}

@@ -1,7 +1,7 @@
 // Exercise the official app bridge against the compiled Go server over stdio.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, copyFile, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, copyFile, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,7 +34,7 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(resource.mimeType, 'text/html;profile=mcp-app');
   assert.ok(resource.text.includes('Dither studio'));
   assert.deepEqual(resource._meta.ui.csp.connectDomains, []);
-  assert.deepEqual(resource._meta.ui.csp.resourceDomains, []);
+  assert.deepEqual(resource._meta.ui.csp.resourceDomains, ['data:']);
 
   const state = new StudioState();
   const args = { input: 'source.png', palette: 'oat-and-ink', options: { algorithm: 'atkinson', width: 96 } };
@@ -72,7 +72,7 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.finishPreview(preview, previewResult), true);
   assert.deepEqual(await readdir(workspace), ['source.png']);
   const operation = state.beginSave('preview.png');
-  assert.deepEqual(operation.request, { ...state.rendered.request, output: 'preview.png' });
+  assert.deepEqual(operation.request, { ...state.rendered.request, output: 'preview.png', expected_source_sha256: state.rendered.sourceSHA256 });
   const saved = await app.callServerTool({ name: 'dither_render', arguments: operation.request });
   assert.equal(state.finishSave(operation, saved), true);
   const png = await readFile(path.join(workspace, 'preview.png'));
@@ -83,4 +83,24 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.finishSave(collision, existing), false);
   assert.deepEqual(await readFile(path.join(workspace, 'preview.png')), png);
   assert.deepEqual(calls.map((call) => call.name), ['dither_studio', 'dither_render', 'dither_render']);
+  const source = state.beginSave('source-size.png', { mode: 'source' });
+  assert.equal(state.finishSave(source, await app.callServerTool({ name: 'dither_render', arguments: source.request })), true);
+  const sourcePNG = await readFile(path.join(workspace, 'source-size.png'));
+  assert.equal(sourcePNG.readUInt32BE(16), initial.structuredContent.source_width);
+  assert.equal(sourcePNG.readUInt32BE(20), initial.structuredContent.source_height);
+  const custom = state.beginSave('custom-size.png', { mode: 'custom', width: 160, height: 100 });
+  assert.equal(state.finishSave(custom, await app.callServerTool({ name: 'dither_render', arguments: custom.request })), true);
+  const customPNG = await readFile(path.join(workspace, 'custom-size.png'));
+  assert.equal(customPNG.readUInt32BE(16), 160); assert.equal(customPNG.readUInt32BE(20), 100);
+  await writeFile(path.join(workspace, 'source.png'), customPNG);
+  const stale = state.beginSave('stale.png');
+  const mismatch = await app.callServerTool({ name: 'dither_render', arguments: stale.request });
+  assert.equal(mismatch.structuredContent.error.code, 'source_changed');
+  assert.equal(state.finishSave(stale, mismatch), false); assert.equal(state.canSave, false);
+  assert.equal((await readdir(workspace)).includes('stale.png'), false);
+  const fresh = state.beginPreview();
+  assert.equal(state.finishPreview(fresh, await app.callServerTool({ name: 'dither_studio', arguments: fresh.request })), true);
+  assert.notEqual(state.rendered.sourceSHA256, initial.structuredContent.source_sha256);
+  assert.equal(state.canSave, true);
+
 });

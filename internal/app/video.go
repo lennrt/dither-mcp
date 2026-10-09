@@ -54,7 +54,7 @@ func (s *Service) video(ctx context.Context, q VideoRequest) (Artifact, error) {
 	if q.DPI != 0 {
 		return Artifact{}, errors.New("video does not support dpi metadata")
 	}
-	input, err := s.read(q.Input, MaxBytes)
+	input, err := s.readExpected(q.Input, q.ExpectedSourceSHA256, "source")
 	if err != nil {
 		return Artifact{}, err
 	}

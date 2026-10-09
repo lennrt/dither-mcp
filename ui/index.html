@@ -23,7 +23,15 @@
         <div class="canvas-footer"><span id="dimensions">— × — px</span><div class="zoom-controls" role="group" aria-label="Preview zoom"><button type="button" class="quiet selected" data-zoom="fit" aria-pressed="true">Fit</button><button type="button" class="quiet" data-zoom="1" aria-pressed="false">1×</button><button type="button" class="quiet" data-zoom="2" aria-pressed="false">2×</button><button type="button" class="quiet" data-zoom="4" aria-pressed="false">4×</button></div></div>
         <p class="preview-hint" id="preview-hint">Previewing reads the source image. Save creates a new file.</p>
         <div class="status-row"><span id="status-dot" class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite">Connecting to your host…</p></div>
-        <form id="save-form" class="save-form"><label for="output">Save the preview</label><div class="save-line"><input id="output" name="output" placeholder="artwork/dithered.png" autocomplete="off" spellcheck="false" aria-describedby="save-note"><button id="save" class="secondary" type="button" disabled>Save image <span aria-hidden="true">↗</span></button></div><p id="save-note">New workspace path · the file extension chooses the format.</p></form>
+        <form id="save-form" class="save-form">
+          <fieldset id="export-settings" disabled>
+            <label for="export-size" class="small-label">Export size</label>
+            <select id="export-size" aria-describedby="export-note"><option id="size-preview" value="preview">Preview</option><option id="size-source" value="source">Source</option><option value="custom">Custom dimensions</option></select>
+            <div id="custom-size" class="pair" hidden><label for="export-width">Export width<input id="export-width" type="number" min="1" step="1" inputmode="numeric" placeholder="Width in pixels"></label><label for="export-height">Export height<input id="export-height" type="number" min="1" step="1" inputmode="numeric" placeholder="Height in pixels"></label></div>
+            <p id="export-note" aria-live="polite">Apply preview to choose an export size.</p>
+          </fieldset>
+          <label for="output" class="small-label">Output path</label><div class="save-line"><input id="output" name="output" placeholder="artwork/dithered.png" autocomplete="off" spellcheck="false" aria-describedby="save-note"><button id="save" class="secondary" type="button" disabled>Save image <span aria-hidden="true">↗</span></button></div><p id="save-note">New workspace path · the file extension chooses the format.</p>
+        </form>
       </section>
       <form id="controls" class="controls" aria-label="Dither settings">
         <fieldset id="settings" disabled>

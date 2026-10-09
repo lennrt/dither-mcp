@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-09",
+  "host": "@modelcontextprotocol/inspector",
+  "version": "2.10.1",
+  "transport": "stdio",
+  "node": "v24.19.0",
+  "browser": "151.0.7922.34",
+  "source": "docs/assets/source/moon-garden.png (isolated copy)",
+  "appInfo": {
+    "hasApp": true,
+    "toolName": "dither_studio",
+    "resourceUri": "ui://dither/studio.html",
+    "visibility": [
+      "model",
+      "app"
+    ],
+    "csp": {
+      "baseUriDomains": [],
+      "connectDomains": [],
+      "frameDomains": [],
+      "resourceDomains": [
+        "data:"
+      ]
+    },
+    "permissions": {},
+    "prefersBorder": true,
+    "resourceMimeType": "text/html;profile=mcp-app"
+  },
+  "checks": [
+    "Official Inspector CLI negotiates Apps and reads the studio resource over Go stdio",
+    "Published web Apps tab renders initial PNG and complete catalogs without writing files",
+    "App-initiated studio preview and guarded PNG save work through Inspector serverTools",
+    "Custom 1200 by 800 export is independent of the 512px preview",
+    "Changed source invalidates Save and leaves no stale export"
+  ],
+  "errors": [],
+  "appExternalRequests": [],
+  "blockedHostRequests": [
+    "fonts.googleapis.com"
+  ],
+  "screenshot": "assets/studio-inspector.png",
+  "limits": "Inspector shell Google Fonts requests were fulfilled locally with empty CSS; no external request was allowed. Only the published official Inspector and this repository embedding example were executed. Other host entries are documentation-backed, not locally tested."
+}

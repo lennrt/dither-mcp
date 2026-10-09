@@ -35,15 +35,17 @@ type RecipeSaveRequest struct {
 	Recipe Recipe `json:"recipe" jsonschema:"Validate and save this version-1 recipe. The service preserves image masks without storing their source paths."`
 }
 type RenderRequest struct {
-	Input     string        `json:"input" jsonschema:"Read this local source relative to the workspace. Video expects a supported container. Other image operations use dither_catalog input_formats."`
-	Output    string        `json:"output" jsonschema:"Create this output relative to the workspace. The path must not exist. Its extension selects the format unless format overrides it."`
-	Recipe    string        `json:"recipe,omitempty" jsonschema:"Load this saved JSON recipe relative to the workspace. A saved recipe must be used without inline options, palette, or colors."`
-	Palette   string        `json:"palette,omitempty" jsonschema:"Choose a built-in palette ID. Use dither_palettes to discover IDs. Omit colors when this field is present."`
-	Colors    []string      `json:"colors,omitempty" jsonschema:"Supply 2 through 256 unique opaque hex colors instead of palette. Each color accepts RGB or RRGGBB with an optional leading #."`
-	Options   engine.Config `json:"options,omitempty" jsonschema:"Apply these engine settings. A saved recipe cannot be combined with inline options."`
-	MaskInput string        `json:"mask_input,omitempty" jsonschema:"Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha >= 0.5 selects pixels on the reduced grid."`
-	Format    string        `json:"format,omitempty" jsonschema:"Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."`
-	DPI       int           `json:"dpi,omitempty" jsonschema:"Set PNG print metadata from 36 through 2400 DPI. Omission or zero leaves metadata unspecified. Animation and video require zero."`
+	Input                string        `json:"input" jsonschema:"Read this local source relative to the workspace. Video expects a supported container. Other image operations use dither_catalog input_formats."`
+	Output               string        `json:"output" jsonschema:"Create this output relative to the workspace. The path must not exist. Its extension selects the format unless format overrides it."`
+	Recipe               string        `json:"recipe,omitempty" jsonschema:"Load this saved JSON recipe relative to the workspace. A saved recipe must be used without inline options, palette, or colors."`
+	Palette              string        `json:"palette,omitempty" jsonschema:"Choose a built-in palette ID. Use dither_palettes to discover IDs. Omit colors when this field is present."`
+	Colors               []string      `json:"colors,omitempty" jsonschema:"Supply 2 through 256 unique opaque hex colors instead of palette. Each color accepts RGB or RRGGBB with an optional leading #."`
+	Options              engine.Config `json:"options,omitempty" jsonschema:"Apply these engine settings. A saved recipe cannot be combined with inline options."`
+	MaskInput            string        `json:"mask_input,omitempty" jsonschema:"Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha >= 0.5 selects pixels on the reduced grid."`
+	ExpectedSourceSHA256 string        `json:"expected_source_sha256,omitempty" jsonschema:"Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."`
+	ExpectedMaskSHA256   string        `json:"expected_mask_sha256,omitempty" jsonschema:"Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."`
+	Format               string        `json:"format,omitempty" jsonschema:"Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."`
+	DPI                  int           `json:"dpi,omitempty" jsonschema:"Set PNG print metadata from 36 through 2400 DPI. Omission or zero leaves metadata unspecified. Animation and video require zero."`
 }
 type CompareRequest struct {
 	RenderRequest

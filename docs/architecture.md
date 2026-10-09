@@ -85,7 +85,7 @@ When dimensions are omitted, the preview fits within 512 × 512 pixels without e
 
 The tool's `_meta.ui.resourceUri` points to `ui://dither/studio.html`. This third resource uses `text/html;profile=mcp-app`. It embeds HTML, CSS, and JavaScript built with the official `@modelcontextprotocol/ext-apps` SDK. Development tools create the bundle. The Go binary embeds and serves it with no runtime Node.js process or external asset request.
 
-A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, apply read-only previews, and inspect the image and swatches. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that exact recipe and a user-selected new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
+A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, apply read-only previews, and inspect the image and swatches. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
 
 Hosts must support both MCP Apps and local stdio servers to display this view. Other hosts receive the PNG and structured JSON from `dither_studio`. The original 13 tools retain their existing tool results. See the [MCP Apps guide](mcp-apps.md) for the detailed host and verification contracts.
 
@@ -175,3 +175,7 @@ OpenSpec captures user-visible requirements and records their implementation cha
 - Read-only studio previews and explicit saves of the last successful recipe.
 
 [The specification guide](../spec/README.md) lists assumptions, executable scenarios, verification bounds, and corresponding Go tests. Passing models provide evidence about those models. They do not prove that Go, codecs, or the operating system refine them.
+
+## Guarded studio exports
+
+A studio preview returns SHA-256 fingerprints of the source and mask bytes it decoded. A save verifies the same captured buffers it will render. A mismatch creates no artifact and requires a fresh preview. Source-size export uses upright dimensions after crop; custom export requires both dimensions. The service enforces its usual dimension and pixel limits. The [embedding example](embedding.md) adds a separate loopback host with a narrow tool allowlist; it is optional and is not part of the Go server runtime.

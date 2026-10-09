@@ -66,7 +66,26 @@ export function decodePreview(result) {
   if (request.options.width !== data.width || request.options.height !== data.height) throw new Error('The preview settings do not match its dimensions.');
   const recipe = data.recipe;
   if (recipe?.version !== 1 || fingerprint(recipe.options) !== fingerprint(request.options) || (recipe.palette ?? '') !== (request.palette ?? '') || fingerprint(recipe.colors ?? []) !== fingerprint(request.colors ?? [])) throw new Error('The preview recipe does not match its settings.');
-  return { request, width: data.width, height: data.height, src: `data:image/png;base64,${image.data}`, algorithms: clone(meta.algorithms ?? []), palettes: clone(meta.palettes ?? []), recipe: clone(recipe) };
+  const validHash = (value) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  if (!validHash(data.source_sha256) || (request.mask_input ? !validHash(data.mask_sha256) : data.mask_sha256 !== undefined)) throw new Error('The preview needs valid source and mask fingerprints. Apply preview again.');
+  if (![data.source_width, data.source_height, data.export_limits?.max_width, data.export_limits?.max_height, data.export_limits?.max_pixels].every((value) => Number.isSafeInteger(value) && value > 0)) throw new Error('The preview needs source dimensions and export limits. Apply preview again.');
+  return { request, width: data.width, height: data.height, sourceWidth: data.source_width, sourceHeight: data.source_height, sourceSHA256: data.source_sha256, maskSHA256: data.mask_sha256, exportLimits: clone(data.export_limits), src: `data:image/png;base64,${image.data}`, algorithms: clone(meta.algorithms ?? []), palettes: clone(meta.palettes ?? []), recipe: clone(recipe) };
+}
+
+// Export size is separate from preview settings. Every other option stays intact.
+export function exportDimensions(preview, selection = { mode: 'preview' }) {
+  if (!preview) throw new Error('Apply preview to choose an export size.');
+  let width, height;
+  switch (selection.mode) {
+    case 'preview': ({ width, height } = preview); break;
+    case 'source': width = preview.sourceWidth; height = preview.sourceHeight; break;
+    case 'custom': ({ width, height } = selection); break;
+    default: throw new Error('Choose preview, source, or custom export size.');
+  }
+  if (![width, height].every((value) => Number.isSafeInteger(value) && value > 0)) throw new Error('Enter positive whole numbers for both export dimensions.');
+  const limits = preview.exportLimits;
+  if (width > limits.max_width || height > limits.max_height || width > Math.floor(limits.max_pixels / height)) throw new Error(`Export must fit within ${limits.max_width} × ${limits.max_height} px and ${limits.max_pixels.toLocaleString('en-US')} pixels in total.`);
+  return { width, height };
 }
 
 export class StudioState {
@@ -156,20 +175,32 @@ export class StudioState {
     this.status = `Preview ready · ${preview.width} × ${preview.height} px`;
     this.error = false;
   }
-  beginSave(output) {
+  beginSave(output, selection = { mode: 'preview' }) {
     if (!this.canSave) throw new Error('Apply the current preview before saving.');
     if (typeof output !== 'string' || !output.trim()) throw new Error('Enter a new output path relative to the workspace.');
-    const request = { ...clone(this.rendered.request), output: output.trim() };
+    const dimensions = exportDimensions(this.rendered, selection);
+    const request = { ...clone(this.rendered.request), output: output.trim(), expected_source_sha256: this.rendered.sourceSHA256 };
+    if (this.rendered.maskSHA256) request.expected_mask_sha256 = this.rendered.maskSHA256;
+    Object.assign(request.options, dimensions);
     const operation = { id: ++this.sequence, revision: this.revision, kind: 'save', request };
     this.pending = operation;
-    this.status = 'Saving the preview settings…';
+    this.status = `Saving ${dimensions.width} × ${dimensions.height} px…`;
     this.error = false;
     return clone(operation);
   }
   finishSave(operation, result) {
     if (!this.current(operation)) return false;
     this.pending = null;
-    if (result?.isError) { this.fail(new Error(toolError(result))); return false; }
+    if (result?.isError) {
+      const message = toolError(result);
+      const code = result?.structuredContent?.error?.code;
+      if (['source_changed', 'mask_changed'].includes(code) || /^(source_changed|mask_changed):/.test(message)) {
+        this.validPreview = false;
+        const changed = code || message.split(':')[0];
+        this.fail(new Error(`${changed === 'mask_changed' ? 'The image mask' : 'The source image'} changed or could not be read. Apply preview again before saving.`));
+      } else this.fail(new Error(message));
+      return false;
+    }
     const path = result?.structuredContent?.path;
     this.status = `Saved ${typeof path === 'string' ? path : operation.request.output}${this.dirty ? '. Apply your changed settings before saving again.' : ''}`;
     this.error = false;

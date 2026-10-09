@@ -249,12 +249,7 @@ func (s *Service) read(p string, limit int64) ([]byte, error) {
 	return b, nil
 }
 func (s *Service) decode(ctx context.Context, p string) (image.Image, []byte, string, error) {
-	b, err := s.read(p, MaxBytes)
-	if err != nil {
-		return nil, nil, "", err
-	}
-	im, f, err := decodeBytes(ctx, b)
-	return im, b, f, err
+	return s.decodeExpected(ctx, p, "", "source")
 }
 func decodeBytes(ctx context.Context, b []byte) (image.Image, string, error) {
 	im, format, _, err := decodeNormalized(ctx, b)
@@ -364,15 +359,23 @@ func (s *Service) loadRecipe(ctx context.Context, p string) (Recipe, error) {
 	return r, validateRecipe(ctx, r)
 }
 func (s *Service) config(ctx context.Context, q RenderRequest) (engine.Config, Recipe, error) {
+	c, r, _, err := s.configWithMaskDigest(ctx, q)
+	return c, r, err
+}
+
+func (s *Service) configWithMaskDigest(ctx context.Context, q RenderRequest) (engine.Config, Recipe, string, error) {
 	r := Recipe{Version: 1, Palette: q.Palette, Colors: q.Colors, Options: q.Options}
+	if err := validateSourceGuards(q); err != nil {
+		return engine.Config{}, r, "", err
+	}
 	if q.Recipe != "" {
 		if q.Palette != "" || len(q.Colors) > 0 || !reflect.DeepEqual(q.Options, engine.Config{}) {
-			return engine.Config{}, r, errors.New("recipe cannot be combined with inline palette/colors/options")
+			return engine.Config{}, r, "", errors.New("recipe cannot be combined with inline palette/colors/options")
 		}
 		var err error
 		r, err = s.loadRecipe(ctx, q.Recipe)
 		if err != nil {
-			return engine.Config{}, r, err
+			return engine.Config{}, r, "", err
 		}
 	}
 	if r.Palette == "" && len(r.Colors) == 0 {
@@ -383,24 +386,30 @@ func (s *Service) config(ctx context.Context, q RenderRequest) (engine.Config, R
 	}
 	p, err := engine.ResolvePalette(r.Palette, r.Colors)
 	if err != nil {
-		return engine.Config{}, r, err
+		return engine.Config{}, r, "", err
 	}
 	c := r.Options
 	c.Palette = p
+	maskSHA256 := ""
 	if q.MaskInput != "" {
-		im, _, _, err := s.decode(ctx, q.MaskInput)
+		im, b, _, err := s.decodeExpected(ctx, q.MaskInput, q.ExpectedMaskSHA256, "mask")
 		if err != nil {
-			return c, r, fmt.Errorf("mask: %w", err)
+			var changed *InputChangedError
+			if errors.As(err, &changed) {
+				return c, r, "", err
+			}
+			return c, r, "", fmt.Errorf("mask: %w", err)
 		}
 		if c.Mask != nil && c.Mask.Shape != "image" {
-			return c, r, errors.New("mask_input requires options.mask.shape=image or no inline mask")
+			return c, r, "", errors.New("mask_input requires options.mask.shape=image or no inline mask")
 		}
+		maskSHA256 = digest(b)
 		c.Mask = &engine.Mask{Shape: "image", Image: im}
 		if r.Options.Mask != nil {
 			c.Mask.Invert = r.Options.Mask.Invert
 		}
 	}
-	return c, r, nil
+	return c, r, maskSHA256, nil
 }
 
 func outputFormat(q RenderRequest) (string, error) {
@@ -433,7 +442,7 @@ func (s *Service) render(ctx context.Context, q RenderRequest) (Artifact, error)
 	if err != nil {
 		return Artifact{}, err
 	}
-	im, _, _, err := s.decode(ctx, q.Input)
+	im, _, _, err := s.decodeExpected(ctx, q.Input, q.ExpectedSourceSHA256, "source")
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -551,7 +560,7 @@ func (s *Service) compare(ctx context.Context, q CompareRequest) (CompareResult,
 	if c.Width == 0 && c.Height == 0 {
 		c.Width = 320
 	}
-	im, _, _, err := s.decode(ctx, q.Input)
+	im, _, _, err := s.decodeExpected(ctx, q.Input, q.ExpectedSourceSHA256, "source")
 	if err != nil {
 		return CompareResult{}, err
 	}

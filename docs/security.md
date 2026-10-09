@@ -29,11 +29,11 @@ Batch results commit independently. A later failure or cancellation does not rev
 
 The [studio](mcp-apps.md) is an optional view in a supporting MCP host. The Go binary serves one embedded HTML resource, `ui://dither/studio.html`, with MIME type `text/html;profile=mcp-app`. Its CSS and official MCP Apps SDK are bundled. It loads no external assets, uses no CDN, and requires no runtime Node.js process or additional server listener.
 
-The host controls the app's sandbox and mediates tool calls through the MCP Apps bridge. App requests still pass through the service's rooted paths, strict arguments, admission queue, cancellation, and resource limits. The resource does not request camera, microphone, or external network access.
+The host controls the app's sandbox and mediates tool calls through the MCP Apps bridge. App requests still pass through the service's rooted paths, strict arguments, admission queue, cancellation, and resource limits. The resource requests `data:` resources for its inline PNG previews. It requests no camera, microphone, external resource origins, or network connections.
 
 `dither_studio` is read-only. It creates an in-memory PNG and returns the resolved recipe. It accepts no destination and publishes no artifact. The default preview fits within 512 × 512 pixels without enlargement. Every preview stays within 1,024 pixels per axis and 2 MiB PNG.
 
-Only **Save image** in the app requests a file write. The app calls `dither_render` with a new relative output path and the exact recipe from its last successful preview. Unsaved control changes and failed previews do not replace that recipe. The normal atomic publication rules protect existing destinations. The host continues to control authorization for tool calls.
+Only **Save image** in the app requests a file write. The app calls `dither_render` with a new relative output path and the accepted recipe, explicit export dimensions, and source/mask fingerprints. Unsaved control changes and failed previews do not replace that recipe. The normal atomic publication rules protect existing destinations. The host continues to control authorization for tool calls.
 
 ## Input metadata
 
@@ -74,3 +74,7 @@ Metadata includes relative paths and processing parameters. Keep logs and demo r
 Quint models specify finite abstractions of publication and quantization. Seeded simulation and mutation checks exercise those models. They do not exhaustively verify the Go implementation, filesystems, codecs, or FFmpeg.
 
 Go tests cover concrete security and image behavior. This includes publication collisions between two services, symlink escapes, GIF disposal, and format limits. The project has not undergone an independent penetration test or external security audit. See [testing](testing.md) for reproducible commands and evidence from this local build.
+
+## Guarded studio exports
+
+A studio preview returns SHA-256 fingerprints of the source and mask bytes it decoded. A save verifies the same captured buffers it will render. A mismatch creates no artifact and requires a fresh preview. Source-size export uses upright dimensions after crop; custom export requires both dimensions. The service enforces its usual dimension and pixel limits. The [embedding example](embedding.md) adds a separate loopback host with a narrow tool allowlist; it is optional and is not part of the Go server runtime.

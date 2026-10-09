@@ -9,6 +9,8 @@
     "Host theme changes, 370px host and 390px viewport without horizontal overflow",
     "Host cancellation invalidates saving and a fresh preview recovers",
     "Keyboard save works without sandbox form permission",
+    "Source-size and custom exports, pixel-budget validation, and unchanged preview size",
+    "Changed source creates no artifact, invalidates save, and requires a fresh preview",
     "Host without serverTools displays result and disables mutations",
     "Showcase studio navigation, all visible images loaded, desktop/mobile layout without overflow"
   ],
@@ -20,14 +22,15 @@
     "work/browser-check/studio-dark.png",
     "work/browser-check/studio-narrow-dark.png",
     "work/browser-check/studio-mobile.png",
+    "work/browser-check/studio-export-mobile.png",
     "work/browser-check/site-studio-desktop.png",
     "work/browser-check/site-studio-mobile.png",
     "work/browser-check/site-mobile.png"
   ],
-  "scope": "Chromium through the official SDK test host and real local Go server; does not establish compatibility with every third-party MCP host.",
+  "scope": "Chromium through the official SDK test host and real local Go server; external-client checks are recorded separately in hosts.md.",
   "playwright": "1.62.1",
   "published_screenshots": {
-    "mcp-app-studio.png": "ca3fce352eccc572ede173a3c85ae9a2f17dd648d513b6b2c20c614a36917e8a",
-    "mcp-app-studio-mobile.png": "ec918b352ce22168af75aa6509450b9b562223da9c237e63eeeac5c03c4b413d"
+    "mcp-app-studio.png": "aae94293b09bda354437d6929fbefe9b2cfff60bff0c12766bebc23e066c5318",
+    "mcp-app-studio-mobile.png": "5c97ece6fca391590e9f66cfb146143f8c24068dd9fb1cf78aaaefa118acf4da"
   }
 }

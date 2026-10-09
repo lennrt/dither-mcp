@@ -57,7 +57,7 @@ func TestStudioPreviewReplaysWithoutWriting(t *testing.T) {
 	zero := 0.0
 	q := StudioRequest{Input: "source.png", Colors: []string{"#152a39", "#efddc2"}, Options: engine.Config{Algorithm: "atkinson", Width: 36, PixelScale: 2, Contrast: &zero, Seed: 23, Crop: &engine.Rect{X: 4, Y: 2, Width: 48, Height: 32}, Effects: engine.Effects{Scanlines: .1}}}
 	r := studioCall(t, s, q)
-	if r.Width != 36 || r.Height != 24 || r.Recipe.Options.Contrast == nil || *r.Recipe.Options.Contrast != 0 || r.MIMEType != "image/png" {
+	if r.Width != 36 || r.Height != 24 || r.SourceWidth != 48 || r.SourceHeight != 32 || r.SourceSHA256 != digest(before) || r.MaskSHA256 != "" || r.ExportLimits != (StudioExportLimits{engine.MaxDimension, engine.MaxDimension, engine.MaxPixels}) || r.Recipe.Options.Contrast == nil || *r.Recipe.Options.Contrast != 0 || r.MIMEType != "image/png" {
 		t.Fatalf("unexpected preview: %+v", r.StudioMetadata)
 	}
 	files, _ := os.ReadDir(root)
@@ -72,7 +72,7 @@ func TestStudioPreviewReplaysWithoutWriting(t *testing.T) {
 	if again := studioCall(t, s, canonical); again.Data != r.Data {
 		t.Fatal("canonical preview is not deterministic")
 	}
-	render := RenderRequest{Input: canonical.Input, Output: "saved.png", Colors: canonical.Colors, Palette: canonical.Palette, Options: canonical.Options, MaskInput: canonical.MaskInput}
+	render := RenderRequest{Input: canonical.Input, Output: "saved.png", Colors: canonical.Colors, Palette: canonical.Palette, Options: canonical.Options, MaskInput: canonical.MaskInput, ExpectedSourceSHA256: r.SourceSHA256}
 	b, _ := json.Marshal(render)
 	if _, err := s.Do(context.Background(), "dither_render", b); err != nil {
 		t.Fatal(err)
@@ -140,10 +140,11 @@ func TestStudioImageMaskReplay(t *testing.T) {
 	s, root := studioFixture(t, 32, 24)
 	q := StudioRequest{Input: "source.png", MaskInput: "source.png", Palette: "gameboy", Options: engine.Config{Mask: &engine.Mask{Shape: "image", Invert: true}}}
 	r := studioCall(t, s, q)
-	if r.MaskInput != q.MaskInput || !r.Recipe.Options.Mask.Invert {
+	source, _ := os.ReadFile(filepath.Join(root, q.Input))
+	if r.MaskInput != q.MaskInput || r.MaskSHA256 != digest(source) || r.SourceSHA256 != digest(source) || !r.Recipe.Options.Mask.Invert {
 		t.Fatal("preview discarded image mask settings")
 	}
-	b, _ := json.Marshal(RenderRequest{Input: q.Input, Output: "mask.png", Palette: r.Recipe.Palette, Options: r.Recipe.Options, MaskInput: r.MaskInput})
+	b, _ := json.Marshal(RenderRequest{Input: q.Input, Output: "mask.png", Palette: r.Recipe.Palette, Options: r.Recipe.Options, MaskInput: r.MaskInput, ExpectedSourceSHA256: r.SourceSHA256, ExpectedMaskSHA256: r.MaskSHA256})
 	if _, err := s.Do(context.Background(), "dither_render", b); err != nil {
 		t.Fatal(err)
 	}

@@ -9,7 +9,7 @@ The live `dither_catalog` and `dither_palettes` results are the authoritative li
 | Capability | dither-mcp implementation | Boundary |
 |---|---|---|
 | Agent interface | 14 MCP tools, three resources, three prompts. Matching CLI workflows | Stdio transport. Host controls model interaction |
-| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Apply preview, zoom, inspect swatches, and explicitly save an image | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save replays the last successful recipe |
+| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Apply preview, zoom, inspect swatches, and explicitly save an image | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save preserves accepted settings with explicit export dimensions and checks source/mask fingerprints |
 | Local processing | Go image engine, rooted local files, immutable output artifacts | Preview images and metadata go to the connected client |
 | Error diffusion | Floyd–Steinberg, false Floyd–Steinberg, Jarvis–Judice–Ninke, Atkinson, Stucki, Burkes, three Sierra variants, simple 2D, Steven Pigeon, Fan, two Shiau–Fan variants, Stevenson–Arce | Implemented kernels. Not a bit-exact clone of another application |
 | Curve diffusion | Riemersma with Hilbert traversal | Fixed documented error-history implementation |

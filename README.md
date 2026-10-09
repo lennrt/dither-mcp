@@ -43,9 +43,13 @@ Ask your agent to open `dither_studio` for a local image. In a host that support
 
 Choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
 
-Previews run in memory and create no file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Every preview stays within 1,024 pixels per axis and 2 MiB PNG. When you select **Save image**, the studio calls `dither_render` with the exact recipe from the last successful preview and a new relative output path. The filename extension selects the output format.
+Previews run in memory and create no file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Every preview stays within 1,024 pixels per axis and 2 MiB PNG. Choose **Preview**, **Source**, or **Custom dimensions** for export, then enter a new relative output path. Preview size reproduces the accepted settings. Source size uses the upright image dimensions after cropping. Custom size requires both dimensions. A different resolution can change the dither pattern. The studio preserves all other settings and checks source and mask fingerprints before saving. The filename extension selects the output format.
 
-The Go binary bundles the complete app and official MCP Apps SDK. It keeps the stdio setup and needs no runtime Node.js process, CDN, or external asset service. Hosts without Apps support receive the PNG preview and structured JSON. Read the [MCP Apps guide](docs/mcp-apps.md) for setup, the host contract, and verified behavior.
+The Go binary bundles the complete app and official MCP Apps SDK. It keeps the stdio setup and needs no runtime Node.js process, CDN, or external asset service. Hosts without Apps support receive the PNG preview and structured JSON.
+
+The studio is verified in MCP Inspector 2.10.1 and the included embedding host. The host guide records the exact checks and versions. Read the [MCP Apps guide](docs/mcp-apps.md) and [host setup and compatibility](docs/hosts.md).
+
+To embed the studio in your own application, use the supported [AppBridge example](docs/embedding.md). It connects a browser view to the local Go server over stdio. GitHub Pages serves the separate showcase; interactive local processing needs a host and backend.
 
 ## Supported files
 
@@ -230,7 +234,7 @@ A new output path preserves your earlier work. Give each variation a separate na
 | Print workflows | PNG resolution metadata and spot-color separation plates in a ZIP |
 | Motion | Source GIF frames, generated GIF loops, sprite sheets, and bounded local video processing with FFmpeg |
 | Agent workflows | Inspect, discover, compare, batch, save, and reload recipes |
-| MCP Apps studio | Choose settings, apply an in-memory preview, zoom, inspect swatches, and explicitly save an image in supporting hosts |
+| MCP Apps studio | Choose settings, apply an in-memory preview, and export at preview, source, or custom size with source-change checks |
 
 The engine preserves source alpha. Diffusion stops at transparent pixels and mask boundaries. Regions outside the mask retain adjusted source colors. Post-effects can introduce colors beyond the selected palette. See the [feature matrix](docs/feature-matrix.md) for precise coverage and the [architecture](docs/architecture.md) for pipeline order and boundaries.
 

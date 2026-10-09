@@ -4,6 +4,7 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/lennrt/dither-mcp/internal/app"
@@ -23,7 +24,7 @@ var Tools = []ToolInfo{
 	{"dither_inspect", "Inspect upright image dimensions, format, frames, alpha, byte size, SHA256, and input normalization. The normalization object reports stored dimensions, EXIF orientation, and the selected color declaration.", true},
 	{"dither_preview", "Return a bounded PNG preview for visual inspection. The tool sends the preview to the MCP client.", true},
 	{"dither_palette_extract", "Extract 2..256 representative sRGB colors deterministically from a normalized local image.", true},
-	{"dither_render", "Apply a deterministic recipe to the first frame of a local image. The tool creates a new output and returns its dimensions, hash, and recipe. Use dither_preview to inspect the result.", false},
+	{"dither_render", "Apply a deterministic recipe to the first frame of a local image. The tool creates a new output and returns its dimensions, hash, and recipe. Optional source and mask SHA256 guards require the exact input bytes from a studio preview. A changed or unreadable guarded input creates no output and returns source_changed or mask_changed. Use dither_preview to inspect the result.", false},
 	{"dither_compare", "Render 1..12 algorithms into a contact sheet with exact cell coordinates. Cells default to 320 pixels wide.", false},
 	{"dither_batch", "Render 1..32 requests in sequence. The tool publishes each successful output separately and reports each failed item.", false},
 	{"dither_animate", "Process source GIF frames or generate wave, orbit, pulse, noise, or palette-cycle motion. Export a GIF or PNG sprite sheet. GIF input defaults to source processing, which preserves frame count, delays, and loop count. Other input defaults to wave motion with 24 frames at 12 fps. Width defaults to 480 pixels when both dimensions are omitted or zero.", false},
@@ -31,7 +32,7 @@ var Tools = []ToolInfo{
 	{"dither_separate", "Create a ZIP with one black-on-white PNG plate per palette ink and a manifest. The tool supports up to 16 inks. The recipe must omit masks and post-effects.", false},
 	{"dither_recipe_save", "Validate a version-1 JSON recipe. Save it to a new relative path without replacing an existing file.", false},
 	{"dither_recipe_load", "Read and validate a saved version-1 JSON recipe.", true},
-	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
+	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. Metadata includes source and mask byte fingerprints, upright source dimensions after cropping, and export limits. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
 }
 
 func New(svc *app.Service) *server.MCPServer {
@@ -95,7 +96,13 @@ func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 		}
 		v, err := svc.Do(ctx, info.Name, b)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			result := mcp.NewToolResultError(err.Error())
+			var changed *app.InputChangedError
+			if errors.As(err, &changed) {
+				result = mcp.NewToolResultError(changed.Error())
+				result.StructuredContent = map[string]any{"error": changed}
+			}
+			return result, nil
 		}
 		if studio, ok := v.(app.StudioResult); ok {
 			return studioResult(ctx, studio), nil
@@ -117,7 +124,7 @@ func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 
 const guide = `Still-image inputs normalize EXIF orientation and supported color declarations to upright sRGB before cropping, resizing, and palette extraction. Image masks use the same normalization. Inspect normalization metadata and use upright crop coordinates. Unsupported profiles return actionable errors. dither_catalog media.still.normalization lists profile support and limits.
 
-Use dither_studio to explore a recipe in memory. MCP Apps hosts can display its optional interactive panel. Other hosts receive a PNG and structured recipe. Studio previews fit within 1024 pixels per side and default to 512. Saving is a separate dither_render call with a new output path. The studio saves its preview dimensions. Use dither_render directly for a larger export.
+Use dither_studio to explore a recipe in memory. MCP Apps hosts can display its optional interactive panel. Other hosts receive a PNG and structured recipe. Studio previews fit within 1024 pixels per side and default to 512. Saving is a separate dither_render call with a new output path. Replay the preview recipe with expected_source_sha256 from source_sha256 and, for an image mask, expected_mask_sha256 from mask_sha256. To export at another size, change only options.width and options.height. The studio's source_width and source_height describe the upright source after cropping. Export dimensions must fit export_limits. A source_changed or mask_changed error requires a fresh preview before export.
 
 Paths are relative to the configured workspace. The service uses local files without URL imports, uploads, telemetry, or remote services. dither_preview sends image content to the MCP client. The client's data policy applies separately.
 

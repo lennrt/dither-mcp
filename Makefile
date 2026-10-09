@@ -1,7 +1,7 @@
 .PHONY: help build fmt fmtcheck vet test race fuzz verify spec-install spec-check demo-smoke demo showcase docs-check bench vuln clean
 
 help:
-	@printf '%s\n' 'build          Build bin/dither-mcp.' 'verify         Check formatting, code, docs, schemas, and MCP workflows.' 'palette-docs   Generate the palette reference from the engine catalog.' 'spec-install   Install the pinned OpenSpec and Quint development tools.' 'spec-check     Check OpenSpec specifications and Quint models.' 'fuzz           Run bounded engine, request, metadata, and profile fuzz tests.' 'vuln           Check dependencies with govulncheck.' 'showcase       Generate the original artwork and gallery.' 'demo           Record four VHS terminal demos.' 'bench          Run engine benchmarks.' 'clean          Remove only local binaries and coverage files.'
+	@printf '%s\n' 'build          Build bin/dither-mcp.' 'verify         Check formatting, code, docs, schemas, and MCP workflows.' 'ui-browser     Verify the embedded studio in Chromium.' 'embedding-test Check the reusable host against real Go stdio.' 'embedding-browser Check host boundaries and browser embedding.' 'palette-docs   Generate the palette reference from the engine catalog.' 'spec-install   Install the pinned OpenSpec and Quint development tools.' 'spec-check     Check OpenSpec specifications and Quint models.' 'fuzz           Run bounded engine, request, metadata, and profile fuzz tests.' 'vuln           Check dependencies with govulncheck.' 'showcase       Generate the original artwork and gallery.' 'demo           Record four VHS terminal demos.' 'bench          Run engine benchmarks.' 'clean          Remove only local binaries and coverage files.'
 build:
 	go build -trimpath -o bin/dither-mcp ./cmd/dither-mcp
 fmt:
@@ -19,7 +19,7 @@ fuzz:
 	go test ./internal/app -run '^$$' -fuzz FuzzStrictJSON -fuzztime 5s -parallel 2
 	go test ./internal/imagemeta -run '^$$' -fuzz FuzzMetadata -fuzztime 5s -parallel 2
 	go test ./internal/colorprofile -run '^$$' -fuzz FuzzICCProfile -fuzztime 5s -parallel 2
-verify: fmtcheck vet test race build docs-check schemas-check palette-docs-check demo-smoke ui-verify
+verify: fmtcheck vet test race build docs-check schemas-check palette-docs-check demo-smoke ui-verify embedding-test
 spec-install:
 	pnpm install --frozen-lockfile --ignore-scripts
 spec-check:
@@ -63,3 +63,9 @@ ui-test: build
 ui-verify: ui-check ui-test
 ui-browser: build ui-check
 	node ui/browser-check.mjs
+
+.PHONY: embedding-test embedding-browser
+embedding-test: build
+	node --test examples/embedding/*.test.mjs
+embedding-browser: build ui-check
+	node examples/embedding/browser-check.mjs

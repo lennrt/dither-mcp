@@ -25,12 +25,23 @@ type StudioRequest struct {
 }
 
 type StudioMetadata struct {
-	Path      string `json:"path"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
-	MIMEType  string `json:"mime_type"`
-	Recipe    Recipe `json:"recipe" jsonschema:"Replay this exact preview recipe with dither_render. Its dimensions describe the preview, not a full-resolution export."`
-	MaskInput string `json:"mask_input,omitempty"`
+	Path         string             `json:"path"`
+	Width        int                `json:"width"`
+	Height       int                `json:"height"`
+	MIMEType     string             `json:"mime_type"`
+	Recipe       Recipe             `json:"recipe" jsonschema:"Replay this exact preview recipe with dither_render. Its dimensions describe the preview, not a full-resolution export."`
+	MaskInput    string             `json:"mask_input,omitempty"`
+	SourceSHA256 string             `json:"source_sha256" jsonschema:"SHA256 of the exact source file bytes decoded for this preview. Pass it as expected_source_sha256 when exporting."`
+	MaskSHA256   string             `json:"mask_sha256,omitempty" jsonschema:"SHA256 of the exact mask file bytes decoded for this preview. Present when mask_input is set. Pass it as expected_mask_sha256 when exporting."`
+	SourceWidth  int                `json:"source_width" jsonschema:"Width of the upright normalized source after the accepted crop and before preview resizing. Use this width for a source-size export."`
+	SourceHeight int                `json:"source_height" jsonschema:"Height of the upright normalized source after the accepted crop and before preview resizing. Use this height for a source-size export."`
+	ExportLimits StudioExportLimits `json:"export_limits" jsonschema:"The engine enforces these output dimensions and total pixel limit on exports."`
+}
+
+type StudioExportLimits struct {
+	MaxWidth  int `json:"max_width"`
+	MaxHeight int `json:"max_height"`
+	MaxPixels int `json:"max_pixels"`
 }
 
 type StudioResult struct {
@@ -50,14 +61,14 @@ func (s *Service) studio(ctx context.Context, q StudioRequest) (StudioResult, er
 	if q.Options.Seed < -maxSafeInteger || q.Options.Seed > maxSafeInteger {
 		return StudioResult{}, errors.New("studio seed must be an integer from -9007199254740991 through 9007199254740991")
 	}
-	cfg, recipe, err := s.config(ctx, RenderRequest{Input: q.Input, Palette: q.Palette, Colors: q.Colors, Options: q.Options, MaskInput: q.MaskInput})
+	cfg, recipe, maskSHA256, err := s.configWithMaskDigest(ctx, RenderRequest{Input: q.Input, Palette: q.Palette, Colors: q.Colors, Options: q.Options, MaskInput: q.MaskInput})
 	if err != nil {
 		return StudioResult{}, err
 	}
 	if err := engine.Validate(cfg); err != nil {
 		return StudioResult{}, err
 	}
-	im, _, _, err := s.decode(ctx, q.Input)
+	im, source, _, err := s.decode(ctx, q.Input)
 	if err != nil {
 		return StudioResult{}, err
 	}
@@ -93,5 +104,14 @@ func (s *Service) studio(ctx context.Context, q StudioRequest) (StudioResult, er
 	if err := ctx.Err(); err != nil {
 		return StudioResult{}, err
 	}
-	return StudioResult{StudioMetadata: StudioMetadata{Path: q.Input, Width: cfg.Width, Height: cfg.Height, MIMEType: "image/png", Recipe: recipe, MaskInput: q.MaskInput}, Data: base64.StdEncoding.EncodeToString(buf.Bytes())}, nil
+	return StudioResult{
+		StudioMetadata: StudioMetadata{
+			Path: q.Input, Width: cfg.Width, Height: cfg.Height,
+			MIMEType: "image/png", Recipe: recipe, MaskInput: q.MaskInput,
+			SourceSHA256: digest(source), MaskSHA256: maskSHA256,
+			SourceWidth: w, SourceHeight: h,
+			ExportLimits: StudioExportLimits{MaxWidth: engine.MaxDimension, MaxHeight: engine.MaxDimension, MaxPixels: engine.MaxPixels},
+		},
+		Data: base64.StdEncoding.EncodeToString(buf.Bytes()),
+	}, nil
 }

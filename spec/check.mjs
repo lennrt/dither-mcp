@@ -42,7 +42,7 @@ function run(name, args, expected = 0) {
   if (args[0] === 'run') {
     record.witnesses = [...output.matchAll(/(\w+) was witnessed in (\d+) trace\(s\) out of (\d+) explored/g)]
       .map(([, name, count, samples]) => ({ name, count: Number(count), samples: Number(samples) }));
-    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : null;
+    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : args.includes('--step=exportStep') ? 'capturedBeforeDiskChange' : null;
     if (requiredWitness && !record.witnesses.some(w => w.name === requiredWitness && w.count > 0)) {
       process.stderr.write(output);
       throw new Error(`Coverage schedule never reached ${requiredWitness}`);
@@ -58,6 +58,7 @@ const modelWitnesses = {
   palette_discovery: ['filteredNonempty', 'emptyMatch', 'completeTraversal', 'beyondEnd'],
   normalization: ['normalizedComplete', 'swappedAxes', 'rejectedMetadata', 'canceledDuringNormalization'],
   mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent'],
+  studio_export: ['sourceSizedExport', 'customSizedExport', 'changedInputRejected', 'capturedBeforeDiskChange'],
 };
 for (const [model, witnesses] of Object.entries(modelWitnesses)) {
   run('quint', ['typecheck', `spec/${model}.qnt`]);
@@ -68,11 +69,14 @@ run('quint', ['run', 'spec/quantization.qnt', '--backend=typescript', '--seed=20
 run('quint', ['run', 'spec/palette_discovery.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initBrowse', '--step=browseStep', '--verbosity=1', '--witnesses', 'completeTraversal']);
 run('quint', ['run', 'spec/normalization.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initNormalize', '--step=normalizeStep', '--verbosity=1', '--witnesses', 'normalizedComplete']);
 run('quint', ['run', 'spec/mcp_apps.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initSave', '--step=saveStep', '--verbosity=1', '--witnesses', 'savedCurrent']);
+run('quint', ['run', 'spec/studio_export.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=20', '--invariant=safety', '--init=initExport', '--step=exportStep', '--verbosity=1', '--witnesses', 'sourceSizedExport', 'capturedBeforeDiskChange']);
 // Remove the no-clobber guard in an isolated temporary copy. The negative test
 // must fail because this regression permits replacement of existing outputs.
 // A second mutation overlaps pages to challenge ordered complete enumeration.
 // A third removes orientation readiness before downstream processing.
 // Studio mutations remove the dirty guard, accept stale results, or write on preview.
+// Export mutations bypass source/mask guards, reread paths after validation,
+// retain invalidated previews, alter options/size, or ignore the output area limit.
 const temp = mkdtempSync(path.join(os.tmpdir(), 'dither-spec-mutation-'));
 try {
   for (const mutation of [
@@ -82,6 +86,14 @@ try {
     { model: 'mcp_apps', before: 's.accepted >= 0, s.acceptedRevision == s.revision', after: 's.accepted >= 0' },
     { model: 'mcp_apps', before: 'val current = id == s.pending and s.requested.get(id) == s.revision', after: 'val current = true' },
     { model: 'mcp_apps', before: 'recipe: if (accept) s.requested.get(id) else s.recipe,', after: 'recipe: if (accept) s.requested.get(id) else s.recipe, writes: s.writes + 1,' },
+    { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readMask == s.request.mask' },
+    { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readSource == s.request.source' },
+    { model: 'studio_export', before: 'decodedSource: s.readSource,', after: 'decodedSource: s.source,' },
+    { model: 'studio_export', before: 'decodedMask: s.readMask, ...s', after: 'decodedMask: if (s.request.masked) s.mask else -1, ...s' },
+    { model: 'studio_export', before: 'accepted: if (matched) s.accepted else false,', after: 'accepted: s.accepted,' },
+    { model: 'studio_export', before: 'recipe: s.recipe, acceptedRecipe: s.recipe,', after: 'recipe: s.recipe + 1, acceptedRecipe: s.recipe,' },
+    { model: 'studio_export', before: 'else if (s.mode == "source") SourceWidth else s.customWidth', after: 'else if (s.mode == "source") PreviewWidth else s.customWidth' },
+    { model: 'studio_export', before: 'width * height <= MaxPixels', after: 'true' },
   ]) {
     const source = readFileSync(path.join(root, `spec/${mutation.model}.qnt`), 'utf8');
     if (!source.includes(mutation.before)) throw new Error(`Mutation anchor missing in ${mutation.model}`);
@@ -94,7 +106,7 @@ try {
 const hashes = Object.fromEntries(Object.keys(modelWitnesses).map(model => `${model}.qnt`).map(name => [name,
   createHash('sha256').update(readFileSync(path.join(root, 'spec', name))).digest('hex')]));
 const report = {
-  scope: 'Strict OpenSpec validation, finite Quint run tests, seeded bounded simulation, and six negative mutation checks. Not exhaustive verification or a proof of Go or UI refinement.',
+  scope: `Strict OpenSpec validation, finite Quint run tests, seeded bounded simulation, and ${records.filter(r => r.expected !== 0).length} negative mutation checks. Not exhaustive verification or a proof of Go or UI refinement.`,
   versions: { openspec: '1.14.0', quint: '0.33.0' }, seed: '20261003', source_sha256: hashes, checks: records,
   totals: {
     openspec_items: records.find(r => r.tool === 'openspec').passed,

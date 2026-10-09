@@ -1,5 +1,5 @@
 import { App, PostMessageTransport, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
-import { StudioState, clone, parseColors, studioRequest } from './state.mjs';
+import { StudioState, clone, exportDimensions, parseColors, studioRequest } from './state.mjs';
 
 const app = new App({ name: 'Dither studio', version: '0.1.0' }, {}, { autoResize: true });
 const state = new StudioState();
@@ -93,7 +93,8 @@ function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
   $('settings').disabled = !state.draft || state.pending?.kind === 'save';
   $('apply').disabled = !state.canPreview;
-  $('save').disabled = !state.canSave || jsonDirty || customDirty || !$('output').value.trim();
+  const exportValid = renderExport();
+  $('save').disabled = !state.canSave || jsonDirty || customDirty || !exportValid || !$('output').value.trim();
   $('output').disabled = state.pending?.kind === 'save';
   $('cancel').hidden = state.pending?.kind !== 'preview';
   $('status').textContent = state.status;
@@ -108,8 +109,33 @@ function render(sync = false) {
     image.hidden = false; $('empty').hidden = true;
     image.alt = `Dithered preview of ${state.rendered.request.input.split(/[\\/]/).pop()}, ${state.rendered.width} by ${state.rendered.height} pixels`;
     $('dimensions').textContent = `${state.rendered.width} × ${state.rendered.height} px`;
-    $('preview-hint').textContent = dirty ? 'The image shows the last applied settings. Apply preview to see your changes.' : 'Save uses these exact preview dimensions and settings.';
+    $('preview-hint').textContent = dirty ? 'The image shows the last applied settings. Apply preview to see your changes.' : 'Choose an export size below. Save checks that the source and mask still match this preview.';
     setZoom(zoom);
+  }
+}
+function exportSelection() {
+  return { mode: $('export-size').value, width: Number($('export-width').value), height: Number($('export-height').value) };
+}
+function renderExport() {
+  $('export-settings').disabled = !state.rendered || state.busy;
+  $('custom-size').hidden = $('export-size').value !== 'custom';
+  if (state.rendered) {
+    const value = state.rendered;
+    $('size-preview').textContent = `Preview · ${value.width} × ${value.height} px`;
+    $('size-source').textContent = `Source · ${value.sourceWidth} × ${value.sourceHeight} px`;
+    for (const axis of ['width', 'height']) $('export-' + axis).max = value.exportLimits['max_' + axis];
+  }
+  try {
+    const size = exportDimensions(state.rendered, exportSelection());
+    $('export-note').textContent = $('export-size').value === 'preview'
+      ? `${size.width} × ${size.height} px · same dimensions and settings as the preview.`
+      : `${size.width} × ${size.height} px · source size includes orientation and crop. Changing resolution can change the dither pattern. All other settings stay the same.`;
+    $('export-note').classList.remove('invalid');
+    return true;
+  } catch (error) {
+    $('export-note').textContent = error.message;
+    $('export-note').classList.toggle('invalid', !!state.rendered);
+    return false;
   }
 }
 function setZoom(value) {
@@ -160,12 +186,13 @@ $('apply').addEventListener('click', async (event) => {
 });
 $('cancel').addEventListener('click', () => { abortController?.abort(); state.cancel(); render(); });
 $('output').addEventListener('input', () => render());
+for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
 $('save').addEventListener('click', async (event) => {
   event.preventDefault();
   if (!state.canSave || jsonDirty || customDirty) return;
   let operation;
   try {
-    operation = state.beginSave($('output').value); render();
+    operation = state.beginSave($('output').value, exportSelection()); render();
     const result = await app.callServerTool({ name: 'dither_render', arguments: operation.request });
     state.finishSave(operation, result); render();
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
@@ -208,6 +235,7 @@ function applyContext(context) {
 // Lifecycle handlers are registered before connecting so initial data cannot race them.
 app.ontoolinput = ({ arguments: arguments_ }) => {
   abortController?.abort(); jsonDirty = false; customDirty = false;
+  $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = '';
   try { state.setInput(arguments_); } catch (error) { state.fail(error); }
   render(true);
 };

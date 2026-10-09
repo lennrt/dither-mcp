@@ -2,7 +2,7 @@
 
 The behavioral requirements live in [`openspec/specs`](../openspec/specs). The initial [`proposal`](../openspec/changes/initial-suite/proposal.md), [`design`](../openspec/changes/initial-suite/design.md), and [`tasks`](../openspec/changes/initial-suite/tasks.md) record the feature and architecture decisions. We wrote and strictly validated the initial baseline before implementing the application.
 
-Quint models five small contracts covering publication, quantization, palette discovery, source normalization, and MCP Apps interactions. They make sequencing and invariants executable. Concrete implementation tests challenge the same claims. They are not a formal proof of the Go program or browser UI.
+Quint models six small contracts covering publication, quantization, palette discovery, source normalization, MCP Apps interactions, and guarded studio exports. They make sequencing and invariants executable. Concrete implementation tests challenge the same claims. They are not a formal proof of the Go program or browser UI.
 
 ## Run the checks
 
@@ -17,12 +17,12 @@ The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the Type
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and four changes.
-2. Typechecking of all five Quint modules.
-3. Fifty-nine executable run tests, including negative precondition scenarios.
+1. Strict validation of six baseline OpenSpec capabilities and five changes.
+2. Typechecking of all six Quint modules.
+3. Seventy-six executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
-5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, normalization, and studio saves. Each schedule requires a completion witness.
-6. Six negative mutation checks, each in an independent temporary model copy. They remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. The harness confirms that the respective regression tests fail.
+5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, normalization, studio saves, and guarded exports. Each schedule requires a completion witness.
+6. Fourteen negative mutation checks, each in an independent temporary model copy. Six remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. Eight bypass source/mask checks, reread source/mask paths after checking, retain an invalid preview, alter an accepted option, use the wrong source-size width, or ignore the export pixel limit. The harness confirms that the respective regression tests fail.
 
 The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
@@ -80,6 +80,18 @@ Revision numbers abstract complete settings. The model does not parse tool data,
 
 The [MCP Apps change](../openspec/changes/mcp-apps/proposal.md) defines negotiated presentation and fallback. The [studio guide](../docs/mcp-apps.md) describes host requirements, saves, and the runtime boundary.
 
+## Guarded studio export model
+
+[`studio_export.qnt`](studio_export.qnt) separates export size from preview settings. It uses three encoded-byte identities each for source and mask, three opaque recipe tokens for all non-dimensional options, fixed 2-by-2 preview and 6-by-4 source geometry, and custom dimensions from zero through nine. An eight-pixel axis limit and 48-pixel area limit stand in for the real engine bounds. The model permits three accepted previews and three successful publications.
+
+The default mode replays preview dimensions. An explicit source/custom choice changes only the dimensions sent for saving. Admission rejects zero, missing, and over-budget modeled dimensions. The concrete UI additionally checks JavaScript types, fractions, and unsafe integers, which this integer model does not represent.
+
+Independent disk mutations may occur before or after loading. The save path captures buffer identities, checks them against the accepted preview tokens, decodes those captured buffers, then publishes. A mismatch invalidates the preview and requires another preview before saving. Invariants check dimension bounds, explicit authorization, unchanged non-dimensional options, and exact accepted source/mask identity at publication. Seventeen runs cover default/source/custom exports, bounds, source and mask changes, recovery, and files changed after loading or checking. Eight isolated mutations challenge these new contracts. A completion-focused schedule must witness a source-size export using the accepted captured bytes after the source path changes.
+
+The tokens abstract SHA-256 equality; they neither implement hashing nor prove collision resistance. The buffer-loading action does not imply an atomic snapshot across multiple files. The source dimensions are fixed abstract values; actual orientation, cropping, and proportional resizing require implementation tests. This model has no codecs, image pixels, filesystem paths, unreadable-input states, JSON, host lifecycle, UI events, cancellation, or no-clobber publication protocol. Guarded read failures and their error shape require the concrete service/protocol tests. The other models address separate protocol aspects without a machine-checked composition or refinement proof. Bounded seeded traces and completion witnesses provide coverage evidence, not exhaustive verification or liveness.
+
+The [studio-export change](../openspec/changes/studio-export/proposal.md) defines byte guards, independent export sizes, and reproducible host/embedding guidance. Fingerprints are consistency checks over encoded bytes, not authentication or a promise that the on-disk path stays unchanged after it is read.
+
 ## Refinement evidence
 
 | Contract | Implementation boundary | Implementation evidence |
@@ -98,8 +110,9 @@ The [MCP Apps change](../openspec/changes/mcp-apps/proposal.md) defines negotiat
 | Numerical color conversion and alpha precision | Bounded matrix/TRC converter | `TestIndependentLittleCMSVectors`, `TestPublishedCSSColorVectors`, `TestMalformedProfiles`, `TestAlphaPrecisionBoundsAndConcurrency`, `TestApplyAdmissionAndCancellation` |
 | Normalization before shared operations | Application still loader and mask loader | `TestNormalizationAcrossDecodedContainers`, `TestNormalizationSharedWorkflows`, `TestMaskNormalizationAndFailureBeforePublication` |
 | Read-only processed previews and exact replay | Shared application studio service | `TestStudioPreviewReplaysWithoutWriting`, `TestStudioGeometryAndAdmission`, `TestStudioImageMaskReplay`, `TestStudioNormalization`, `TestStudioEncodedBudgetAndSafeSeeds` |
-| Negotiated MCP Apps linkage and core fallback | Tool filter, resource handler, and result encoder | `TestAppsNegotiationAndFallback`, `TestStdioProtocolEras` |
-| Dirty controls, stale responses, and exact save arguments | Concrete JavaScript state controller | [`ui/state.test.mjs`](../ui/state.test.mjs), including canceled replacements, late host results, custom color preservation, hidden options, and invalid seeds |
+| Guarded byte snapshots and source-size geometry | Shared bounded read/decode buffers and studio metadata | `TestGuardedRenderDetectsSourceAndMaskReplacement`, `TestGuardChecksBytesBeforeDecodingAndPreservesNormalRenders`, `TestStudioSourceDimensionsFollowOrientationAndCrop`, `TestStudioAndGuardedRenderUseTheDecodedSnapshot`, `TestEmbeddedRenderRequestsApplySourceGuard` |
+| Negotiated MCP Apps linkage and core fallback | Tool filter, resource handler, and result encoder | `TestAppsNegotiationAndFallback`, `TestStdioProtocolEras`, `TestStudioExportGuardsReturnStructuredMCPError` |
+| Dirty controls, stale responses, and exact save arguments | Concrete JavaScript state controller | [`ui/state.test.mjs`](../ui/state.test.mjs), including canceled replacements, late host results, custom color preservation, hidden options, invalid seeds, export bounds, exact dimension-only changes, guard forwarding, and mismatch invalidation/recovery |
 | Host lifecycle and tool-call capability | Official SDK App and AppBridge over paired transports | [`ui/bridge.test.mjs`](../ui/bridge.test.mjs) checks initial input/result, exact save arguments, theme, cancellation, and a host without tool capability |
 
 The implementation tests independently exercise real code. They do not come from Quint traces. The SDK bridge tests use paired in-memory transports and do not render a browser document. The local browser harness can exercise that separate integration boundary. These checks do not establish machine-checked refinement. Review the tests together with the models when changing either boundary.

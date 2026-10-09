@@ -16,7 +16,7 @@ test('official App and AppBridge deliver initial lifecycle data and proxy exact 
   const bridge = new AppBridge(null, { name: 'host-test', version: '1' }, { serverTools: {} }, { hostContext: { theme: 'light' } });
   const state = new StudioState();
   const request = { input: 'source.png', palette: 'mono', options: { algorithm: 'atkinson', width: 4, height: 2, seed: 7, effects: { noise: .2 } } };
-  const initial = { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: 'source.png', width: 4, height: 2, mime_type: 'image/png', recipe: { version: 1, palette: 'mono', options: request.options } }, _meta: { dither: { request, algorithms: [], palettes: [] } } };
+  const initial = { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: 'source.png', width: 4, height: 2, mime_type: 'image/png', source_sha256: 'a'.repeat(64), source_width: 40, source_height: 20, export_limits: { max_width: 16384, max_height: 16384, max_pixels: 16777216 }, recipe: { version: 1, palette: 'mono', options: request.options } }, _meta: { dither: { request, algorithms: [], palettes: [] } } };
   let ready;
   const initialReady = new Promise((resolve) => { ready = resolve; });
   app.ontoolinput = ({ arguments: value }) => state.setInput(value);
@@ -33,7 +33,7 @@ test('official App and AppBridge deliver initial lifecycle data and proxy exact 
   const operation = state.beginSave('exact.png');
   const saved = await app.callServerTool({ name: 'dither_render', arguments: operation.request });
   assert.equal(state.finishSave(operation, saved), true);
-  assert.deepEqual(calls.map(({ name, arguments: args }) => ({ name, arguments: args })), [{ name: 'dither_render', arguments: { ...request, output: 'exact.png' } }]);
+  assert.deepEqual(calls.map(({ name, arguments: args }) => ({ name, arguments: args })), [{ name: 'dither_render', arguments: { ...request, output: 'exact.png', expected_source_sha256: 'a'.repeat(64) } }]);
   const themeChanged = new Promise((resolve) => { app.addEventListener('hostcontextchanged', (context) => { state.theme = context.theme; resolve(); }); });
   bridge.setHostContext({ theme: 'dark' }); await themeChanged; assert.equal(state.theme, 'dark');
   const canceled = new Promise((resolve) => { app.addEventListener('toolcancelled', () => { state.cancel('Host canceled'); resolve(); }); });

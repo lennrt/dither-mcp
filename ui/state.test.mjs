@@ -5,7 +5,7 @@ import { StudioState, clone, decodePreview, parseColors, studioRequest } from '.
 const request = { input: 'source.png', palette: 'oat-and-ink', mask_input: 'mask.png', options: { algorithm: 'atkinson', width: 320, height: 160, strength: .9, seed: 17, crop: { x: 2, y: 3, width: 90, height: 80 }, mask: { shape: 'image' }, effects: { noise: .1, pixel_sort: true, pixel_sort_threshold: 0 } } };
 function result(value = request) {
   const source = clone(value);
-  return { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: source.input, mask_input: source.mask_input, width: source.options.width, height: source.options.height, mime_type: 'image/png', recipe: { version: 1, palette: source.palette, colors: source.colors, options: clone(source.options) } }, _meta: { dither: { request: source, algorithms: [{ id: 'atkinson', name: 'Atkinson', family: 'diffusion' }], palettes: [{ id: 'oat-and-ink', name: 'Oat & ink', colors: ['#182F37', '#E8DBC0'] }] } } };
+  return { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: source.input, mask_input: source.mask_input, width: source.options.width, height: source.options.height, mime_type: 'image/png', source_sha256: 'a'.repeat(64), mask_sha256: 'b'.repeat(64), source_width: 90, source_height: 80, export_limits: { max_width: 16384, max_height: 16384, max_pixels: 16777216 }, recipe: { version: 1, palette: source.palette, colors: source.colors, options: clone(source.options) } }, _meta: { dither: { request: source, algorithms: [{ id: 'atkinson', name: 'Atkinson', family: 'diffusion' }], palettes: [{ id: 'oat-and-ink', name: 'Oat & ink', colors: ['#182F37', '#E8DBC0'] }] } } };
 }
 function ready() { const state = new StudioState(); state.canCallTools = true; state.setInput(request); assert.equal(state.hostResult(result()), true); return state; }
 
@@ -19,7 +19,7 @@ test('editing controls preserves the displayed recipe and disables saving', () =
 });
 test('save uses the exact accepted preview, including hidden crop, mask, effects, and zero values', () => {
   const state = ready(); const operation = state.beginSave(' output/final.png ');
-  assert.deepEqual(operation.request, { ...request, output: 'output/final.png' }); assert.equal(state.canSave, false);
+  assert.deepEqual(operation.request, { ...request, output: 'output/final.png', expected_source_sha256: 'a'.repeat(64), expected_mask_sha256: 'b'.repeat(64) }); assert.equal(state.canSave, false);
   operation.request.options.effects.noise = 99; assert.equal(state.rendered.request.options.effects.noise, .1);
 });
 test('save requires an explicit output destination and a successful current preview', () => {
@@ -68,7 +68,7 @@ test('transport errors invalidate a pending preview without changing its display
 test('a save error is visible and an explicit retry uses the same accepted preview', () => {
   const state = ready(); const operation = state.beginSave('final.png');
   assert.equal(state.finishSave(operation, { isError: true, content: [{ type: 'text', text: 'Output exists.' }] }), false);
-  assert.equal(state.canSave, true); assert.match(state.status, /Output exists/); assert.deepEqual(state.beginSave('new.png').request, { ...request, output: 'new.png' });
+  assert.equal(state.canSave, true); assert.match(state.status, /Output exists/); assert.deepEqual(state.beginSave('new.png').request, { ...request, output: 'new.png', expected_source_sha256: 'a'.repeat(64), expected_mask_sha256: 'b'.repeat(64) });
 });
 test('unsafe integer seeds and excessive dimensions cannot be previewed or reconstructed', () => {
   for (const seed of [9007199254740992, -9007199254740992, 1.5]) assert.throws(() => studioRequest({ ...request, options: { ...request.options, seed } }), /Seed/);
@@ -104,4 +104,49 @@ test('host without tools capability can display the preview but cannot call prev
 });
 test('invalid new host input invalidates the previous save permission', () => {
   const state = ready(); assert.throws(() => state.setInput({ input: '', options: {} })); assert.equal(state.canSave, false); assert.equal(state.canPreview, false);
+});
+
+test('source and custom exports change only dimensions and retain the preview fingerprints', () => {
+  for (const [selection, size] of [[{ mode: 'source' }, { width: 90, height: 80 }], [{ mode: 'custom', width: 1920, height: 1080 }, { width: 1920, height: 1080 }]]) {
+    const state = ready();
+    const original = clone(state.rendered);
+    const save = state.beginSave('large.png', selection);
+    assert.deepEqual(save.request, { ...request, options: { ...request.options, ...size }, output: 'large.png', expected_source_sha256: 'a'.repeat(64), expected_mask_sha256: 'b'.repeat(64) });
+    assert.deepEqual(state.rendered, original);
+    assert.equal(state.dirty, false);
+  }
+});
+test('invalid or excessive export dimensions never begin a save', () => {
+  const state = ready();
+  for (const selection of [{ mode: 'unknown' }, ...[0, -1, 1.5, NaN, Infinity, 16385, undefined, '100'].map(width => ({ mode: 'custom', width, height: 1 })), { mode: 'custom', width: 1 }, { mode: 'custom', width: 4097, height: 4096 }]) {
+    assert.throws(() => state.beginSave('invalid.png', selection));
+    assert.equal(state.pending, null);
+    assert.equal(state.canSave, true);
+  }
+  state.rendered.sourceWidth = 16385;
+  assert.throws(() => state.beginSave('source.png', { mode: 'source' }), /Export must fit/);
+  assert.equal(state.beginSave('limit.png', { mode: 'custom', width: 4096, height: 4096 }).request.options.width, 4096);
+});
+test('source and mask changes invalidate saving until a fresh preview is accepted', () => {
+  for (const code of ['source_changed', 'mask_changed']) {
+    for (const structured of [true, false]) {
+      const state = ready(); const save = state.beginSave('changed.png');
+      const failure = { isError: true, content: [{ type: 'text', text: `${code}: File changed.` }] };
+      if (structured) failure.structuredContent = { error: { code } };
+      assert.equal(state.finishSave(save, failure), false);
+      assert.equal(state.canSave, false);
+      assert.equal(state.rendered.request.input, request.input);
+      assert.match(state.status, /Apply preview again/);
+      assert.throws(() => state.beginSave('retry.png'), /Apply/);
+      const preview = state.beginPreview(); const fresh = result(); fresh.structuredContent.source_sha256 = 'c'.repeat(64);
+      assert.equal(state.finishPreview(preview, fresh), true);
+      assert.equal(state.beginSave('fresh.png').request.expected_source_sha256, 'c'.repeat(64));
+    }
+  }
+});
+test('missing or malformed fingerprints and export metadata cannot authorize a save', () => {
+  for (const [key, value] of [['source_sha256', undefined], ['source_sha256', 'x'.repeat(64)], ['source_sha256', ['a'.repeat(64)]], ['mask_sha256', undefined], ['source_width', 0], ['source_height', 1.5], ['export_limits', undefined], ['export_limits', { max_width: 16384, max_height: 16384, max_pixels: 0 }]]) {
+    const invalid = result(); invalid.structuredContent[key] = value;
+    assert.throws(() => decodePreview(invalid));
+  }
 });

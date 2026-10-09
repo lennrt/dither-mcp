@@ -78,7 +78,7 @@ Use `call` to run the same read-only preview operation as the [MCP Apps studio](
 
 This call returns PNG data, preview metadata, and a resolved recipe as JSON. It creates no output file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Explicit and aspect-derived dimensions must fit within 1,024 pixels per axis, and the PNG must fit within 2 MiB. The tool accepts `input`, `palette` or `colors`, `options`, and an optional `mask_input`. It accepts neither an output path nor a recipe file.
 
-The interactive controls appear when an MCP host supports MCP Apps and local stdio servers. The CLI returns the data for direct use. To save a matching PNG, pass the successful preview's resolved recipe to `dither_render` with the same input, mask input when needed, and a new relative output path.
+The interactive controls appear when an MCP host supports MCP Apps and local stdio servers. The CLI returns the data for direct use. To save a matching PNG, pass the successful preview's resolved recipe to `dither_render` with the same input, mask input when needed, and a new relative output path. Add `expected_source_sha256` and any `expected_mask_sha256` from the preview metadata to detect changed inputs. You can set explicit export width and height while preserving the other recipe options. See [studio export behavior](mcp-apps.md#preview-and-save-behavior).
 
 ## Motion settings
 

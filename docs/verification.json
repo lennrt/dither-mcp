@@ -13,9 +13,10 @@
     "pnpm": "11.19.0",
     "mcp_apps_sdk": "2.0.3",
     "playwright": "1.62.1",
-    "chromium": "151.0.7922.34"
+    "chromium": "151.0.7922.34",
+    "mcp_inspector": "2.10.1"
   },
-  "scope": "Local automated verification of MCP Apps, the Go implementation, specifications, and static showcase assets. Chromium rendering was checked through the local official SDK host; external host compatibility remains unverified. Cross-builds do not establish native OS behavior.",
+  "scope": "Local verification of guarded studio exports, reusable embedding, the Go implementation, specifications, and static showcase. Independent MCP Inspector evidence is recorded in host-verification.json. Other clients are explicitly untested. Cross-builds do not establish native OS behavior.",
   "checks": [
     {
       "command": "make verify",
@@ -31,16 +32,16 @@
         "palette reference",
         "real stdio MCP subprocess",
         "embedded UI freshness",
-        "24 JavaScript bundle, state, and bridge tests"
+        "28 JavaScript bundle, state, and bridge tests plus 3 embedding stdio/boundary tests"
       ]
     },
     {
       "command": "node --test ui/*.test.mjs",
       "result": "pass",
-      "tests": 24,
+      "tests": 28,
       "coverage": [
         "delivered embedded JavaScript syntax",
-        "20 concrete UI controller cases",
+        "24 concrete UI controller cases",
         "2 official App/AppBridge transport tests",
         "1 official SDK bridge test against the actual Go stdio server"
       ],
@@ -50,17 +51,20 @@
         "changed preview writes no artifact",
         "explicit save replays the applied request",
         "PNG output matches accepted preview bytes",
-        "existing destination remains unchanged"
+        "existing destination remains unchanged",
+        "explicit source/custom export dimensions",
+        "source/mask changes invalidate saving until a fresh preview",
+        "custom size admission respects runtime axis and pixel limits"
       ]
     },
     {
       "command": "node spec/check.mjs",
       "result": "pass",
-      "openspec_items": 10,
-      "quint_models": 5,
-      "quint_run_tests": 59,
-      "simulation_traces": 54000,
-      "mutation_checks": 6,
+      "openspec_items": 11,
+      "quint_models": 6,
+      "quint_run_tests": 76,
+      "simulation_traces": 65000,
+      "mutation_checks": 14,
       "detail": "../spec/verification.json",
       "note": "Finite run tests and seeded bounded simulation, not a proof of implementation refinement."
     },
@@ -71,6 +75,41 @@
     {
       "command": "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ./cmd/dither-mcp",
       "result": "pass"
+    },
+    {
+      "command": "make video-test",
+      "result": "pass",
+      "coverage": [
+        "MP4/MOV/WebM/Matroska/AVI input",
+        "MP4/WebM/GIF/sprite-sheet output"
+      ]
+    },
+    {
+      "command": "make embedding-test",
+      "result": "pass",
+      "tests": 3,
+      "coverage": [
+        "two-tool and selected-source allowlist",
+        "relative paths and symlink containment",
+        "real stdio guarded export and byte-identical PNG"
+      ]
+    },
+    {
+      "command": "make embedding-browser",
+      "result": "pass",
+      "detail": "embedding-browser-verification.json",
+      "checks": [
+        "Exact Host and Origin checks, sandbox denied access to bootstrap, per-session token required",
+        "Opaque sandbox renders real Go preview through official AppBridge without writing",
+        "App-initiated guarded save writes the selected relative output byte-identically",
+        "Host theme update and 390px responsive layout",
+        "Official teardown handshake closes the view before unmount"
+      ]
+    },
+    {
+      "command": "Published MCP Inspector 2.10.1 CLI and Apps browser verification",
+      "result": "pass",
+      "detail": "host-verification.json"
     },
     {
       "command": "Static showcase asset and publication inventory checks",
@@ -104,6 +143,8 @@
         "Host theme changes, 370px host and 390px viewport without horizontal overflow",
         "Host cancellation invalidates saving and a fresh preview recovers",
         "Keyboard save works without sandbox form permission",
+        "Source-size and custom exports, pixel-budget validation, and unchanged preview size",
+        "Changed source creates no artifact, invalidates save, and requires a fresh preview",
         "Host without serverTools displays result and disables mutations",
         "Showcase studio navigation, all visible images loaded, desktop/mobile layout without overflow"
       ],
@@ -116,8 +157,8 @@
     "CHANGELOG.md": "ddfa1cf331a2015ae8043ddb0465b33476e1beb9eb258dd4217ef17eae6d38bf",
     "CONTRIBUTING.md": "57a2950c9003436ff99f53910bc2edf7d4e0dbd6ed351e8ae2b0df82b138a4ca",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "Makefile": "b538f427315febb7b0fdf724b8c84f7eaf36755f107c95d128c3b61746259c94",
-    "README.md": "1853512c4d5771ba7684fff70c509599c56b261dffb71b27f43886d8e5f02ecf",
+    "Makefile": "427525373d896941863fcb4395eb83aaf0d405ab59942258575f570cf5a067f7",
+    "README.md": "9518fd50c89f93fa9cd8c4a7d11a55bb513d56534960e46df1aea6f049808a9e",
     "SECURITY.md": "9491e2b9e6e2b1b522c30158209599ca84cfc31ddb827caa9a5e090306bda024",
     "THIRD_PARTY_LICENSES/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
     "THIRD_PARTY_LICENSES/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
@@ -145,19 +186,23 @@
     "demos/palettes.tape": "f0f831139440e2669e50b4831e01f36e4bb6d89af9edaaf48ddd1f5e26be7b1f",
     "demos/render.tape": "4a8610170b678f1971f257409e6bd3e026a4daa4cb5b43bbc75cac4f96d150ed",
     "docs/README.md": "4eb1d38e57e1d7e0d938b25cf7bc6a21a2d8d7dd80e6d26100277627e5f84fda",
-    "docs/architecture.md": "a8f598fc5347f12f8574961e3016456223da91f4cfee87132cabbf1bff96f71f",
-    "docs/cli.md": "aea87f68b4df3749456eef56fc84a7ec7ac132c43296687d8e44b8958d2c01de",
-    "docs/feature-matrix.md": "aecc22fae42bb87b699e0344be53cad9858146b26830cdb77037efb8e675a2f8",
+    "docs/architecture.md": "f7c12bb3118330c66f62f47ec0e9974b08c4df6aa5f92d6f806bac44e098628c",
+    "docs/cli.md": "c4bbaef4d42b4af422db55f6188560e76e178688c6d049d8feb4e9e2de844ed0",
+    "docs/embedding-browser-verification.json": "5cd6427b7940bde94929ae5d24fd5905f61567fd790b28095f21115686900e7e",
+    "docs/embedding.md": "dc8265714b4ecf096d8caa6ec326ebe267edd4261b3ace568771409ad433ab28",
+    "docs/feature-matrix.md": "88c5046d2bd6c271e5d5e7f74586ec606ee280d6b76c1e762b1dc04cde6b6976",
     "docs/formats.md": "9d5edcbf359abfde7b7821fd9862f232f6e5454c2ba6114eb44a2567c016c87c",
-    "docs/mcp-apps-browser-verification.json": "9be472bfdb147c7eeaed2fc928c6a78b059ba7466b1b7c9942309e998ab0ff26",
-    "docs/mcp-apps.md": "aa7b85fc3c00a33b9d18462f1a815acc9424a26d02289055164b774517b5f007",
-    "docs/mcp.md": "cfe3e4878140acfbf0488979a851721f40c3bd451b1b36676c5302b514c8fe02",
+    "docs/host-verification.json": "f96ea93af6addbc3d6110805d65d6e45c29720f34b9d4c70c2fef61d908f8a3e",
+    "docs/hosts.md": "b207204bcd3d2969e9b5b6d75a4a703a48a81a7671c9d599de982f4642676af9",
+    "docs/mcp-apps-browser-verification.json": "9013a9d6e25b97b641941544789ab965e72a4b17b1cc49b8c74db4ff6283e1b4",
+    "docs/mcp-apps.md": "860039ceaf555b85f7800324f7e7daed2b8d8392a16ad3f174c2c43f6c3aedce",
+    "docs/mcp.md": "0edf51371ed5347e4ea0560920df5d5e71c998a440c84630005880f0c6a9c9b9",
     "docs/palettes.md": "d50d9ecbce8c4d5875e28ec962a58d4ef61f9c4a50db66a588f1ebc30d9e065b",
-    "docs/security.md": "099061e5de386610176bca3a48f9ffb36404468b716a01c2442513c71a97aff7",
+    "docs/security.md": "77fe3058618b691d7534239c6a3c24f729a241279b0c835e4995099c26c914a0",
     "docs/showcase.md": "4ab27d1846ab57688521b117b8c5597389a66aea14c82b65c39f9ee7246c527f",
     "docs/sources.md": "a73018a26ab01e212a0a5b53cd050a878bc203fb75b344b45b6fa219f45c9ac7",
-    "docs/testing.md": "9a0263538e10ac6cd900d3ebf3e759c657b0f6a40d5b1bd90bcbe8afbae920de",
-    "docs/tool-schemas.json": "838466935e225d55f6b35848520128ddcd780e9cdf839cdc7bfc9c7959a4e67f",
+    "docs/testing.md": "777a022a7055ae01db5fc00c825937164f3d88c257ae1d69b3300220161bb159",
+    "docs/tool-schemas.json": "955dd96ff0f0990c9c17ddf28bef673a433577bcee24e748e389bd12aeb7253a",
     "docs/writing-style.md": "87cfc74b82f80dfff71be7686b26565e54df685dd079a7663f9b6400986bdec1",
     "engine/SOURCES.md": "d3b25ab0be9a14b94b62b99772cd7238894d0fc1e96ca1c12ccf61f0ead8c3c4",
     "engine/algorithms.go": "765d829cc94731f200d308dcefc5dc9c0b028f6a9167c8f493bed9db4d85616e",
@@ -174,12 +219,21 @@
     "engine/screens.go": "a4fd6d9ac447122ee03a2830d905ac67b61f18e877bdded91fa897e0ae25810f",
     "engine/testdata/legacy-palettes.json": "0597a26ec72ddc6d2a3450f5125b1d4c3498c3439483efcfe0028bea62557e32",
     "engine/types.go": "feb9831a886ca9ad03458b84303e11b8345850c69292c2702982ee1d5af22270",
+    "examples/embedding/browser-check.mjs": "901c0f7bb29e71424ae48c085efa4fbfd5be070d8373c322a1d11b5b9a084c9e",
+    "examples/embedding/client.mjs": "13f53c3c4c11c9382ac5989fb9fd1afb819cdf80f08e718dfdd46d0346fcb7d9",
+    "examples/embedding/index.html": "5cfe0540818b2eb20d256b997d07ded2ef8baedfd52686c07f979f2af0b43e49",
+    "examples/embedding/inspector-check.mjs": "e8d8fef5fd4f37581ef2c0eefd087500b79a6f2c69c3c204f7cff93dcee44e6d",
+    "examples/embedding/sandbox.html": "74180c21da5a861754d4945f63a7278a1bc19a518b1acb791bcd20d8e18c4ecb",
+    "examples/embedding/server.mjs": "1afc74da51fa0bd65138975f331c03fbf9e4d72c29b9631c767b038cca0e92db",
+    "examples/embedding/session.mjs": "ecb81a68aad1a30b4e69ed12eb3138f3a4ae0c6c21a808d617d6de87075c6f84",
+    "examples/embedding/session.test.mjs": "417d2ff7f681d523bfcd3d7d0fc025a25eabe33d10df1eaa3f22e189b10a3e47",
+    "examples/embedding/studio-host.mjs": "fd096d77947d1a88501a9a21e9be5c52104147139d18602b04ad5ce0ef04530f",
     "go.mod": "cfc9bd0daa1a3b222da0b04bf3f081606c1d411717460bb2cb12c6d2009f97c3",
     "go.sum": "b11157aa8570282ffe3cb3ac373848d154058f50dbb1923b2164968a052fd89d",
     "internal/app/animation_test.go": "4f1541e2b932bc2e7543773120a6d6dc3e9f0329e6be37040577e55be23f4418",
     "internal/app/catalog.go": "a36c33d7fd6c8a4ecb107668f94605cb04d2e7009aa6d47fe2a256848d24116e",
     "internal/app/catalog_test.go": "d4e4d8582afb2abbbc7055dce2dbc7c1721e7989e14a97408d967be36d5bf340",
-    "internal/app/export.go": "6323b89d51faf3defeb40af536034bcedb989f7d4405d9f9bc199004d37d27d5",
+    "internal/app/export.go": "14f3ae849557fa242e6d7b94cbcdfbe7eddcae63de7bea5e1187a5be67c2e185",
     "internal/app/fuzz_test.go": "58b3e3dfbb1fc198581f2a156e27b40cc82aba13c84e4b3fd86753242d097f83",
     "internal/app/normalization_test.go": "dee4df1a884d8206c7dfe62d92acaf4b3cda481f469f4682a35ef24e853d3ce4",
     "internal/app/open_other.go": "57290bdf60ea4c48f9d313301e2675df0cd6b4de884d01a45f04eedbcc684f79",
@@ -189,11 +243,13 @@
     "internal/app/preview.go": "a480a3c613f0be0e1381a914654dc5073bf308192224b3a120bb2f3ef3f275f6",
     "internal/app/review_test.go": "f2ddbfa85ad3c1ae0ca83b96c100d5144d8be0a0147694e117664f8e77112a7d",
     "internal/app/security_test.go": "bf6c34928ef55fd2de88eb023a11a8e4f0b1c35ddef8de66db00b37b1c298c44",
-    "internal/app/service.go": "6d7d9908d1c99a55789d9beb72942408e788bc8f41f3d145c2b79952ad581290",
-    "internal/app/studio.go": "0aab6a1035552606c57efc5773714593f3ee515c431c7cb5018d46d4895b8361",
-    "internal/app/studio_test.go": "fe808acc4c335995eafc9d1df7658b5ba5d0ca585018b32784a5b9ef7287afa7",
-    "internal/app/types.go": "d35197f5e01a841b1e6a97d576611892b07b6284109413070e4d4f90e0769008",
-    "internal/app/video.go": "81ed7ac1cba99c1778995cc516dd724d6c065a0d6dd857523006de53b9586451",
+    "internal/app/service.go": "a04977c578d9a1777e6bb3251d5280a2f7b5f1b9d5b3a167c37305a920e59ffc",
+    "internal/app/source_guard.go": "57b1851266e57dd0ffd58e6ce0a22522b3f3e06185fe643da4c860c8d636b83e",
+    "internal/app/source_guard_test.go": "dfadd71eb55380eebb14f5653ca6287a23925ee74b4cc8dc59cd8ce503d8de83",
+    "internal/app/studio.go": "238dd34083930df38e5c35b09c8edbe15040fe772e7a324412dcaf1baf1ca45d",
+    "internal/app/studio_test.go": "b49c40ca5371a8af8ca5938a489ca3bb05819b5b428733596155e9c5ea89a59b",
+    "internal/app/types.go": "02f380f7adef18fbea8b1d21088ce0f0a83d2ab53db2199069fbe249ed314d52",
+    "internal/app/video.go": "5f844ec2bcbc4a8afe8be05f86458f9bde12a69c1d3f720d5607d5ebe16e9291",
     "internal/app/video_test.go": "c9839f34e7ea00ca566316bf41faef1a6de10b820cfdb1ab0c4e4b8d19e1e55a",
     "internal/app/workflow_test.go": "137251e5ad047d02870d693abf9b5094c253d163ab9f9ed70613d3870e8d26b0",
     "internal/cli/cli.go": "566756b066d32ae17fa17a47bbdf48a9e8f3781fc410b90c3ce7739dc8012199",
@@ -222,10 +278,10 @@
     "internal/imagemeta/testdata/linear-srgb.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
     "internal/imagemeta/testdata/oriented.webp": "82dd5d08496cdc2794404f0ea3deadae7995bd38dcd31501811227f26574c22c",
     "internal/mcpapp/mcpapp.go": "35ec6d671dd28483a00f8bb3122b7aadf3b5e2e5dc24d738963577a5ea3cc9ce",
-    "internal/mcpapp/studio.html": "5767c2e6bcb85f601445849535f7539ed60d1c5d862867daa1cb897e7afcfae6",
-    "internal/mcpserver/apps.go": "a61a63e27229f034c4208ebb20e50895b36256beeb4b1c93376303baccba5e8f",
-    "internal/mcpserver/apps_test.go": "cb9d361a487c35b65fadc11a613f3040118d73bfe7f5889471ae36b41c35bd5e",
-    "internal/mcpserver/server.go": "e22a34397e1310ad814beb532e646565691cae06c17ad467a077c4a71483ed5e",
+    "internal/mcpapp/studio.html": "de228ddd513dd15dd74e4daead25accd6d2fa56430304a177b8e8680d7744377",
+    "internal/mcpserver/apps.go": "e2142ac9068d74e6c643b0e9cc0b7bf6d27bcd9206e9e3c5e6c28b4749d1249e",
+    "internal/mcpserver/apps_test.go": "8b2f9036ce586fd10658a4f5a14ada9cfaddbd1ef21b7d6be77d6565cf3ca562",
+    "internal/mcpserver/server.go": "c6f00bf3697327bccbc05d8ad7f0c4e84bd2eacccc7265c99f5ff7f83940fed3",
     "internal/mcpserver/server_test.go": "8171a4d8bb40b6b6a4828e58618c427b10c7f9f00fda08b42e1362e90137eed7",
     "internal/mcpserver/transport_test.go": "f192abb33501003b8c7847479d3dc011995099662e3552334cdadbfc43fe0d00",
     "openspec/changes/image-normalization/design.md": "d04fa5be8cdc19abdb56f6589b2d7cabbece612726f7818d40788f90921d4d48",
@@ -251,14 +307,20 @@
     "openspec/changes/palette-library/proposal.md": "a284a188cffdbcb9750e9de6509c3daad5e6757b6581b7929210c5462d96583b",
     "openspec/changes/palette-library/specs/palette-library/spec.md": "5f3cf9e96d85b59333dfcec0ad0a2b4a148133476bbed6bc35678b9997eaaf3c",
     "openspec/changes/palette-library/tasks.md": "a3be8650ed956978c4323af55edb3b283a2bcaa27dd39a634028868fd0a41388",
+    "openspec/changes/studio-export/.openspec.yaml": "ec3a1b167d0ccdb9f7a3f8f370ba8038feb637051c90a0b3fbcc5e9cef45d7a5",
+    "openspec/changes/studio-export/design.md": "49e94e59b61553a6695aa71b42b0c404a35544aed861a18076d8734606a1c051",
+    "openspec/changes/studio-export/proposal.md": "897f3398c365922c03b44fea64e729588ca22a31f370defed5923c13685d349a",
+    "openspec/changes/studio-export/specs/agent-workflows/spec.md": "481359824a1b9fbbbdedd4f2d57f476b8b45415184a8b551d67124c5ea60c889",
+    "openspec/changes/studio-export/specs/delivery-quality/spec.md": "1232f67f68fd74e5e8136828a3c4fc92dfd8009c406d87e0f4875671c92cb744",
+    "openspec/changes/studio-export/tasks.md": "cdc3be7d1e9358996d3b7ad1773c387961408300526f505b588527ef867577d1",
     "openspec/config.yaml": "fdd97c6a88cf4b8264311bf777f648e112414b590da61ecc9d206f43e631afbc",
-    "openspec/specs/agent-workflows/spec.md": "7ba39b8a99f1d458e240347f632911fc23758d1746ea1bf82583410625fdd328",
-    "openspec/specs/delivery-quality/spec.md": "5dd244c15b6059f9ccc6e97883843bc1d2510c60b154aadf32a437ddcc397750",
+    "openspec/specs/agent-workflows/spec.md": "f2e0435f467f6aaa389a62b5b46ff4cc2836ad740f9f1344f6ce38b0a151957b",
+    "openspec/specs/delivery-quality/spec.md": "d0cb7cc2c6be3e86052ea2758e814219b814e0e3708fc21105dab75054c54a58",
     "openspec/specs/image-pipeline/spec.md": "2cb38ce2a0b2c752a8143ba7d8bb7c44b4fd060f9843886cc5d542096900f8c0",
     "openspec/specs/local-workspace/spec.md": "6d645380e91a05ea8ee795a910bda1b8ade4b37591add8f2457f04eda1721dcf",
     "openspec/specs/motion-print/spec.md": "471753c833195cee20c28ec9956548655af3234aec08bf7db3615ea288845903",
     "openspec/specs/palette-library/spec.md": "16017f1b8f115baf2bca9af66bf1969e93de1c59235ce315ee20e291642c19d2",
-    "package.json": "1c89ae3af43b6eb76e7ba67ccd8d326cc1ac6ca1651ccbef5ec0b7c9bc6777f4",
+    "package.json": "a5bc0c8945f7969b122c091446e0c248e2279c445b77374ae7db6ab36c52da3c",
     "pnpm-lock.yaml": "992eac9f1feedad6eec64624574ea8148449438a3743e9fc14a2fed449fcf983",
     "pnpm-workspace.yaml": "c2fdea20a67c0d1369c0b287122109e087452367e5719c5ea50c08e84e7c8240",
     "scripts/brand-banner/main.go": "641973eb70dd02e3c4ccf2155eed96692e022963ed1f7d7cff8ecba156e88b6c",
@@ -275,29 +337,30 @@
     "scripts/showcase-site.sh": "99b58a6480aca88bc147580e096fc727e0c3fe25a0a008189ee543a72d3c0930",
     "scripts/showcase-source/main.go": "b049cfcee96bacde0cffb8985f9372c0045551c1c968335b8de0e5130decb870",
     "scripts/showcase.sh": "bf4ad05758ea0f02951b0ff2a13d44810c115450a65d121fc39df0040cea4653",
-    "spec/README.md": "bab83e18c695ed5840549d4faf00969fd470dd530866c4c75fe84ccff7d5b62e",
-    "spec/check.mjs": "8526d81199906fd545de0fc48a71b68bc7f2079d3a31999aa17de1ff63efd7ec",
+    "spec/README.md": "317b874322d2da6a4acef862d1d1f84932a0b5a906e70fe0ce6f2080f16bc208",
+    "spec/check.mjs": "bc294c2bbbea782129ecd905c97202d62e5aa9bedf2f6ddd8ab2ce0dad2caa11",
     "spec/mcp_apps.qnt": "8ea36a77134f073d85499fa16233b7da7f8581f24bce336b62419fd1a7f74921",
     "spec/normalization.qnt": "911018c49955f50c37af5d8278f1a1482245b68c869040de352c0f8eacf58d57",
     "spec/palette_discovery.qnt": "54697f37b5d3d3ebbc3bc5e68f94ef9c5dc970e23238251db5e46a36fe512efd",
     "spec/publication.qnt": "28b53c3fe7174f2dde45287f9f7117123a905558b0ee1186da47cb6871f75133",
     "spec/quantization.qnt": "1066276acbdefa598e8c90df039551a1abab82415cc2f8a68e98ad36d0df9695",
-    "spec/verification.json": "875046895c81ed37052a1653a2fbf22b3d7820f71908db3461555af672711c4a",
-    "ui/app.mjs": "36f37f110ceae168f39c221e65bd21cd4594808903ccd29e687541c33d97438a",
-    "ui/bridge.test.mjs": "7e187bd1f5a4f433078b757749283a464c48eb2f771de78ae73ac1b6e56e9f37",
-    "ui/browser-check.mjs": "025b482d8ce06e5ee07d7463f25f5c66fe934528cc40015930c41724d1841fc9",
+    "spec/studio_export.qnt": "8bd70e9f542f6428e236efe7fa9ff8a1b855c70e78d56f34f83c76a67e6bba6b",
+    "spec/verification.json": "c4c098251a7290b8e454dad1263141dc7229423606e2d7545fc4b0eb9fa0c7f5",
+    "ui/app.mjs": "29b7fed3e8b1a8faa0643ba76aded5c1fbd86eaec024f296cd58ac5a16bb883e",
+    "ui/bridge.test.mjs": "09560b8cbcf568cf4294ac0037628b668058832a0cd8748fb214501a0ef6082c",
+    "ui/browser-check.mjs": "2b6c7e6e3321306bb919d0759d52157dea0f328a444c0ea521de9df19e62dd60",
     "ui/build.mjs": "04a6c601b8cf5068b9b5d255c3dc7e04d917da3df1e28a8e1663e66c87b72817",
-    "ui/bundle-meta.json": "3d9104417f70c159ef73940f13e825c948d1d0ea88b8e7920596b74fdb0ad0b6",
+    "ui/bundle-meta.json": "5bc69caa398e0231f1c4234aec7f48772f07010c2d3743ed387801630bab2ccb",
     "ui/bundle.test.mjs": "11510658a8e693f02c2c81ff6669c29135727360cfaed377e5f64c5db0399e92",
     "ui/harness-client.mjs": "1c58ef0686c3dbc913f6d744efc4f800c9d23ac36983876cd22dc924c4d3a264",
     "ui/harness-sandbox.html": "1ac31eae884f9d3277c9f3c3892cff914f1740bbcd14cc32480029929cf8de90",
     "ui/harness.html": "9a7e1c9b71ca33202a7599756e4547bb2d961abaa8ff2c6fdf4c3f0ffe13634e",
     "ui/harness.mjs": "3de800b6bb2fe79a72e2d5b74d6fae0b71f54cf167707a4a923da4a3b6e5e474",
-    "ui/index.html": "fdd4f3ce7919bf7a94cd8a75137dbb80747726468f5cfa082d9a42a8e2f6cfe3",
-    "ui/server.test.mjs": "ff5b4a228de11d38c8e8eb0ae1d30ef4d47ff742e57aaf4f5d00002058676def",
-    "ui/state.mjs": "161fbd6cd52f0a1d24c8ed51aee70eeac54f55cd4ccf67380e6e0978ee6e1da2",
-    "ui/state.test.mjs": "cbf9c5c0f95599524dbf2e4f0b3553cd0173cc6efb46291fc63a9c2d967998a2",
-    "ui/style.css": "7693cfc7fbd67c2bc3199a3b617e48b27e842cb3f7b9bc1f82dffa6ae82a593d"
+    "ui/index.html": "f9d6f19693764a9ec54250269b9aad38c0f0fa62a381a252a9a4766c60d09aa9",
+    "ui/server.test.mjs": "0880afee362a4d398bb5f7c4d6b676f68ca0979dd1d3e2b0ee0356ce69b0311f",
+    "ui/state.mjs": "540fd951ed57690ad5cccec1a0972646f0538ba11ee180846561b2506e82ede6",
+    "ui/state.test.mjs": "e8e35f73c699894faf83f1f62d67d6829072520322207698d5eb52016d3c54c0",
+    "ui/style.css": "9bba77d5e3c486e8a44abe361c28fd25aa499d4b91b27a2b9dd2918f76f48ddd"
   },
   "media": {
     "GO-FONTS-LICENSE.txt": {
@@ -417,12 +480,12 @@
       "sha256": "b9d3127ec29a4c0a0962c3283c5164fa07b4361d193446aa933fbf3e1745648d"
     },
     "mcp-app-studio-mobile.png": {
-      "bytes": 75679,
-      "sha256": "ec918b352ce22168af75aa6509450b9b562223da9c237e63eeeac5c03c4b413d"
+      "bytes": 83619,
+      "sha256": "5c97ece6fca391590e9f66cfb146143f8c24068dd9fb1cf78aaaefa118acf4da"
     },
     "mcp-app-studio.png": {
-      "bytes": 119562,
-      "sha256": "ca3fce352eccc572ede173a3c85ae9a2f17dd648d513b6b2c20c614a36917e8a"
+      "bytes": 127629,
+      "sha256": "aae94293b09bda354437d6929fbefe9b2cfff60bff0c12766bebc23e066c5318"
     },
     "mcp-app-workflow.svg": {
       "bytes": 725316,
@@ -632,6 +695,10 @@
         }
       }
     },
+    "studio-inspector.png": {
+      "bytes": 108853,
+      "sha256": "159c23f6134f8304ed2632794b9b655d03ef05c9c9c2fd85a4e1691f910b3568"
+    },
     "study-atkinson.png": {
       "bytes": 35310,
       "sha256": "90e588b785f76d20033f76eb28ffb67860a90cacf61301befd32ba2a03ffe5e4"
@@ -657,7 +724,7 @@
       "sha256": "6f36cb03286e5021ba56c93cc1113b7ec03342069374695b3d82ca3879e17d4f"
     }
   },
-  "revision": "mcp-apps-browser-verification",
+  "revision": "guarded-studio-exports-and-embedding",
   "palette_library": {
     "palettes": 256,
     "categories": 16,
@@ -688,7 +755,7 @@
     ".gitignore": "8d2576114a8dc036ff4b2d42bb532c6088bf68e87d360028d538c1566fa1c5c7",
     ".nojekyll": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "README.md": "7ef091c75bcf808c28be5b6d90ca6e37778d3931bb57fdb12a7b20678382a1cc",
+    "README.md": "5d1fa9642b8f76d6fce5f6e15acccd0441e7dedbbf0d4a515f649962dab30e63",
     "app.js": "03ee2d307f2f7542f7afb44a9f0bcc51f2c3543390d652ac5d6fd24c10248d23",
     "apps.css": "0b2ecddb7e8d8c2710008de00fb3c45c868b8dfbadf6e4e60e1556a4d5f4f85d",
     "assets/GO-FONTS-LICENSE.txt": "dc588a7ba9130043b67c2380cc03cc6644ed3557f6d5e8589b96acba1c64e343",
@@ -711,8 +778,8 @@
     "assets/garden-gameboy.png": "19c5cd85f174f857613d362721099614df4b324a157c1530c9fa240b47a08386",
     "assets/garden-wave-still.png": "3fc995787514a2bae114021a94f04d4ed196d4f2da87d025ca9d90925690b90e",
     "assets/garden-wave.gif": "64a8b3a544095a44e2940057e752bad0e5e4853e8f2b1ebad5a47291fa8bb56a",
-    "assets/mcp-app-studio-mobile.png": "ec918b352ce22168af75aa6509450b9b562223da9c237e63eeeac5c03c4b413d",
-    "assets/mcp-app-studio.png": "ca3fce352eccc572ede173a3c85ae9a2f17dd648d513b6b2c20c614a36917e8a",
+    "assets/mcp-app-studio-mobile.png": "5c97ece6fca391590e9f66cfb146143f8c24068dd9fb1cf78aaaefa118acf4da",
+    "assets/mcp-app-studio.png": "aae94293b09bda354437d6929fbefe9b2cfff60bff0c12766bebc23e066c5318",
     "assets/mcp-app-workflow.svg": "6f2694b8b284e707ddb99c5e05d9dbd3e0f2c837ed47453b7a1bc831d8ea7494",
     "assets/mcp.mp4": "002fe1beaf7f97402cabb4b34460610d136330406f707fbc4e2298c2fc677435",
     "assets/mineral-ember.png": "1c81cd458f30f79e096e361f826ffd08ae9068e68f6af3b989294d7553d51a73",
@@ -741,7 +808,7 @@
     "assets/study-floyd-steinberg.png": "b16c2c3432771a3b76186996533c2465df4a43ea078066850e91ec795473306d",
     "assets/study-halftone.png": "39910d1052cdb0856ca09d51f3a2b23d90478fb67eeb9b2a99597446cc230785",
     "formats.css": "7780a6e1d82bae6831224ce086a0909098de8aacdf0dbca9af28dd9442679c82",
-    "index.html": "f26e74fea98253acdbf4377c04b8cba3681ffcce7cc3ad028465ec326b024a14",
+    "index.html": "3e0ffb183eb3d60fd5129abba376bb0d5f3a4664e33f05c7af2a323f2dd14175",
     "palettes.css": "f479e39ef52171df762b2685baded1b8eb9b7254e583a7304d81649e0569514c",
     "palettes.js": "d9bfa9c14c5a497e8088ef366106538ef260b8d48464c6e5a90fcd4b1ab81b07",
     "styles.css": "3b68571cde72ffeac238971af797c89063e1db769ab64295c9d30d6d2cb8f59a"

@@ -1,0 +1,70 @@
+// Browser integration and local HTTP boundary checks; uses an isolated copy of
+// the public artwork and the compiled Go server. No third-party host is implied.
+import { chromium } from 'playwright';
+import { expect } from 'playwright/test';
+import assert from 'node:assert/strict';
+import { createServer } from 'node:net';
+import { request } from 'node:http';
+import { mkdir, mkdtemp, copyFile, readFile, readdir, writeFile, rm } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { startStudioHost } from './server.mjs';
+
+const repository = fileURLToPath(new URL('../..', import.meta.url));
+const out = path.join(repository, 'work/embedding-browser-check');
+await mkdir(out, { recursive: true });
+const root = await mkdtemp(path.join(out, 'workspace-'));
+await copyFile(path.join(repository, 'docs/assets/source/moon-garden.png'), path.join(root, 'source.png'));
+const probe = createServer();
+await new Promise((resolve, reject) => { probe.once('error', reject); probe.listen(0, '127.0.0.1', resolve); });
+const port = probe.address().port;
+await new Promise((resolve) => probe.close(resolve));
+let host, browser;
+const errors = [], external = [], failures = [], checks = [];
+try {
+  host = await startStudioHost({ root, input: 'source.png', port });
+  const rejected = await fetch(host.sandboxOrigin + '/bootstrap');
+  assert.equal(rejected.status, 403);
+  assert.equal((await fetch(host.origin + '/bootstrap')).status, 403);
+  assert.equal((await fetch(host.origin, { headers: { origin: 'https://example.invalid' } })).status, 403);
+  const hostileHost = await new Promise((resolve, reject) => {
+    const req = request({ hostname: '127.0.0.1', port, path: '/', headers: { host: 'example.invalid' } }, (response) => { response.resume(); resolve(response.statusCode); });
+    req.once('error', reject); req.end();
+  });
+  assert.equal(hostileHost, 403);
+  checks.push('Exact Host and Origin checks, sandbox denied access to bootstrap, per-session token required');
+  browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('requestfailed', (request) => { if (!request.failure()?.errorText.includes('ERR_ABORTED')) failures.push({ url: request.url(), error: request.failure()?.errorText }); });
+  page.on('request', (request) => { if (/^https?:/.test(request.url()) && !['localhost', '127.0.0.1'].includes(new URL(request.url()).hostname)) external.push(request.url()); });
+  await page.goto(host.origin);
+  await expect(page.locator('#status')).toHaveText('Connected to the local Go server.');
+  const studio = page.frames().find((frame) => frame.url() === 'about:srcdoc');
+  assert(studio);
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect.poll(() => studio.locator('#preview').evaluate((image) => image.complete && image.naturalWidth)).toBe(512);
+  assert.deepEqual(await readdir(root), ['source.png']);
+  checks.push('Opaque sandbox renders real Go preview through official AppBridge without writing');
+  await studio.locator('#output').fill('saved.png');
+  const preview = await studio.locator('#preview').getAttribute('src');
+  await studio.locator('#save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved saved.png');
+  assert.deepEqual(await readFile(path.join(root, 'saved.png')), Buffer.from(preview.split(',')[1], 'base64'));
+  checks.push('App-initiated guarded save writes the selected relative output byte-identically');
+  await page.locator('#theme').click();
+  await expect(studio.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.screenshot({ path: path.join(out, 'embedding-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert(await studio.locator('html').evaluate((html) => html.scrollWidth <= html.clientWidth + 1));
+  await page.screenshot({ path: path.join(out, 'embedding-mobile.png'), fullPage: true });
+  checks.push('Host theme update and 390px responsive layout');
+  await page.locator('#close').click();
+  await expect(page.locator('#status')).toHaveText('Studio closed.');
+  assert.equal(await page.locator('#studio').getAttribute('src'), null);
+  checks.push('Official teardown handshake closes the view before unmount');
+  assert.deepEqual(errors, []); assert.deepEqual(external, []); assert.deepEqual(failures, []);
+  await writeFile(path.join(out, 'verification.json'), JSON.stringify({ browser: await browser.version(), checks, errors, externalRequests: external, failedRequests: failures }, null, 2) + '\n');
+  console.log(JSON.stringify({ checks, errors, externalRequests: external, failedRequests: failures }, null, 2));
+} finally { await browser?.close(); await host?.close(); await rm(root, { recursive: true, force: true }); }

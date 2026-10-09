@@ -65,7 +65,7 @@ func studioResourceMeta() map[string]any {
 		"prefersBorder": true,
 		"permissions":   map[string]any{},
 		"csp": map[string]any{
-			"connectDomains": []string{}, "resourceDomains": []string{},
+			"connectDomains": []string{}, "resourceDomains": []string{"data:"},
 			"frameDomains": []string{}, "baseUriDomains": []string{},
 		},
 	}}

@@ -12,7 +12,10 @@
     "ui:check": "node ui/build.mjs --check",
     "ui:test": "node --test ui/*.test.mjs",
     "ui:harness": "node ui/harness.mjs",
-    "ui:browser": "node ui/browser-check.mjs"
+    "ui:browser": "node ui/browser-check.mjs",
+    "embedding:serve": "node examples/embedding/server.mjs",
+    "embedding:test": "node --test examples/embedding/*.test.mjs",
+    "embedding:browser": "node examples/embedding/browser-check.mjs"
   },
   "engines": {
     "node": ">=20.19.0"

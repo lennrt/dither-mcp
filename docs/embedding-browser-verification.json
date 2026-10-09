@@ -1,0 +1,17 @@
+{
+  "browser": "151.0.7922.34",
+  "checks": [
+    "Exact Host and Origin checks, sandbox denied access to bootstrap, per-session token required",
+    "Opaque sandbox renders real Go preview through official AppBridge without writing",
+    "App-initiated guarded save writes the selected relative output byte-identically",
+    "Host theme update and 390px responsive layout",
+    "Official teardown handshake closes the view before unmount"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "failedRequests": [],
+  "date": "2026-10-08",
+  "timezone": "America/Los_Angeles",
+  "scope": "Reusable local embedding example against the real Go stdio server with the official AppBridge.",
+  "playwright": "1.62.1"
+}

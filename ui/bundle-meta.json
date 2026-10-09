@@ -3111,12 +3111,12 @@
       "format": "esm"
     },
     "ui/state.mjs": {
-      "bytes": 10137,
+      "bytes": 12789,
       "imports": [],
       "format": "esm"
     },
     "ui/app.mjs": {
-      "bytes": 15642,
+      "bytes": 17297,
       "imports": [
         {
           "path": "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js",
@@ -3448,13 +3448,13 @@
           "bytesInOutput": 30587
         },
         "ui/state.mjs": {
-          "bytesInOutput": 6668
+          "bytesInOutput": 8541
         },
         "ui/app.mjs": {
-          "bytesInOutput": 10169
+          "bytesInOutput": 11431
         }
       },
-      "bytes": 547432
+      "bytes": 550567
     }
   }
 }

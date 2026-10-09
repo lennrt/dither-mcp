@@ -237,6 +237,14 @@
           "type": "string",
           "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
         },
+        "expected_source_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+        },
+        "expected_mask_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
+        },
         "format": {
           "type": "string",
           "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
@@ -790,6 +798,14 @@
               "mask_input": {
                 "type": "string",
                 "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
+              },
+              "expected_source_sha256": {
+                "type": "string",
+                "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+              },
+              "expected_mask_sha256": {
+                "type": "string",
+                "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
               },
               "format": {
                 "type": "string",
@@ -2220,6 +2236,14 @@
         "mask_input": {
           "type": "string",
           "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
+        },
+        "expected_source_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+        },
+        "expected_mask_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
         },
         "format": {
           "type": "string",
@@ -3711,7 +3735,7 @@
       "idempotentHint": false,
       "openWorldHint": false
     },
-    "description": "Apply a deterministic recipe to the first frame of a local image. The tool creates a new output and returns its dimensions, hash, and recipe. Use dither_preview to inspect the result.",
+    "description": "Apply a deterministic recipe to the first frame of a local image. The tool creates a new output and returns its dimensions, hash, and recipe. Optional source and mask SHA256 guards require the exact input bytes from a studio preview. A changed or unreadable guarded input creates no output and returns source_changed or mask_changed. Use dither_preview to inspect the result.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3941,6 +3965,14 @@
         "mask_input": {
           "type": "string",
           "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
+        },
+        "expected_source_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+        },
+        "expected_mask_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
         },
         "format": {
           "type": "string",
@@ -4468,6 +4500,14 @@
           "type": "string",
           "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
         },
+        "expected_source_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+        },
+        "expected_mask_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
+        },
         "format": {
           "type": "string",
           "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
@@ -4772,7 +4812,7 @@
       "idempotentHint": true,
       "openWorldHint": false
     },
-    "description": "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.",
+    "description": "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. Metadata includes source and mask byte fingerprints, upright source dimensions after cropping, and export limits. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5005,10 +5045,35 @@
     "outputSchema": {
       "additionalProperties": false,
       "properties": {
+        "export_limits": {
+          "additionalProperties": false,
+          "description": "The engine enforces these output dimensions and total pixel limit on exports.",
+          "properties": {
+            "max_height": {
+              "type": "integer"
+            },
+            "max_pixels": {
+              "type": "integer"
+            },
+            "max_width": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "max_width",
+            "max_height",
+            "max_pixels"
+          ],
+          "type": "object"
+        },
         "height": {
           "type": "integer"
         },
         "mask_input": {
+          "type": "string"
+        },
+        "mask_sha256": {
+          "description": "SHA256 of the exact mask file bytes decoded for this preview. Present when mask_input is set. Pass it as expected_mask_sha256 when exporting.",
           "type": "string"
         },
         "mime_type": {
@@ -5243,6 +5308,18 @@
           ],
           "type": "object"
         },
+        "source_height": {
+          "description": "Height of the upright normalized source after the accepted crop and before preview resizing. Use this height for a source-size export.",
+          "type": "integer"
+        },
+        "source_sha256": {
+          "description": "SHA256 of the exact source file bytes decoded for this preview. Pass it as expected_source_sha256 when exporting.",
+          "type": "string"
+        },
+        "source_width": {
+          "description": "Width of the upright normalized source after the accepted crop and before preview resizing. Use this width for a source-size export.",
+          "type": "integer"
+        },
         "width": {
           "type": "integer"
         }
@@ -5252,7 +5329,11 @@
         "width",
         "height",
         "mime_type",
-        "recipe"
+        "recipe",
+        "source_sha256",
+        "source_width",
+        "source_height",
+        "export_limits"
       ],
       "type": "object"
     }
@@ -5494,6 +5575,14 @@
         "mask_input": {
           "type": "string",
           "description": "Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha \u003e= 0.5 selects pixels on the reduced grid."
+        },
+        "expected_source_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."
+        },
+        "expected_mask_sha256": {
+          "type": "string",
+          "description": "Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."
         },
         "format": {
           "type": "string",
