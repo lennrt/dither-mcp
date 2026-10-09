@@ -158,7 +158,7 @@
     "CONTRIBUTING.md": "57a2950c9003436ff99f53910bc2edf7d4e0dbd6ed351e8ae2b0df82b138a4ca",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
     "Makefile": "427525373d896941863fcb4395eb83aaf0d405ab59942258575f570cf5a067f7",
-    "README.md": "9518fd50c89f93fa9cd8c4a7d11a55bb513d56534960e46df1aea6f049808a9e",
+    "README.md": "64f0606c503ee57eb023d48aa3a8fd37b2639fe9cafa339139548c4584408ec6",
     "SECURITY.md": "9491e2b9e6e2b1b522c30158209599ca84cfc31ddb827caa9a5e090306bda024",
     "THIRD_PARTY_LICENSES/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
     "THIRD_PARTY_LICENSES/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
@@ -1033,5 +1033,9 @@
       }
     ],
     "note": "Historical checks retained from the earlier implementation. They were not rerun for MCP Apps unless listed in current checks."
+  },
+  "documentation_update": {
+    "date": "2026-10-09",
+    "scope": "Set the main website link in README.md and keep MCP Apps support prominent. Updated the README hash; earlier implementation check results are unchanged."
   }
 }

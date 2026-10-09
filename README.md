@@ -12,7 +12,7 @@ dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotoco
 
 [Open the studio](#an-image-studio-inside-your-chat) · [Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
 
-[Source code](https://github.com/lennrt/dither-mcp) · [Showcase source](https://github.com/k-a2a/dither-mcp-site)
+[Website](http://ka2a.dev/dither-mcp-site/) · [MCP Apps guide](docs/mcp-apps.md) · [Source code](https://github.com/lennrt/dither-mcp) · [Website source](https://github.com/k-a2a/dither-mcp-site)
 
 ## What your agent can do
 
@@ -175,7 +175,7 @@ Use a preset or supply **2–256 unique hex colors**. Custom palettes are explic
 
 *Wave / 24 frames / 12 fps. [Reproduce the artwork and recipes](docs/showcase.md).*
 
-The separate [showcase repository](https://github.com/k-a2a/dither-mcp-site) contains a static site prepared for GitHub Pages. It introduces the MCP Apps studio and includes a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos. Its bundled HTML, CSS, JavaScript, media, and local fonts are ready to serve directly.
+Explore the [dither-mcp website](http://ka2a.dev/dither-mcp-site/) for the MCP Apps studio, a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos. The [website source](https://github.com/k-a2a/dither-mcp-site) lives in a separate repository and supports GitHub Pages.
 
 ## Make a reproducible recipe
 
