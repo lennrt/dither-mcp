@@ -7,6 +7,8 @@ All tool arguments and results are JSON objects. Tools advertise input and outpu
 
 See [formats and video](formats.md) for the complete support matrix, setup, examples, and tested codec combinations.
 
+The server provides **14 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
+
 ## Tools
 
 | Tool | Inputs | Result |
@@ -15,6 +17,7 @@ See [formats and video](formats.md) for the complete support matrix, setup, exam
 | `dither_palettes` | `query`, `category`, `min_colors`, `max_colors`, `limit`, `offset` (all optional) | Searchable palette pages with exact colors, descriptions, tags, provenance and category counts |
 | `dither_inspect` | `input` | Upright dimensions, normalization details, first-frame alpha, frame count, size, and SHA256 |
 | `dither_preview` | `input`, optional `width` | Structured metadata plus native MCP PNG image content |
+| `dither_studio` | `input`, optional `palette` or `colors`, `options`, and `mask_input` | In-memory dithered PNG preview, resolved recipe, and optional interactive studio |
 | `dither_palette_extract` | `input`, `count` (default 8) | Deterministic array of up to the requested 2–256 colors |
 | `dither_render` | Render request | Artifact and recipe |
 | `dither_compare` | Render request, `algorithms`, optional `columns` | Contact sheet plus indexed cell rectangles |
@@ -52,6 +55,31 @@ The result records a relative path, actual dimensions, encoded byte count, and S
 A comparison's `cells` supply labels and exact rectangles. The contact sheet contains no embedded typography. `dither_inspect` can hash source files when a caller needs to keep a complete input manifest.
 
 Solid-color sources cannot produce two distinct extracted colors. Extraction returns an actionable error instead of an unusable one-color render palette.
+
+## MCP Apps studio
+
+Ask your agent to open `dither_studio` for a local image:
+
+```json
+{
+  "input": "photo.png",
+  "palette": "oat-and-ink",
+  "options": {
+    "algorithm": "atkinson",
+    "pixel_scale": 2,
+    "contrast": 1.1,
+    "seed": 42
+  }
+}
+```
+
+The studio uses all 41 algorithms, 256 palettes, custom colors, and the shared engine options. The embedded controls let you select an algorithm and palette, adjust the image, apply a preview, zoom, and inspect swatches.
+
+`dither_studio` reads the source and renders in memory. It accepts no output path and creates no file. When dimensions are omitted, the preview fits within 512 × 512 pixels without enlarging the source. Explicit or aspect-derived dimensions must fit within 1,024 pixels per axis. Encoded PNG data must fit within 2 MiB. Studio seeds must be safe JavaScript integers, from −9,007,199,254,740,991 through 9,007,199,254,740,991.
+
+Select **Save image** and supply a new relative output path to write a file. The filename extension selects the still-image output format. The app calls `dither_render` with the exact recipe from the last successful preview. Changing a control does not change that saved recipe until **Apply preview** succeeds. Existing destinations remain protected by the service's atomic publication rules.
+
+The tool descriptor associates this view with `ui://dither/studio.html` through `_meta.ui.resourceUri`. The resource has MIME type `text/html;profile=mcp-app`. The original tools keep their normal tool results. Read the [MCP Apps guide](mcp-apps.md) for the host contract, build workflow, and verified behavior.
 
 ## Input normalization and inspection
 
@@ -107,7 +135,7 @@ The binary embeds the catalog. Discovery uses local data.
 | `gamma` | 0.1..8, default 1 |
 | `threshold` | 0..1, default 0.5 |
 | `strength` | 0..2, default 1 |
-| `seed` | Signed 64-bit integer. Default: 0. Raw MCP JSON preserves integer precision. |
+| `seed` | Signed 64-bit integer. Default: 0. Raw MCP JSON preserves integer precision. Studio requests use the safe JavaScript integer range. |
 | `serpentine` | Alternate diffusion rows. Default: false. |
 | `invert`, `grayscale` | Boolean controls |
 | `color_space` | `srgb` or `linear-rgb` |
@@ -175,7 +203,8 @@ The service enforces these limits:
 | Comparison | 12 candidates |
 | Batch | 32 items |
 | Palette | 2–256 unique opaque colors |
-| Preview | 1,024 pixels per axis and 2 MiB PNG. Default width: 512. |
+| Source preview | 1,024 pixels per axis and 2 MiB PNG. Default width: 512. |
+| Studio preview | 1,024 pixels per axis and 2 MiB PNG. Default: fit within 512 × 512 without enlargement. |
 | Tool arguments | 1 MiB |
 | MCP line | 2 MiB |
 
@@ -199,6 +228,7 @@ There are no overwrite, delete, upload, or network-import tools.
 
 - `dither://capabilities`: the live machine-readable catalog.
 - `dither://workflow`: agent workflow, privacy and parameter guidance.
+- `ui://dither/studio.html`: self-contained MCP Apps studio with MIME type `text/html;profile=mcp-app`.
 - `art_director`: inspect, compare, preview, render, save a recipe.
 - `prepare_print`: choose inks, preview, generate plates.
 - `make_loop`: check budgets, animate and report frame dimensions.
@@ -211,6 +241,8 @@ model provider. See [security](security.md) before choosing a workspace root.
 The server uses `mcp-go` v1.1.1 for protocol version handling, stdio framing, dispatch, resources, and prompts. The application supplies typed tool schemas and runtime validation. It does not start an HTTP listener.
 
 Successful tools return structured JSON and a serialized JSON text block. Preview tools also return native PNG image content. Protocol tests validate structured results against each advertised output schema. These choices follow the [MCP tools guidance](https://modelcontextprotocol.io/specification/2026-07-28/server/tools).
+
+The studio adds the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). Its HTML bundles CSS and the official `@modelcontextprotocol/ext-apps` SDK. The host mediates app tool calls and controls the embedded view. The app loads no external scripts or assets and needs no runtime Node.js process.
 
 Tool descriptions identify defaults, bounds, required dependencies, and output behavior. Annotations distinguish reads from file writes and describe local, non-destructive behavior. Clients must treat annotations as untrusted unless they trust the server. Annotations do not replace authorization or input validation. See [tool annotations](https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool).
 

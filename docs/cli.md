@@ -64,6 +64,24 @@ sources even when output width is small. See [MCP limits](mcp.md#limits-and-erro
 `call ... dither_preview` emits base64 PNG in JSON for direct CLI callers. The MCP
 transport instead emits native image content alongside compact structured metadata.
 
+## Studio previews
+
+Use `call` to run the same read-only preview operation as the [MCP Apps studio](mcp-apps.md):
+
+```sh
+./bin/dither-mcp call --root . dither_studio '{
+  "input":"docs/assets/source/moon-garden.png",
+  "palette":"oat-and-ink",
+  "options":{"algorithm":"atkinson","pixel_scale":2,"seed":42}
+}'
+```
+
+This call returns PNG data, preview metadata, and a resolved recipe as JSON. It creates no output file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Explicit and aspect-derived dimensions must fit within 1,024 pixels per axis, and the PNG must fit within 2 MiB. The tool accepts `input`, `palette` or `colors`, `options`, and an optional `mask_input`. It accepts neither an output path nor a recipe file.
+
+The interactive controls appear when an MCP host supports MCP Apps and local stdio servers. The CLI returns the data for direct use. To save a matching PNG, pass the successful preview's resolved recipe to `dither_render` with the same input, mask input when needed, and a new relative output path.
+
+## Motion settings
+
 Source GIF animation preserves source timing when you select `--effect source` or that effect applies by default. Still `render` processes only the first frame.
 The CLI and MCP service share frame controls and all limits.
 

@@ -2,29 +2,29 @@
 
 The behavioral requirements live in [`openspec/specs`](../openspec/specs). The initial [`proposal`](../openspec/changes/initial-suite/proposal.md), [`design`](../openspec/changes/initial-suite/design.md), and [`tasks`](../openspec/changes/initial-suite/tasks.md) record the feature and architecture decisions. We wrote and strictly validated the initial baseline before implementing the application.
 
-Quint models four small contracts covering publication, quantization, palette discovery, and source normalization. They make sequencing and invariants executable. Concrete Go tests challenge the same claims. They are not a formal proof of the Go program.
+Quint models five small contracts covering publication, quantization, palette discovery, source normalization, and MCP Apps interactions. They make sequencing and invariants executable. Concrete implementation tests challenge the same claims. They are not a formal proof of the Go program or browser UI.
 
 ## Run the checks
 
-The specification-only command requires Node.js 20.19 or later and pnpm. It does not require Go.
+The specification check requires Node.js and pnpm at the versions declared in `package.json`. It does not require Go.
 
 ```sh
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm spec:check
 ```
 
-The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the TypeScript Quint backend, so it needs neither Java/Apalache nor a downloaded native simulator. The harness disables OpenSpec telemetry. Node and these packages are development dependencies only. The runtime remains Go.
+The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the TypeScript Quint backend, so it needs neither Java/Apalache nor a downloaded native simulator. The harness disables OpenSpec telemetry. Node and these packages are development dependencies only. The server runtime remains Go. An MCP Apps host executes the embedded studio script in its sandbox.
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and three changes.
-2. Typechecking of all four Quint modules.
-3. Forty-three executable run tests, including negative precondition scenarios.
+1. Strict validation of six baseline OpenSpec capabilities and four changes.
+2. Typechecking of all five Quint modules.
+3. Fifty-nine executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
-5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, and normalization. Each schedule requires a completion witness.
-6. Three negative mutation checks, each in an independent temporary model copy. They remove the no-clobber guard, overlap pagination, or bypass orientation readiness. The harness confirms that the respective regression tests fail.
+5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, normalization, and studio saves. Each schedule requires a completion witness.
+6. Six negative mutation checks, each in an independent temporary model copy. They remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. The harness confirms that the respective regression tests fail.
 
-The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, and witness counts. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
+The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
 ## Publication model
 
@@ -68,9 +68,21 @@ Color conversion is an abstract scalar transformation. The model does not establ
 
 The [image-normalization change](../openspec/changes/image-normalization/proposal.md) records the supported subset and implementation checklist. A completion-focused schedule checks that valid requests can reach downstream processing. Its witness is coverage evidence rather than a liveness proof.
 
+## MCP Apps interaction model
+
+[`mcp_apps.qnt`](mcp_apps.qnt) represents complete source, palette, options, and mask settings with four revision values. It permits three preview requests and three save attempts. Each request keeps its identity and original revision, including after cancellation. Successful responses become current only while both identity and revision match.
+
+The model separates preview requests from explicit save authorization and publication outcomes. Save requires host tool support, a destination, a current successful preview, and no pending operation. An authorization records the current revision, accepted preview, and replay recipe. Invariants check that these agree. Run tests cover edits during requests, cancellation, late results, failed replacements, missing destinations, and busy-state guards.
+
+Three mutations challenge the studio tests. They permit dirty saves, accept stale responses, or increment the publication count while receiving a preview. A completion-focused schedule must witness a successful save. This supplies coverage evidence rather than a liveness proof.
+
+Revision numbers abstract complete settings. The model does not parse tool data, render controls, implement the host bridge, validate filesystem paths, or compare image pixels. Preview actions have no publication transition by design. Go tests must independently check that the actual preview service writes no files. Controller and browser tests must check that real events enforce the modeled guards. The model alone establishes no UI behavior or machine-checked refinement.
+
+The [MCP Apps change](../openspec/changes/mcp-apps/proposal.md) defines negotiated presentation and fallback. The [studio guide](../docs/mcp-apps.md) describes host requirements, saves, and the runtime boundary.
+
 ## Refinement evidence
 
-| Contract | Implementation boundary | Go evidence |
+| Contract | Implementation boundary | Implementation evidence |
 |---|---|---|
 | Palette compatibility and data quality | Built-in engine catalog | `TestLegacyPaletteCompatibility`, `TestPaletteLibraryQuality`, `TestPaletteLibraryReferences`, `TestEveryPaletteRenders` |
 | Filtered discovery and complete pagination | Application discovery shared by MCP/CLI | `TestPaletteDiscoveryPagination`, `TestPaletteDiscoveryFilterComposition`, `TestPaletteDiscoveryInvalidInputs`, `TestPaletteDiscoveryCLI`, `TestProtocolWorkflow` |
@@ -85,8 +97,12 @@ The [image-normalization change](../openspec/changes/image-normalization/proposa
 | Metadata admission and precedence | Container scanners and selected color transform | `TestICCContainersAndSequence`, `TestPNGPrecedenceAndBoundedMetadata`, `TestReviewBMPProfileAdmission`, `TestReviewCICPPrecedesProfileInternals`, `TestReviewJPEGMetadataBetweenScans` |
 | Numerical color conversion and alpha precision | Bounded matrix/TRC converter | `TestIndependentLittleCMSVectors`, `TestPublishedCSSColorVectors`, `TestMalformedProfiles`, `TestAlphaPrecisionBoundsAndConcurrency`, `TestApplyAdmissionAndCancellation` |
 | Normalization before shared operations | Application still loader and mask loader | `TestNormalizationAcrossDecodedContainers`, `TestNormalizationSharedWorkflows`, `TestMaskNormalizationAndFailureBeforePublication` |
+| Read-only processed previews and exact replay | Shared application studio service | `TestStudioPreviewReplaysWithoutWriting`, `TestStudioGeometryAndAdmission`, `TestStudioImageMaskReplay`, `TestStudioNormalization`, `TestStudioEncodedBudgetAndSafeSeeds` |
+| Negotiated MCP Apps linkage and core fallback | Tool filter, resource handler, and result encoder | `TestAppsNegotiationAndFallback`, `TestStdioProtocolEras` |
+| Dirty controls, stale responses, and exact save arguments | Concrete JavaScript state controller | [`ui/state.test.mjs`](../ui/state.test.mjs), including canceled replacements, late host results, custom color preservation, hidden options, and invalid seeds |
+| Host lifecycle and tool-call capability | Official SDK App and AppBridge over paired transports | [`ui/bridge.test.mjs`](../ui/bridge.test.mjs) checks initial input/result, exact save arguments, theme, cancellation, and a host without tool capability |
 
-The Go tests independently exercise real code. They do not come from Quint traces. They do not establish machine-checked refinement. Review the tests together with the models when changing either boundary.
+The implementation tests independently exercise real code. They do not come from Quint traces. The SDK bridge tests use paired in-memory transports and do not render a browser document. The local browser harness can exercise that separate integration boundary. These checks do not establish machine-checked refinement. Review the tests together with the models when changing either boundary.
 
 ## What the checks do not establish
 

@@ -1,0 +1,95 @@
+# Interactive studio
+
+`dither_studio` processes a local image and returns a PNG preview with its exact recipe. An MCP Apps host can display the interactive studio. Other MCP clients receive the same preview and recipe through ordinary tool results.
+
+The studio follows the [stable MCP Apps specification, dated 2026-01-26](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx). It bundles the official [`@modelcontextprotocol/ext-apps`](https://apps.extensions.modelcontextprotocol.io/) SDK at version 2.0.3.
+
+## Open and use the studio
+
+Start the server with an existing image workspace:
+
+```sh
+dither-mcp mcp --root /absolute/path/to/images
+```
+
+Ask the agent to open an image with `dither_studio`, or call the tool directly:
+
+```json
+{
+  "input": "photo.png",
+  "palette": "gameboy",
+  "options": {
+    "algorithm": "atkinson",
+    "width": 480,
+    "seed": 42
+  }
+}
+```
+
+Choose an algorithm, search the palette library, or enter custom hex colors. Adjust tone, dimensions, and texture. Advanced JSON exposes the complete engine options, including crop, masks, and effects. The source and image-mask paths come from the tool call.
+
+Select **Apply preview** to process changed settings. Editing controls marks the displayed image as stale. Save stays disabled until those settings have a successful preview. Pending, canceled, and late results cannot authorize a save of unpreviewed settings.
+
+Enter a new workspace-relative destination, then select **Save image**. Saving calls the existing `dither_render` tool. The filename extension selects the output format. The destination must not exist.
+
+## Preview and save behavior
+
+| Property | Behavior |
+|---|---|
+| Preview input | `input`, optional `palette` or `colors`, engine `options`, and optional `mask_input` |
+| Default size | Fit within 512 × 512 pixels without enlargement when both dimensions are zero or omitted |
+| Size limit | 1,024 pixels on each axis, including a dimension derived from aspect ratio |
+| Encoded limit | 2 MiB of PNG bytes |
+| Preview result | Source `path`, `width`, `height`, `mime_type`, versioned `recipe`, and any `mask_input` |
+| Filesystem effect | Preview reads files and keeps its PNG in memory |
+| Save input | Accepted preview source, exact recipe settings, mask path, and the destination entered by the user |
+| Save dimensions | The same dimensions as the accepted preview |
+| Studio seed | Integer from −9,007,199,254,740,991 through 9,007,199,254,740,991, the exact JavaScript range |
+
+The studio uses the shared image loader. EXIF orientation and supported input color normalization run before crop, resize, and dithering. Image masks use the same normalization policy. Preview failures create no artifact.
+
+Save reprocesses the input with the accepted recipe. Keep the source and mask unchanged to reproduce the preview pixels. The preview does not hold a content-addressed snapshot of those files. JPEG and other output formats can also change encoded appearance.
+
+Use `dither_render` directly for a larger export or the full signed 64-bit seed range. Its usual limits apply. See the [MCP reference](mcp.md) for all engine options and the [security model](security.md) for rooted paths and atomic publication.
+
+## Host and resource contract
+
+The host advertises the `io.modelcontextprotocol/ui` extension with the exact MIME type `text/html;profile=mcp-app`. The server advertises the extension and checks the client's MIME types. For supporting clients, `dither_studio` declares:
+
+```json
+{
+  "_meta": {
+    "ui": {
+      "resourceUri": "ui://dither/studio.html",
+      "visibility": ["model", "app"]
+    }
+  }
+}
+```
+
+The public resource returns a complete HTML document through `resources/read`. Each returned content item carries `_meta.ui` with empty external connection, resource, frame, and base-URI domain lists. It requests no browser permissions. The host controls sandboxing and CSP enforcement.
+
+Scripts, styles, and the SDK are embedded in the Go binary. The running studio uses the host bridge and in-memory PNG data. It needs no CDN, HTTP listener, or external network access.
+
+The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable interactive preview and save. Without that capability, the UI can show its supplied result and explains the unavailable controls.
+
+For supporting clients, result `_meta.dither` supplies the canonical request and the algorithm/palette catalogs. The normal result still contains structured metadata, serialized JSON text, and native PNG image content. The server omits UI linkage and presentation metadata when the client does not advertise the supported MIME type.
+
+The studio calls the same public tools available to the agent. Host consent and tool policies still apply to each call. No private save endpoint bypasses the existing service.
+
+## Build and check
+
+Released binaries contain the built UI. Contributors need the declared Node.js and pnpm versions to rebuild it:
+
+```sh
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm ui:build
+pnpm ui:check
+make ui-test          # build the Go binary and run UI state/bridge tests
+pnpm spec:check
+go test ./...
+```
+
+`ui:build` bundles the pinned SDK and application assets. `ui:check` verifies that the checked-in embedded document matches its sources. `make ui-test` builds the Go binary, exercises the concrete interaction state and official SDK bridge, and checks preview/save behavior through the real stdio server. After `make build`, `pnpm ui:harness` starts a loopback-only browser test host with an isolated copy of the original sample artwork. Open the localhost URL that it prints. Its outputs stay in an ignored `work/apps-host-*` directory. This development harness is not part of the production server.
+
+The [OpenSpec change](../openspec/changes/mcp-apps/proposal.md) records the contract. The [Quint interaction model](../spec/mcp_apps.qnt) checks abstract preview, stale-result, and save sequencing. The [specification guide](../spec/README.md#mcp-apps-interaction-model) separates model evidence from implementation tests. Neither finite simulation nor a local browser harness proves compatibility with every MCP Apps host.

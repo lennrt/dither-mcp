@@ -25,6 +25,16 @@ Standard-library image decode/encode calls cannot be preempted mid-call. The dea
 
 Batch results commit independently. A later failure or cancellation does not reverse earlier outputs. Inspect every returned item. A comparison or print archive produces one final artifact. The service publishes it only after all components complete.
 
+## MCP Apps studio
+
+The [studio](mcp-apps.md) is an optional view in a supporting MCP host. The Go binary serves one embedded HTML resource, `ui://dither/studio.html`, with MIME type `text/html;profile=mcp-app`. Its CSS and official MCP Apps SDK are bundled. It loads no external assets, uses no CDN, and requires no runtime Node.js process or additional server listener.
+
+The host controls the app's sandbox and mediates tool calls through the MCP Apps bridge. App requests still pass through the service's rooted paths, strict arguments, admission queue, cancellation, and resource limits. The resource does not request camera, microphone, or external network access.
+
+`dither_studio` is read-only. It creates an in-memory PNG and returns the resolved recipe. It accepts no destination and publishes no artifact. The default preview fits within 512 × 512 pixels without enlargement. Every preview stays within 1,024 pixels per axis and 2 MiB PNG.
+
+Only **Save image** in the app requests a file write. The app calls `dither_render` with a new relative output path and the exact recipe from its last successful preview. Unsaved control changes and failed previews do not replace that recipe. The normal atomic publication rules protect existing destinations. The host continues to control authorization for tool calls.
+
 ## Input metadata
 
 The still-image loader parses recognized EXIF and color metadata within the input byte budget. It limits EXIF payloads and expanded ICC profiles to 4 MiB each. ICC profiles permit at most 256 tags and 65,536 samples per tone curve. EXIF IFD0 permits at most 4,096 entries. Malformed recognized container metadata and invalid or unsupported selected profiles cause errors before artifact publication. Image masks use the same validation and normalization path.
@@ -53,7 +63,7 @@ The service removes temporary staging after each ordinary completion or error. T
 
 The Go application does not fetch URLs, upload images, collect analytics, or call an LLM provider. A normal still operation needs no network. Dependency downloads and vulnerability checks are development activities.
 
-The MCP client receives metadata. `dither_preview` explicitly sends a PNG preview to that client. The client may forward it to a hosted model under its own policy. Local processing does not guarantee anything about the client's transmission or retention.
+The MCP client receives metadata. `dither_preview` and `dither_studio` explicitly send PNG previews to that client. Studio results also include the resolved recipe. The client may forward these results to a hosted model under its own policy. Local processing does not guarantee anything about the client's transmission or retention.
 
 Inspection also reports orientation, stored dimensions, color-source identifiers, conversion status, and the selected ICC profile’s digest when applicable. It does not return the full embedded profile. Exports omit source EXIF and ICC data.
 

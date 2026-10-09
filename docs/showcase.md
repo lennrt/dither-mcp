@@ -70,6 +70,16 @@ The generator creates an original arrow chart with EXIF orientation 6 and a synt
 
 The generator checks upright dimensions, selected-profile metadata, conversion of neutral 128 to sRGB 188, and preservation of alpha 160. It saves source images, the original profile, preview PNGs, and inspection receipts. See [the format guide](formats.md#reproduce-the-comparison) for the image and results.
 
+## Studio workflow illustration
+
+The studio workflow uses a separate, editable SVG illustration at
+`docs/assets/mcp-app-workflow.svg`. It embeds the original Moon Garden and
+`garden-clay.png` as image examples. Its labels explain opening an image,
+previewing settings in memory, and explicitly saving the applied recipe.
+The illustration is not a browser capture. The site asset script copies it
+to the showcase repository. See the [studio guide](mcp-apps.md) for the
+development host and automated protocol checks.
+
 ## Terminal recordings
 
 Prerequisites:
@@ -140,6 +150,6 @@ The wave artwork contains 24 frames with a total duration of exactly 2.00 s. All
 - Empty-result behavior, Escape reset, and featured treatment selection.
 - Keyboard disclosure and image loading for the normalization comparison.
 
-All observed gallery images loaded, and the browser console remained clear. The standalone site directory contains desktop, mobile, palette explorer, and supported-format screenshots.
+All observed gallery images loaded, and the browser console remained clear. These browser observations apply to the October 3 showcase. Browser rendering of the October 8 MCP Apps update remains unverified.
 
 The Go showcase programs compile, shell scripts pass syntax checks, and VHS checks all four tapes. These checks establish the recorded local behavior and media integrity. They do not establish compatibility with every MCP host or browser.

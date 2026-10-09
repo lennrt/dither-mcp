@@ -85,6 +85,12 @@ func (s *Service) Do(ctx context.Context, name string, raw []byte) (result any, 
 			return nil, err
 		}
 		return s.preview(ctx, q)
+	case "dither_studio":
+		var q StudioRequest
+		if err := StrictJSON(raw, &q); err != nil {
+			return nil, err
+		}
+		return s.studio(ctx, q)
 	case "dither_inspect":
 		var q InputRequest
 		if err := StrictJSON(raw, &q); err != nil {

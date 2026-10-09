@@ -22,6 +22,16 @@ type CatalogResult struct {
 	Defaults          Recipe             `json:"defaults"`
 	Paths             string             `json:"paths"`
 	Media             MediaCapabilities  `json:"media" jsonschema:"Each section lists accepted inputs, output roles, defaults, and limits for a media operation."`
+	Studio            StudioCapabilities `json:"studio" jsonschema:"This read-only preview operation can open an optional MCP Apps interface in supporting hosts."`
+}
+
+type StudioCapabilities struct {
+	Tool                string `json:"tool"`
+	DefaultMaxDimension int    `json:"default_max_dimension"`
+	MaxDimension        int    `json:"max_dimension"`
+	MaxPNGBytes         int    `json:"max_png_bytes"`
+	WritesFiles         bool   `json:"writes_files"`
+	SaveTool            string `json:"save_tool"`
 }
 
 type PaletteDiscovery struct {
@@ -134,6 +144,7 @@ func (s *Service) Catalog() CatalogResult {
 		Limits:   CatalogLimits{MaxBytes, engine.MaxPixels, MaxFramePixels, MaxFrames, 32, 12, 120},
 		Defaults: Recipe{Version: 1, Palette: "mono", Options: engine.DefaultConfig()},
 		Paths:    "Paths are relative to the configured root. The service rejects URLs, absolute paths, and parent traversal. Outputs use new paths without overwriting files.",
+		Studio:   StudioCapabilities{Tool: "dither_studio", DefaultMaxDimension: StudioDefaultDimension, MaxDimension: StudioMaxDimension, MaxPNGBytes: StudioMaxPNGBytes, WritesFiles: false, SaveTool: "dither_render"},
 		Media: MediaCapabilities{
 			Still: StillCapabilities{
 				InputFormats: append([]string(nil), input...), OutputFormats: append([]string(nil), output...),

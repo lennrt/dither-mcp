@@ -36,3 +36,21 @@ License 1.1. It loads these fonts from local files:
 | `github.com/yosida95/uritemplate/v3` | `v3.0.2` | [Notice](THIRD_PARTY_LICENSES/github.com_yosida95_uritemplate_v3@v3.0.2-LICENSE) |
 | `golang.org/x/image` | `v0.46.0` | [Notice](THIRD_PARTY_LICENSES/golang.org_x_image@v0.46.0-LICENSE) |
 | `golang.org/x/text` | `v0.42.0` | [Notice](THIRD_PARTY_LICENSES/golang.org_x_text@v0.42.0-LICENSE) |
+
+## Embedded MCP Apps code
+
+The studio bundles the following JavaScript packages into the HTML embedded in
+the Go executable. `ui/bundle-meta.json` records the files included by the build.
+The original license files are preserved in full, including the MCP packages'
+MIT and Apache 2.0 transition terms. The studio uses system fonts.
+
+| Package | Version | License notice |
+|---|---|---|
+| `@modelcontextprotocol/ext-apps` | `2.0.3` | [Original notice](THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_ext-apps@2.0.3-LICENSE.txt) |
+| `@modelcontextprotocol/core` | `2.3.1` | [Original notice](THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_core@2.3.1-LICENSE.txt) |
+| `@modelcontextprotocol/client` | `2.3.1` | [Original notice](THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_client@2.3.1-LICENSE.txt) |
+| `zod` | `4.6.5` | [Original notice](THIRD_PARTY_LICENSES/npm_zod@4.6.5-LICENSE.txt) |
+| `eventsource-parser` | `3.1.1` | [Original notice](THIRD_PARTY_LICENSES/npm_eventsource-parser@3.1.1-LICENSE.txt) |
+| `eventsource` | `3.0.7` | [Original notice](THIRD_PARTY_LICENSES/npm_eventsource@3.0.7-LICENSE.txt) |
+| `jose` | `6.2.12` | [Original notice](THIRD_PARTY_LICENSES/npm_jose@6.2.12-LICENSE.txt) |
+| `pkce-challenge` | `5.0.1` | [Original notice](THIRD_PARTY_LICENSES/npm_pkce-challenge@5.0.1-LICENSE.txt) |

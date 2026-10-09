@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lennrt/dither-mcp/internal/app"
+	"github.com/lennrt/dither-mcp/internal/mcpapp"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -37,14 +38,19 @@ func TestStdioProtocolEras(t *testing.T) {
 			go func() { _ = server.NewStdioServer(New(svc)).Listen(ctx, input, output) }()
 			reader := bufio.NewReader(receive)
 			id := 0
+			apps := version == "2026-07-28"
 			rpc := func(method string, params map[string]any) map[string]any {
 				t.Helper()
 				id++
 				if version == "2026-07-28" {
+					capabilities := map[string]any{}
+					if apps {
+						capabilities["extensions"] = appsExtension()
+					}
 					params["_meta"] = map[string]any{
 						mcp.MetaKeyProtocolVersion:    version,
 						mcp.MetaKeyClientInfo:         map[string]any{"name": "dither-wire-test", "version": "1"},
-						mcp.MetaKeyClientCapabilities: map[string]any{},
+						mcp.MetaKeyClientCapabilities: capabilities,
 						"allow_video":                 true,
 					}
 				}
@@ -90,8 +96,36 @@ func TestStdioProtocolEras(t *testing.T) {
 			listed := rpc("tools/list", map[string]any{})
 			result := listed["result"].(map[string]any)
 			tools := result["tools"].([]any)
-			if len(tools) != 13 {
+			if len(tools) != 14 {
 				t.Fatalf("tools=%d", len(tools))
+			}
+			checkStudio := func(tools []any, wantUI bool) {
+				t.Helper()
+				found := false
+				for _, entry := range tools {
+					tool := entry.(map[string]any)
+					if tool["name"] != "dither_studio" {
+						continue
+					}
+					found = true
+					meta, hasUI := tool["_meta"].(map[string]any)
+					if hasUI != wantUI {
+						t.Fatalf("Apps negotiation: %+v", tool)
+					}
+					if wantUI && meta["ui"].(map[string]any)["resourceUri"] != mcpapp.URI {
+						t.Fatal("wrong UI URI")
+					}
+				}
+				if !found {
+					t.Fatal("studio missing from core fallback")
+				}
+			}
+			checkStudio(tools, apps)
+			if apps {
+				apps = false
+				fallback := rpc("tools/list", map[string]any{})
+				checkStudio(fallback["result"].(map[string]any)["tools"].([]any), false)
+				apps = true
 			}
 			if version == "2026-07-28" && result["resultType"] != "complete" {
 				t.Fatal("modern tools/list lacks resultType")

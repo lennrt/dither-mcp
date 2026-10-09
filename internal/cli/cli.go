@@ -70,6 +70,7 @@ The CLI writes JSON results to stdout and diagnostics to stderr. Each output use
 Still images and masks normalize EXIF orientation and supported color metadata to upright sRGB.
 Crop coordinates use the upright image. Run inspect to see normalization details.
 For advanced tool schemas, connect an MCP client or read docs/mcp.md.
+Call dither_studio for an in-memory dither preview. MCP Apps hosts can show its interactive panel.
 `
 
 func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer) error {

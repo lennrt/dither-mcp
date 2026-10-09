@@ -31,10 +31,11 @@ var Tools = []ToolInfo{
 	{"dither_separate", "Create a ZIP with one black-on-white PNG plate per palette ink and a manifest. The tool supports up to 16 inks. The recipe must omit masks and post-effects.", false},
 	{"dither_recipe_save", "Validate a version-1 JSON recipe. Save it to a new relative path without replacing an existing file.", false},
 	{"dither_recipe_load", "Read and validate a saved version-1 JSON recipe.", true},
+	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
 }
 
 func New(svc *app.Service) *server.MCPServer {
-	s := server.NewMCPServer("dither-mcp", app.Version, server.WithToolCapabilities(false), server.WithResourceCapabilities(false, false), server.WithPromptCapabilities(false), server.WithRecovery(), server.WithInstructions(guide), server.WithTitle("Dither MCP"))
+	s := server.NewMCPServer("dither-mcp", app.Version, server.WithToolCapabilities(false), server.WithResourceCapabilities(false, false), server.WithPromptCapabilities(false), server.WithRecovery(), server.WithInstructions(guide), server.WithTitle("Dither MCP"), server.WithExtensions(appsExtension()), server.WithToolFilter(appsToolFilter))
 	add[app.Empty, app.CatalogResult](s, svc, Tools[0])
 	add[app.PaletteQuery, app.PaletteList](s, svc, Tools[1])
 	add[app.InputRequest, app.Inspection](s, svc, Tools[2])
@@ -48,6 +49,8 @@ func New(svc *app.Service) *server.MCPServer {
 	add[app.RenderRequest, app.Artifact](s, svc, Tools[10])
 	add[app.RecipeSaveRequest, app.Artifact](s, svc, Tools[11])
 	add[app.InputRequest, app.Recipe](s, svc, Tools[12])
+	add[app.StudioRequest, app.StudioMetadata](s, svc, Tools[13])
+	addStudioResource(s)
 	s.AddResource(mcp.NewResource("dither://capabilities", "Dither capabilities", mcp.WithMIMEType("application/json")), func(ctx context.Context, r mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		b, err := json.Marshal(svc.Catalog())
 		if err != nil {
@@ -72,6 +75,9 @@ func New(svc *app.Service) *server.MCPServer {
 }
 func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 	tool := mcp.NewTool(info.Name, mcp.WithDescription(info.Description), mcp.WithInputSchema[T](), mcp.WithOutputSchema[O](), mcp.WithReadOnlyHintAnnotation(info.ReadOnly), mcp.WithDestructiveHintAnnotation(false), mcp.WithIdempotentHintAnnotation(info.ReadOnly), mcp.WithOpenWorldHintAnnotation(false))
+	if info.Name == "dither_studio" {
+		tool.Meta = studioToolMeta()
+	}
 	s.AddTool(tool, func(ctx context.Context, r mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var b []byte
 		var err error
@@ -91,6 +97,9 @@ func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
+		if studio, ok := v.(app.StudioResult); ok {
+			return studioResult(ctx, studio), nil
+		}
 		if preview, ok := v.(app.PreviewResult); ok {
 			metadata := map[string]any{"path": preview.Path, "width": preview.Width, "height": preview.Height, "mime_type": preview.MIMEType}
 			b, _ := json.Marshal(metadata)
@@ -107,6 +116,8 @@ func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 }
 
 const guide = `Still-image inputs normalize EXIF orientation and supported color declarations to upright sRGB before cropping, resizing, and palette extraction. Image masks use the same normalization. Inspect normalization metadata and use upright crop coordinates. Unsupported profiles return actionable errors. dither_catalog media.still.normalization lists profile support and limits.
+
+Use dither_studio to explore a recipe in memory. MCP Apps hosts can display its optional interactive panel. Other hosts receive a PNG and structured recipe. Studio previews fit within 1024 pixels per side and default to 512. Saving is a separate dither_render call with a new output path. The studio saves its preview dimensions. Use dither_render directly for a larger export.
 
 Paths are relative to the configured workspace. The service uses local files without URL imports, uploads, telemetry, or remote services. dither_preview sends image content to the MCP client. The client's data policy applies separately.
 

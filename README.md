@@ -4,22 +4,23 @@
 
 **Color with character. Local image dithering for your agent.**
 
-dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotocol.io/) server for image dithering. Your agent can inspect images, compare algorithms, apply palettes, and save recipes. One Go binary provides the same image pipeline through MCP and the CLI.
+dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotocol.io/) server for image dithering. Your agent can inspect images, compare algorithms, apply palettes, and save recipes. The new **MCP Apps studio** adds image controls inside supported MCP hosts. One Go binary provides the same image pipeline through MCP and the CLI.
 
 ![Moon Garden: original procedural still life on the left, Atkinson dithering in six clay and paper colors on the right](docs/assets/hero.png)
 
 *Moon Garden original → Atkinson / six-color clay palette / 2× pixels. Local Go programs generated the artwork and dithered treatments.*
 
-[Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
+[Open the studio](#an-image-studio-inside-your-chat) · [Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
 
 [Source code](https://github.com/lennrt/dither-mcp) · [Showcase source](https://github.com/k-a2a/dither-mcp-site)
 
 ## What your agent can do
 
-The toolkit provides **13 tools with typed inputs**, **2 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. File-producing tools also return local artifact paths and SHA-256 digests. Image artifacts include dimensions.
+The toolkit provides **14 tools with typed inputs**, **3 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. File-producing tools also return local artifact paths and SHA-256 digests. Image artifacts include dimensions.
 
 | Ask your agent | Workflow |
 |---|---|
+| “Open a studio for this image so I can choose the colors and texture.” | `dither_studio` → choose settings → Apply preview → Save image |
 | “Find four warm colors for a botanical print.” | Filter `dither_palettes` by name, category, and color count → `dither_render` |
 | “Build a palette from this image’s own colors.” | `dither_inspect` → `dither_palette_extract` → `dither_render` |
 | “Show me Atkinson, Floyd–Steinberg, and Bayer side by side.” | `dither_catalog` → `dither_compare` |
@@ -31,6 +32,20 @@ The toolkit provides **13 tools with typed inputs**, **2 resources**, and **3 pr
 | “Show me the result. Create separate print plates.” | `dither_preview` → `dither_separate` |
 
 Image processing stays in your configured workspace, with source files and artifacts under your control. Your connected MCP host receives tool results and controls which information reaches its model.
+
+## An image studio inside your chat
+
+![MCP Apps workflow: open a local image, explore algorithms and palettes, then explicitly save the applied recipe](docs/assets/mcp-app-workflow.svg)
+
+*Workflow illustration with actual engine-generated artwork.*
+
+Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
+
+Choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
+
+Previews run in memory and create no file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Every preview stays within 1,024 pixels per axis and 2 MiB PNG. When you select **Save image**, the studio calls `dither_render` with the exact recipe from the last successful preview and a new relative output path. The filename extension selects the output format.
+
+The Go binary bundles the complete app and official MCP Apps SDK. It keeps the stdio setup and needs no runtime Node.js process, CDN, or external asset service. Hosts without Apps support receive the PNG preview and structured JSON. Read the [MCP Apps guide](docs/mcp-apps.md) for setup, the host contract, and verified behavior.
 
 ## Supported files
 
@@ -88,7 +103,7 @@ For an MCP client that uses an `mcpServers` configuration, supply absolute paths
 
 1. Reconnect the client.
 2. Ask it to inspect an image.
-3. Ask it to compare a few algorithms.
+3. Ask it to open the studio or compare a few algorithms.
 
 Paths in tool calls are relative to `--root`. The server exchanges MCP messages on stdin/stdout and sends diagnostics to stderr.
 
@@ -156,7 +171,7 @@ Use a preset or supply **2–256 unique hex colors**. Custom palettes are explic
 
 *Wave / 24 frames / 12 fps. [Reproduce the artwork and recipes](docs/showcase.md).*
 
-The separate [showcase repository](https://github.com/k-a2a/dither-mcp-site) contains a static site prepared for GitHub Pages. It includes a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos. Its bundled HTML, CSS, JavaScript, media, and local fonts are ready to serve directly.
+The separate [showcase repository](https://github.com/k-a2a/dither-mcp-site) contains a static site prepared for GitHub Pages. It introduces the MCP Apps studio and includes a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos. Its bundled HTML, CSS, JavaScript, media, and local fonts are ready to serve directly.
 
 ## Make a reproducible recipe
 
@@ -215,6 +230,7 @@ A new output path preserves your earlier work. Give each variation a separate na
 | Print workflows | PNG resolution metadata and spot-color separation plates in a ZIP |
 | Motion | Source GIF frames, generated GIF loops, sprite sheets, and bounded local video processing with FFmpeg |
 | Agent workflows | Inspect, discover, compare, batch, save, and reload recipes |
+| MCP Apps studio | Choose settings, apply an in-memory preview, zoom, inspect swatches, and explicitly save an image in supporting hosts |
 
 The engine preserves source alpha. Diffusion stops at transparent pixels and mask boundaries. Regions outside the mask retain adjusted source colors. Post-effects can introduce colors beyond the selected palette. See the [feature matrix](docs/feature-matrix.md) for precise coverage and the [architecture](docs/architecture.md) for pipeline order and boundaries.
 

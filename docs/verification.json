@@ -1,6 +1,6 @@
 {
-  "status": "passed",
-  "date": "2026-10-03",
+  "status": "automated-checks-passed-with-documented-limitations",
+  "date": "2026-10-08",
   "environment": {
     "go": "go1.27.0",
     "os": "darwin",
@@ -9,9 +9,11 @@
     "ffmpeg": "9.0.1",
     "vhs": "0.12.1",
     "quint": "0.33.0",
-    "openspec": "1.14.0"
+    "openspec": "1.14.0",
+    "pnpm": "11.19.0",
+    "mcp_apps_sdk": "2.0.3"
   },
-  "scope": "Local verification evidence for the source and showcase. Cross-builds do not establish native OS behavior. Hosted CI and external audit results are outside this record.",
+  "scope": "Local automated verification of MCP Apps, the Go implementation, specifications, and static showcase assets. Browser rendering and external host compatibility remain unverified for this update. Cross-builds do not establish native OS behavior.",
   "checks": [
     {
       "command": "make verify",
@@ -22,78 +24,42 @@
         "Go tests",
         "Go race tests",
         "native build",
-        "relative Markdown links",
-        "schema snapshot consistency",
-        "palette reference consistency",
-        "real stdio MCP subprocess"
+        "relative documentation links",
+        "schema snapshot",
+        "palette reference",
+        "real stdio MCP subprocess",
+        "embedded UI freshness",
+        "23 JavaScript state and bridge tests"
       ]
     },
     {
-      "command": "make schemas-check",
+      "command": "node --test ui/*.test.mjs",
       "result": "pass",
-      "note": "Generated tool descriptors match the snapshot. Protocol tests validate every successful non-video tool result against its output schema. Video uses the same Artifact schema."
-    },
-    {
-      "command": "make fuzz",
-      "result": "pass",
-      "process_executions": 102038,
-      "strict_json_executions": 165636,
-      "seconds_per_target": 5,
-      "parallel": 2,
-      "evidence_stage": "input-normalization",
-      "metadata_executions": 463609,
-      "icc_profile_executions": 18,
-      "note": "Bounded smoke runs. The ICC run completed with limited executions and does not establish broad malformed-profile coverage."
-    },
-    {
-      "command": "go test ./engine -run ^$ -fuzz FuzzParseHex -fuzztime 10s",
-      "result": "pass",
-      "executions": 383646,
-      "note": "The initial implementation passed this bounded run. The hexadecimal parser is unchanged.",
-      "evidence_stage": "initial-suite"
+      "tests": 23,
+      "coverage": [
+        "20 concrete UI controller cases",
+        "2 official App/AppBridge transport tests",
+        "1 official SDK bridge test against the actual Go stdio server"
+      ],
+      "assertions": [
+        "negotiated UI resource and MIME/CSP",
+        "41 algorithm and 256 palette catalogs",
+        "changed preview writes no artifact",
+        "explicit save replays the applied request",
+        "PNG output matches accepted preview bytes",
+        "existing destination remains unchanged"
+      ]
     },
     {
       "command": "node spec/check.mjs",
       "result": "pass",
-      "openspec_validations": 9,
-      "quint_typechecks": 4,
-      "quint_tests": 43,
-      "seeded_traces": 43000,
-      "steps_per_trace_max": 30,
+      "openspec_items": 10,
+      "quint_models": 5,
+      "quint_run_tests": 59,
+      "simulation_traces": 54000,
+      "mutation_checks": 6,
       "detail": "../spec/verification.json",
-      "negative_mutations_detected": 3
-    },
-    {
-      "command": "DITHER_TEST_VIDEO=1 go test -race -timeout 1m ./internal/app -run 'TestVideoIntegration|TestVideoInputContainers' -v",
-      "result": "pass",
-      "formats": [
-        "gif",
-        "png sprite sheet",
-        "mp4 H.264",
-        "webm VP9"
-      ],
-      "evidence_stage": "input-normalization",
-      "input_fixtures": [
-        "MP4/H.264 with AAC audio",
-        "MOV/H.264",
-        "WebM/VP9",
-        "Matroska/FFV1",
-        "AVI/MPEG-4",
-        "MP4 with a .bin extension"
-      ],
-      "assertions": [
-        "output codecs",
-        "frame counts",
-        "dimensions and even padding",
-        "silent output from an audio source",
-        "content-based input detection"
-      ]
-    },
-    {
-      "command": "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...",
-      "result": "No vulnerabilities found",
-      "note": "The initial implementation passed this advisory check. Go module dependencies are unchanged. This is a dated result, not a guarantee about later advisories.",
-      "evidence_stage": "initial-suite"
+      "note": "Finite run tests and seeded bounded simulation, not a proof of implementation refinement."
     },
     {
       "command": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./cmd/dither-mcp",
@@ -104,104 +70,39 @@
       "result": "pass"
     },
     {
-      "command": "VHS recordings + ffprobe + visual review",
+      "command": "Static showcase asset and publication inventory checks",
       "result": "pass",
-      "recordings": 4,
-      "note": "Render and MCP recordings were refreshed for input normalization. Comparison and palette recordings retain the verified clay-style versions. All four recordings use real commands. The MP4 files report 25 fps; the tapes request 20 fps."
-    },
-    {
-      "command": "Static site desktop/mobile browser checks",
-      "result": "pass",
-      "mobile_viewport": "390x844",
       "checks": [
-        "no horizontal overflow",
-        "all assets load",
-        "keyboard comparison slider",
-        "algorithm selection",
-        "animation pause and play",
-        "reduced-motion support",
-        "256-entry palette catalog",
-        "query, category, and color-count filters",
-        "pagination",
-        "selection, exact clipboard text, and copy fallback",
-        "palette treatment images",
-        "format table on desktop and mobile",
-        "clay theme and readable color contrast",
-        "self-hosted fonts",
-        "orientation and input-color disclosure",
-        "normalization image and caption at desktop and mobile sizes"
-      ],
-      "note": "The normalization disclosure and responsive layout were checked after the input-normalization update. Earlier palette and media controls retain their verified implementation."
-    },
-    {
-      "command": "MCP protocol compatibility tests",
-      "result": "pass",
-      "protocol_versions": [
-        "2026-07-28",
-        "2025-11-25"
-      ],
-      "checks": [
-        "modern server/discover and request metadata",
-        "legacy initialize and initialized notification",
-        "tool listing and calls",
-        "structured JSON with text fallback",
-        "native preview image content",
-        "accurate tool annotations",
-        "strict input validation",
-        "tool errors and protocol errors",
-        "protocol-only stdout",
-        "metadata cannot enable video"
+        "project-relative HTML and CSS links",
+        "SVG XML parsing",
+        "no duplicate HTML IDs",
+        "bundled SDK license inventory",
+        "no excluded files or sensitive-pattern matches",
+        "manifest hashes"
       ]
     },
     {
-      "command": "Editorial and contract review",
-      "result": "pass",
-      "style": "Google developer documentation style and STE-flavored guidance",
-      "checks": [
-        "authored Markdown, code comments, CLI help, MCP descriptions, palette descriptions, and website copy",
-        "relative Markdown targets and heading anchors",
-        "palette IDs, names, colors, order, tags, and provenance unchanged",
-        "legal notices preserved",
-        "normalization guide, specifications, code comments, and site caption"
-      ],
-      "note": "The style checker provides review prompts. Technical vocabulary and precise requirements take precedence over advisory vocabulary findings."
+      "command": "pnpm audit --json",
+      "result": "one-known-development-advisory",
+      "high": 1,
+      "advisory": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "path": "@fission-ai/openspec > fast-glob > micromatch > braces@3.0.3",
+      "note": "Advisory names 3.0.4 as fixed; registry returned no matching version during verification. This package is absent from the Go runtime and embedded browser bundle. Quint adm-zip is pinned to patched 0.6.1."
     },
     {
-      "command": "Clean repository checkout: make verify",
-      "result": "pass",
-      "checks": [
-        "build with github.com/lennrt/dither-mcp module imports",
-        "Go tests and race checks",
-        "relative documentation targets",
-        "schema and palette consistency",
-        "real stdio MCP session"
-      ],
-      "note": "The prepared repository excludes local dependencies, build outputs, scratch files, and the separate website."
-    },
-    {
-      "command": "Normalization regression and independent color tests",
-      "result": "pass",
-      "checks": [
-        "all eight EXIF orientations and both byte orders",
-        "JPEG, PNG, WebP, TIFF, and supported BMP metadata",
-        "45 independent LittleCMS 2.19 RGB16 vectors",
-        "published CSS Color 4 reference values",
-        "8-bit and 16-bit alpha preservation",
-        "bounded metadata and explicit unsupported-profile errors",
-        "PNG metadata precedence",
-        "crop, masks, inspection, extraction, preview, comparison, animation, and print paths"
-      ],
-      "limitations": "Matrix/TRC RGB normalization with media-relative colorimetric conversion and clipping. No LUT profiles, CMYK conversion, HDR mapping, printer calibration, or perceptual gamut mapping."
+      "command": "Browser rendering and live MCP host review",
+      "result": "not-run",
+      "note": "Computer-use permissions were unavailable. The new showcase asset is a labeled workflow illustration, not a captured UI. Protocol and concrete controller tests do not replace browser or host rendering checks."
     }
   ],
   "source_sha256": {
     ".gitattributes": "66477a0d309443c637cef47f14c9b10ef0216596ea7d05b289aa100837c9ca9b",
     ".gitignore": "ad9926d359ccf232a359707174b1beac8e745b4350c9b3431643bc9096addee5",
-    "CHANGELOG.md": "5b1fa8eeec416b5c9c6b2a6494b207fec4cc13124981a77a74de3a14ec976119",
-    "CONTRIBUTING.md": "3f96dda4445ca08c1436ede19a398a4dc2e02e9b67e48b732169fe6234a9023d",
+    "CHANGELOG.md": "96640578f6990cb6944b1822b37b1c89cba584c9886068e07095d8508c57a90f",
+    "CONTRIBUTING.md": "c868093a19ed86541a81fd9f6bd45681999b15ecbcfdea362a59ff681e89355e",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "Makefile": "16ddfa69b6b92dc48e445a9b7095160e26cf85d9ef7be1e788387acb15261ea7",
-    "README.md": "c3a31d6adb6bfaa7c9629dba526a242279545957aa124a2cba8c6adb2540b7cb",
+    "Makefile": "d2c09603e94017fa6c53dc7bb2fa35a8e150a96867efeb543d723af8af91e01a",
+    "README.md": "a34846889c160231c64177453fe1e5b3b9c0bb6884b2784b63df47fa731577b5",
     "SECURITY.md": "9491e2b9e6e2b1b522c30158209599ca84cfc31ddb827caa9a5e090306bda024",
     "THIRD_PARTY_LICENSES/OFL-inter.txt": "8c8fa881d9091ee315d2c80d207bb73afd4e90a66c9782ca445c5642f25db6dc",
     "THIRD_PARTY_LICENSES/OFL-jetbrains-mono.txt": "bb1c26eb6fe1839e3759548777c8a35b9495ce4878a4b833b1b63d43ff313a4b",
@@ -214,24 +115,33 @@
     "THIRD_PARTY_LICENSES/github.com_yosida95_uritemplate_v3@v3.0.2-LICENSE": "0761aadfb1921103752869ee942d4a71bdd54494697684d4b13dc17ad9781191",
     "THIRD_PARTY_LICENSES/golang.org_x_image@v0.46.0-LICENSE": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
     "THIRD_PARTY_LICENSES/golang.org_x_text@v0.42.0-LICENSE": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
-    "THIRD_PARTY_NOTICES.md": "bfd13cc2b348f0454cdbe33a5bdfe0d4e15a7767e9b246ac603d2e441873a309",
+    "THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_client@2.3.1-LICENSE.txt": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+    "THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_core@2.3.1-LICENSE.txt": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+    "THIRD_PARTY_LICENSES/npm_@modelcontextprotocol_ext-apps@2.0.3-LICENSE.txt": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+    "THIRD_PARTY_LICENSES/npm_eventsource-parser@3.1.1-LICENSE.txt": "835eb611a23301b27115ca1be9f754c876e643ceb7fe63049c6b50609a1cafeb",
+    "THIRD_PARTY_LICENSES/npm_eventsource@3.0.7-LICENSE.txt": "f683a72ffe6a9675b5507af22fe0f448d8c8de3da1e14f139d370a7e6a54a23e",
+    "THIRD_PARTY_LICENSES/npm_jose@6.2.12-LICENSE.txt": "8078b0829d6c3e9ecde2f003e1966e4cad3efc6e7a640efbab0313cc166b1af1",
+    "THIRD_PARTY_LICENSES/npm_pkce-challenge@5.0.1-LICENSE.txt": "feb87a2e0c305de3464cc44077da5393c52d8ca6362d37427157d04ec6f4510d",
+    "THIRD_PARTY_LICENSES/npm_zod@4.6.5-LICENSE.txt": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8",
+    "THIRD_PARTY_NOTICES.md": "dfed3f38ad18826111b3d12ef82b3e76613892b22f7bbceee67396a723f9f3b7",
     "cmd/dither-mcp/main.go": "2bafb0ee74a2c43688ec1e854359cc0998d141573b060e0de24ac32e8e55d47a",
     "demos/compare.tape": "b2d2f9eaf776da46439175542e37bb35a80e18c9e12fe298d418ca0e2f7e6c4a",
     "demos/mcp.tape": "d0bfccda7c8b1ef3b4b788e5d361f2c3f48a204a494ad817938263f14b4ba153",
     "demos/palettes.tape": "f0f831139440e2669e50b4831e01f36e4bb6d89af9edaaf48ddd1f5e26be7b1f",
     "demos/render.tape": "4a8610170b678f1971f257409e6bd3e026a4daa4cb5b43bbc75cac4f96d150ed",
-    "docs/README.md": "4a04dc5ebffe84c8fe1910ecd2006373e12bdce59cd48c91966caed4a690fa1a",
-    "docs/architecture.md": "e428656d47b7662448f14845a2f8e12a715d84f9f90959357af2bb3855007943",
-    "docs/cli.md": "a1dae1dde1a2edbe0103cf34b749cbbe239f25be4d15cef18014bf67580106fb",
-    "docs/feature-matrix.md": "2de3eb12cab3cd5839889fa1b34936eabf885f7ed23aa0b7d5f25b8e157f60b4",
+    "docs/README.md": "4eb1d38e57e1d7e0d938b25cf7bc6a21a2d8d7dd80e6d26100277627e5f84fda",
+    "docs/architecture.md": "a8f598fc5347f12f8574961e3016456223da91f4cfee87132cabbf1bff96f71f",
+    "docs/cli.md": "aea87f68b4df3749456eef56fc84a7ec7ac132c43296687d8e44b8958d2c01de",
+    "docs/feature-matrix.md": "aecc22fae42bb87b699e0344be53cad9858146b26830cdb77037efb8e675a2f8",
     "docs/formats.md": "9d5edcbf359abfde7b7821fd9862f232f6e5454c2ba6114eb44a2567c016c87c",
-    "docs/mcp.md": "e88a4416d5c377d35dbcae4226e6fa443bc2b2244a01edf45704c2451bfb137c",
+    "docs/mcp-apps.md": "ede61703c263c2a5140cac0de45f3bb6fe9a73e30afffd3bf65fbd0c7a5948c4",
+    "docs/mcp.md": "cfe3e4878140acfbf0488979a851721f40c3bd451b1b36676c5302b514c8fe02",
     "docs/palettes.md": "d50d9ecbce8c4d5875e28ec962a58d4ef61f9c4a50db66a588f1ebc30d9e065b",
-    "docs/security.md": "18351db525ba991363a0476c149415560b638bf55014fd73b79af937dd5e80c3",
-    "docs/showcase.md": "b1ad3a96214246a480ceb36f8b892da5443f3a78746fb931412d6fb221feb76a",
+    "docs/security.md": "099061e5de386610176bca3a48f9ffb36404468b716a01c2442513c71a97aff7",
+    "docs/showcase.md": "ee3f10f11da6cdebd98969576d12e2a3e41f96dc0e4c82432bbba3a6b047e34b",
     "docs/sources.md": "a73018a26ab01e212a0a5b53cd050a878bc203fb75b344b45b6fa219f45c9ac7",
-    "docs/testing.md": "fcab2d39198bbc1b74e01ed75f52aa78a54dbbe1906dd40b3ae902bba08dea33",
-    "docs/tool-schemas.json": "884a3eba05157f4e5baec13e8333262bcc6d54e9a7308d72d5d9b6f7442dca62",
+    "docs/testing.md": "e3ac2681aa63872ea8422f5faeb733d86bd37cbe9af4e1489357547848a240c8",
+    "docs/tool-schemas.json": "838466935e225d55f6b35848520128ddcd780e9cdf839cdc7bfc9c7959a4e67f",
     "docs/writing-style.md": "87cfc74b82f80dfff71be7686b26565e54df685dd079a7663f9b6400986bdec1",
     "engine/SOURCES.md": "d3b25ab0be9a14b94b62b99772cd7238894d0fc1e96ca1c12ccf61f0ead8c3c4",
     "engine/algorithms.go": "765d829cc94731f200d308dcefc5dc9c0b028f6a9167c8f493bed9db4d85616e",
@@ -251,7 +161,7 @@
     "go.mod": "cfc9bd0daa1a3b222da0b04bf3f081606c1d411717460bb2cb12c6d2009f97c3",
     "go.sum": "b11157aa8570282ffe3cb3ac373848d154058f50dbb1923b2164968a052fd89d",
     "internal/app/animation_test.go": "4f1541e2b932bc2e7543773120a6d6dc3e9f0329e6be37040577e55be23f4418",
-    "internal/app/catalog.go": "875270266c7c788271d1492cc39b92e50c9e74955795ba13f256fff88caf1a00",
+    "internal/app/catalog.go": "a36c33d7fd6c8a4ecb107668f94605cb04d2e7009aa6d47fe2a256848d24116e",
     "internal/app/catalog_test.go": "d4e4d8582afb2abbbc7055dce2dbc7c1721e7989e14a97408d967be36d5bf340",
     "internal/app/export.go": "6323b89d51faf3defeb40af536034bcedb989f7d4405d9f9bc199004d37d27d5",
     "internal/app/fuzz_test.go": "58b3e3dfbb1fc198581f2a156e27b40cc82aba13c84e4b3fd86753242d097f83",
@@ -263,12 +173,14 @@
     "internal/app/preview.go": "a480a3c613f0be0e1381a914654dc5073bf308192224b3a120bb2f3ef3f275f6",
     "internal/app/review_test.go": "f2ddbfa85ad3c1ae0ca83b96c100d5144d8be0a0147694e117664f8e77112a7d",
     "internal/app/security_test.go": "bf6c34928ef55fd2de88eb023a11a8e4f0b1c35ddef8de66db00b37b1c298c44",
-    "internal/app/service.go": "4c9d0d9285183400d3254c9a93f4738e9dd98584f54e81421dc8d29e7fee41f6",
+    "internal/app/service.go": "6d7d9908d1c99a55789d9beb72942408e788bc8f41f3d145c2b79952ad581290",
+    "internal/app/studio.go": "0aab6a1035552606c57efc5773714593f3ee515c431c7cb5018d46d4895b8361",
+    "internal/app/studio_test.go": "fe808acc4c335995eafc9d1df7658b5ba5d0ca585018b32784a5b9ef7287afa7",
     "internal/app/types.go": "d35197f5e01a841b1e6a97d576611892b07b6284109413070e4d4f90e0769008",
     "internal/app/video.go": "81ed7ac1cba99c1778995cc516dd724d6c065a0d6dd857523006de53b9586451",
     "internal/app/video_test.go": "c9839f34e7ea00ca566316bf41faef1a6de10b820cfdb1ab0c4e4b8d19e1e55a",
     "internal/app/workflow_test.go": "137251e5ad047d02870d693abf9b5094c253d163ab9f9ed70613d3870e8d26b0",
-    "internal/cli/cli.go": "95e46be60e342987592c04fe00e02f27ae7fe57f9f2758e86263f4f0ba71b772",
+    "internal/cli/cli.go": "566756b066d32ae17fa17a47bbdf48a9e8f3781fc410b90c3ce7739dc8012199",
     "internal/cli/cli_test.go": "246366c36eef4ac2f63ec74adeccb5413eb6a04ea74b35ce0c5e07f021485e8b",
     "internal/cli/lines.go": "3c75b0e33c706c0420427fd2d75552f0f3cae21e694fcaeaf71f5e6b9116f22f",
     "internal/colorprofile/SOURCES.md": "398f78af74063cb7e02b9cfd6ae004270b79fb3eba268950f176e14a4949cfa4",
@@ -293,9 +205,13 @@
     "internal/imagemeta/testdata/README.md": "46f92a584037a9dcb97aed7414e69aeb0cbc31ff963a9b216343f7deaaf51aae",
     "internal/imagemeta/testdata/linear-srgb.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
     "internal/imagemeta/testdata/oriented.webp": "82dd5d08496cdc2794404f0ea3deadae7995bd38dcd31501811227f26574c22c",
-    "internal/mcpserver/server.go": "9d4bb2fad82476d77ea7c216424a3e7bdb720de1f73455a4ce4565a5f7122e43",
-    "internal/mcpserver/server_test.go": "954f70de03f7125c13351ec23baa831c146e93f1fb44c59805a4aa513d2d641f",
-    "internal/mcpserver/transport_test.go": "3862bed92269f88b2db0f440187d793343b9c0ea3495a25e53f66c70235b01f4",
+    "internal/mcpapp/mcpapp.go": "35ec6d671dd28483a00f8bb3122b7aadf3b5e2e5dc24d738963577a5ea3cc9ce",
+    "internal/mcpapp/studio.html": "bc2b2486032eaa94295c874e14133d04602e9717207952c113b5ea6c68368cd4",
+    "internal/mcpserver/apps.go": "a61a63e27229f034c4208ebb20e50895b36256beeb4b1c93376303baccba5e8f",
+    "internal/mcpserver/apps_test.go": "cb9d361a487c35b65fadc11a613f3040118d73bfe7f5889471ae36b41c35bd5e",
+    "internal/mcpserver/server.go": "e22a34397e1310ad814beb532e646565691cae06c17ad467a077c4a71483ed5e",
+    "internal/mcpserver/server_test.go": "8171a4d8bb40b6b6a4828e58618c427b10c7f9f00fda08b42e1362e90137eed7",
+    "internal/mcpserver/transport_test.go": "f192abb33501003b8c7847479d3dc011995099662e3552334cdadbfc43fe0d00",
     "openspec/changes/image-normalization/design.md": "d04fa5be8cdc19abdb56f6589b2d7cabbece612726f7818d40788f90921d4d48",
     "openspec/changes/image-normalization/proposal.md": "a5682b8811ab7c14b63e0b76840536f65d124380a47f6e42899ab4372c809822",
     "openspec/changes/image-normalization/specs/image-pipeline/spec.md": "6170ef091cd771723a95ba164a6f18f54b063f91f72490c04f8b1a09145ae37f",
@@ -309,20 +225,26 @@
     "openspec/changes/initial-suite/specs/local-workspace/spec.md": "1918fdac6e1b2d704d0fc179075167a2a60fe1cfc9662a9ea48b15591a37f7b0",
     "openspec/changes/initial-suite/specs/motion-print/spec.md": "a498e57528b5d53d7a0536a66086332b90cf2f37fc6156359951dc65f9713306",
     "openspec/changes/initial-suite/tasks.md": "0e3e7e58fd5c684b3f0ace5affecbb0f7f710838ff9bb6e4a4899940e3f60fbf",
+    "openspec/changes/mcp-apps/.openspec.yaml": "ec3a1b167d0ccdb9f7a3f8f370ba8038feb637051c90a0b3fbcc5e9cef45d7a5",
+    "openspec/changes/mcp-apps/design.md": "7e149160e4c50f7466dda7cc979cd499bd49d08588dada5cef555d22f4c20a5e",
+    "openspec/changes/mcp-apps/proposal.md": "b9d17099ac44fec09b27f2e8b3765d33e2af323ae794cd0a74ee85e2f62292d8",
+    "openspec/changes/mcp-apps/specs/agent-workflows/spec.md": "6397d0a596c7d527c37212b94bb216caa432b942f0d916eebd14120619c50139",
+    "openspec/changes/mcp-apps/tasks.md": "309900bcaa2364c25df93e78101afe8bd253e8455a90414ce5ef412263445f18",
     "openspec/changes/palette-library/.openspec.yaml": "df4fb22c89b17a0d45d8ca25e98028a2244dceafe5a64ecbbc3bae35db97ccbc",
     "openspec/changes/palette-library/design.md": "0cb49358336ebebe8fcf2d3af3dece304de8443631cd9950d596e363f99833bc",
     "openspec/changes/palette-library/proposal.md": "a284a188cffdbcb9750e9de6509c3daad5e6757b6581b7929210c5462d96583b",
     "openspec/changes/palette-library/specs/palette-library/spec.md": "5f3cf9e96d85b59333dfcec0ad0a2b4a148133476bbed6bc35678b9997eaaf3c",
     "openspec/changes/palette-library/tasks.md": "a3be8650ed956978c4323af55edb3b283a2bcaa27dd39a634028868fd0a41388",
     "openspec/config.yaml": "fdd97c6a88cf4b8264311bf777f648e112414b590da61ecc9d206f43e631afbc",
-    "openspec/specs/agent-workflows/spec.md": "13c924d3bc8fe2dc80c60cb7c48de55ab779009199d22ed368457d0c2307a285",
+    "openspec/specs/agent-workflows/spec.md": "7ba39b8a99f1d458e240347f632911fc23758d1746ea1bf82583410625fdd328",
     "openspec/specs/delivery-quality/spec.md": "5dd244c15b6059f9ccc6e97883843bc1d2510c60b154aadf32a437ddcc397750",
     "openspec/specs/image-pipeline/spec.md": "2cb38ce2a0b2c752a8143ba7d8bb7c44b4fd060f9843886cc5d542096900f8c0",
     "openspec/specs/local-workspace/spec.md": "6d645380e91a05ea8ee795a910bda1b8ade4b37591add8f2457f04eda1721dcf",
     "openspec/specs/motion-print/spec.md": "471753c833195cee20c28ec9956548655af3234aec08bf7db3615ea288845903",
     "openspec/specs/palette-library/spec.md": "16017f1b8f115baf2bca9af66bf1969e93de1c59235ce315ee20e291642c19d2",
-    "package.json": "58da953e46ac9f71ae729e30be9d52bcfb94f44665a06487566521637f79e320",
-    "pnpm-lock.yaml": "01033ce8b5267f13a23ddaa05c44ef77d9fd1947283ef6dec25c8b7bc7dbe44f",
+    "package.json": "83238fc54b58483d303da174cb5bab7df84b561fa3a176501b95482f917c9d41",
+    "pnpm-lock.yaml": "947912b7015dbff5766b8cee7174ad0c2ed7ab014a6761e071dfd68ab65cbc5a",
+    "pnpm-workspace.yaml": "c2fdea20a67c0d1369c0b287122109e087452367e5719c5ea50c08e84e7c8240",
     "scripts/brand-banner/main.go": "641973eb70dd02e3c4ccf2155eed96692e022963ed1f7d7cff8ecba156e88b6c",
     "scripts/check-docs/main.go": "2dcefddb1ecef4fc42e1d8a981241ed56835e3d71d5abc542a806dc94f05e57e",
     "scripts/demo-prepare.sh": "70c7c7ce1e0c6525eed9a47e0f9650158cf6a8799255f6adfbadee4b09cae1c6",
@@ -334,16 +256,30 @@
     "scripts/schema/main.go": "c06b2b3d830aa9af1c39dbc4f75366efb359c6cc1a9ccda4cca501041e31327a",
     "scripts/showcase-record.sh": "b98deaa8fed80c77bc46b0848fdeff02c922f54bec16f2539d23a4c38ad317e0",
     "scripts/showcase-render/main.go": "305473bdea6902e4e0465208b809a7b612886f38b39389fc9359d55d02892ce5",
-    "scripts/showcase-site.sh": "913aa16c73c7d52bbfeba4da809fb0d53ee784e3303e1fc12e3502afb8973f53",
+    "scripts/showcase-site.sh": "ce6550330853cac9a5a5e4d21a22ac5b9d9b731413d733e1c534960e94ee87e5",
     "scripts/showcase-source/main.go": "b049cfcee96bacde0cffb8985f9372c0045551c1c968335b8de0e5130decb870",
     "scripts/showcase.sh": "bf4ad05758ea0f02951b0ff2a13d44810c115450a65d121fc39df0040cea4653",
-    "spec/README.md": "4244f2ff464773daf74fdda01a8dcf10b07cf4a8e5d8e19d4abe23bf1358821b",
-    "spec/check.mjs": "71962e4074343019668bbc21bf23b3397af7efb75dfccf1d0aca2b1c3e359279",
+    "spec/README.md": "bab83e18c695ed5840549d4faf00969fd470dd530866c4c75fe84ccff7d5b62e",
+    "spec/check.mjs": "8526d81199906fd545de0fc48a71b68bc7f2079d3a31999aa17de1ff63efd7ec",
+    "spec/mcp_apps.qnt": "8ea36a77134f073d85499fa16233b7da7f8581f24bce336b62419fd1a7f74921",
     "spec/normalization.qnt": "911018c49955f50c37af5d8278f1a1482245b68c869040de352c0f8eacf58d57",
     "spec/palette_discovery.qnt": "54697f37b5d3d3ebbc3bc5e68f94ef9c5dc970e23238251db5e46a36fe512efd",
     "spec/publication.qnt": "28b53c3fe7174f2dde45287f9f7117123a905558b0ee1186da47cb6871f75133",
     "spec/quantization.qnt": "1066276acbdefa598e8c90df039551a1abab82415cc2f8a68e98ad36d0df9695",
-    "spec/verification.json": "7f67a3561a6a7a556c055087d3758d148aef981d828381fc7f8ebc03406e3c91"
+    "spec/verification.json": "875046895c81ed37052a1653a2fbf22b3d7820f71908db3461555af672711c4a",
+    "ui/app.mjs": "cd06739987903647e77260c1df9dcf9c86dcad32406ef6423cb78ad568bb165b",
+    "ui/bridge.test.mjs": "7e187bd1f5a4f433078b757749283a464c48eb2f771de78ae73ac1b6e56e9f37",
+    "ui/build.mjs": "f0b2ba9e79f4acaee2299be8180c8487a782bf49eb51961bd42a1b1591ecf3a3",
+    "ui/bundle-meta.json": "60bcee25b234a309262fb5bd37c1bce5441068c8e9e966dc1f5073336fe4690b",
+    "ui/harness-client.mjs": "1c58ef0686c3dbc913f6d744efc4f800c9d23ac36983876cd22dc924c4d3a264",
+    "ui/harness-sandbox.html": "1ac31eae884f9d3277c9f3c3892cff914f1740bbcd14cc32480029929cf8de90",
+    "ui/harness.html": "9a7e1c9b71ca33202a7599756e4547bb2d961abaa8ff2c6fdf4c3f0ffe13634e",
+    "ui/harness.mjs": "3de800b6bb2fe79a72e2d5b74d6fae0b71f54cf167707a4a923da4a3b6e5e474",
+    "ui/index.html": "819d21f8692a4f09fc79e66955c03e8bef51b6ee67e2956514a4eaae265de3db",
+    "ui/server.test.mjs": "ff5b4a228de11d38c8e8eb0ae1d30ef4d47ff742e57aaf4f5d00002058676def",
+    "ui/state.mjs": "161fbd6cd52f0a1d24c8ed51aee70eeac54f55cd4ccf67380e6e0978ee6e1da2",
+    "ui/state.test.mjs": "cbf9c5c0f95599524dbf2e4f0b3553cd0173cc6efb46291fc63a9c2d967998a2",
+    "ui/style.css": "7693cfc7fbd67c2bc3199a3b617e48b27e842cb3f7b9bc1f82dffa6ae82a593d"
   },
   "media": {
     "GO-FONTS-LICENSE.txt": {
@@ -461,6 +397,10 @@
     "hero.png": {
       "bytes": 290212,
       "sha256": "b9d3127ec29a4c0a0962c3283c5164fa07b4361d193446aa933fbf3e1745648d"
+    },
+    "mcp-app-workflow.svg": {
+      "bytes": 725316,
+      "sha256": "6f2694b8b284e707ddb99c5e05d9dbd3e0f2c837ed47453b7a1bc831d8ea7494"
     },
     "mcp.gif": {
       "bytes": 148127,
@@ -691,7 +631,7 @@
       "sha256": "6f36cb03286e5021ba56c93cc1113b7ec03342069374695b3d82ca3879e17d4f"
     }
   },
-  "revision": "input-normalization-and-repository-preparation",
+  "revision": "mcp-apps-studio",
   "palette_library": {
     "palettes": 256,
     "categories": 16,
@@ -722,8 +662,9 @@
     ".gitignore": "8d2576114a8dc036ff4b2d42bb532c6088bf68e87d360028d538c1566fa1c5c7",
     ".nojekyll": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
     "LICENSE": "b5060f3c4f90086ff1580b5226abd284b1a35acb7add29259ca3c6c622947dca",
-    "README.md": "bc7f0ecf77a6068dd7ba4e45d7f7f884ba6a27abb4e925f594082ccee8fd1dcc",
+    "README.md": "e0adf5fc18ce27fe457e6912995ec3beda900054b7156ea45f5a529173f73ca9",
     "app.js": "03ee2d307f2f7542f7afb44a9f0bcc51f2c3543390d652ac5d6fd24c10248d23",
+    "apps.css": "0b2ecddb7e8d8c2710008de00fb3c45c868b8dfbadf6e4e60e1556a4d5f4f85d",
     "assets/GO-FONTS-LICENSE.txt": "dc588a7ba9130043b67c2380cc03cc6644ed3557f6d5e8589b96acba1c64e343",
     "assets/banner.png": "bcc857cc8011f536e8137e1afbeac383bc0c267c73749599b9afff44a1cb1706",
     "assets/banner.svg": "b3a67f9258e24b0a6d1057a43fd2c9b31b5d6b249cc2ec67c9a7a1ec66ca7698",
@@ -744,6 +685,7 @@
     "assets/garden-gameboy.png": "19c5cd85f174f857613d362721099614df4b324a157c1530c9fa240b47a08386",
     "assets/garden-wave-still.png": "3fc995787514a2bae114021a94f04d4ed196d4f2da87d025ca9d90925690b90e",
     "assets/garden-wave.gif": "64a8b3a544095a44e2940057e752bad0e5e4853e8f2b1ebad5a47291fa8bb56a",
+    "assets/mcp-app-workflow.svg": "6f2694b8b284e707ddb99c5e05d9dbd3e0f2c837ed47453b7a1bc831d8ea7494",
     "assets/mcp.mp4": "002fe1beaf7f97402cabb4b34460610d136330406f707fbc4e2298c2fc677435",
     "assets/mineral-ember.png": "1c81cd458f30f79e096e361f826ffd08ae9068e68f6af3b989294d7553d51a73",
     "assets/moon-garden.png": "6ade867ff51c3f12f6aea102bac8e02c2f9b115fd9ee07db676e47f47434579c",
@@ -771,7 +713,7 @@
     "assets/study-floyd-steinberg.png": "b16c2c3432771a3b76186996533c2465df4a43ea078066850e91ec795473306d",
     "assets/study-halftone.png": "39910d1052cdb0856ca09d51f3a2b23d90478fb67eeb9b2a99597446cc230785",
     "formats.css": "7780a6e1d82bae6831224ce086a0909098de8aacdf0dbca9af28dd9442679c82",
-    "index.html": "d0c0c9f7da65953fce2e2c39cf211aafac69e84ba071b146dbfba0ce4555a0f3",
+    "index.html": "18d470f6eb4b5568b9c844ed54f5e2e7374d26c1f080e265805319fc38947727",
     "palettes.css": "f479e39ef52171df762b2685baded1b8eb9b7254e583a7304d81649e0569514c",
     "palettes.js": "d9bfa9c14c5a497e8088ef366106538ef260b8d48464c6e5a90fcd4b1ab81b07",
     "styles.css": "3b68571cde72ffeac238971af797c89063e1db769ab64295c9d30d6d2cb8f59a"
@@ -809,5 +751,192 @@
     "source/normalization-linear.icc": "5192786fd7ec2177776aa376d7f31a47755123ca4a2b7a582c04cec62086f3d1",
     "source/normalization-linear.png": "97ea01cc668a71106ed9ad68d17978c46548a6f5377d5b7e533a66db19135610",
     "source/normalization-oriented.png": "6c500ec08ac480a1286c77089b1356479cf32c3e24a81a7593dd4187bc4fddef"
+  },
+  "prior_checks": {
+    "date": "2026-10-03",
+    "revision": "input-normalization-and-repository-preparation",
+    "checks": [
+      {
+        "command": "make verify",
+        "result": "pass",
+        "includes": [
+          "gofmt",
+          "go vet",
+          "Go tests",
+          "Go race tests",
+          "native build",
+          "relative Markdown links",
+          "schema snapshot consistency",
+          "palette reference consistency",
+          "real stdio MCP subprocess"
+        ]
+      },
+      {
+        "command": "make schemas-check",
+        "result": "pass",
+        "note": "Generated tool descriptors match the snapshot. Protocol tests validate every successful non-video tool result against its output schema. Video uses the same Artifact schema."
+      },
+      {
+        "command": "make fuzz",
+        "result": "pass",
+        "process_executions": 102038,
+        "strict_json_executions": 165636,
+        "seconds_per_target": 5,
+        "parallel": 2,
+        "evidence_stage": "input-normalization",
+        "metadata_executions": 463609,
+        "icc_profile_executions": 18,
+        "note": "Bounded smoke runs. The ICC run completed with limited executions and does not establish broad malformed-profile coverage."
+      },
+      {
+        "command": "go test ./engine -run ^$ -fuzz FuzzParseHex -fuzztime 10s",
+        "result": "pass",
+        "executions": 383646,
+        "note": "The initial implementation passed this bounded run. The hexadecimal parser is unchanged.",
+        "evidence_stage": "initial-suite"
+      },
+      {
+        "command": "node spec/check.mjs",
+        "result": "pass",
+        "openspec_validations": 9,
+        "quint_typechecks": 4,
+        "quint_tests": 43,
+        "seeded_traces": 43000,
+        "steps_per_trace_max": 30,
+        "detail": "../spec/verification.json",
+        "negative_mutations_detected": 3
+      },
+      {
+        "command": "DITHER_TEST_VIDEO=1 go test -race -timeout 1m ./internal/app -run 'TestVideoIntegration|TestVideoInputContainers' -v",
+        "result": "pass",
+        "formats": [
+          "gif",
+          "png sprite sheet",
+          "mp4 H.264",
+          "webm VP9"
+        ],
+        "evidence_stage": "input-normalization",
+        "input_fixtures": [
+          "MP4/H.264 with AAC audio",
+          "MOV/H.264",
+          "WebM/VP9",
+          "Matroska/FFV1",
+          "AVI/MPEG-4",
+          "MP4 with a .bin extension"
+        ],
+        "assertions": [
+          "output codecs",
+          "frame counts",
+          "dimensions and even padding",
+          "silent output from an audio source",
+          "content-based input detection"
+        ]
+      },
+      {
+        "command": "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...",
+        "result": "No vulnerabilities found",
+        "note": "The initial implementation passed this advisory check. Go module dependencies are unchanged. This is a dated result, not a guarantee about later advisories.",
+        "evidence_stage": "initial-suite"
+      },
+      {
+        "command": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./cmd/dither-mcp",
+        "result": "pass"
+      },
+      {
+        "command": "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ./cmd/dither-mcp",
+        "result": "pass"
+      },
+      {
+        "command": "VHS recordings + ffprobe + visual review",
+        "result": "pass",
+        "recordings": 4,
+        "note": "Render and MCP recordings were refreshed for input normalization. Comparison and palette recordings retain the verified clay-style versions. All four recordings use real commands. The MP4 files report 25 fps; the tapes request 20 fps."
+      },
+      {
+        "command": "Static site desktop/mobile browser checks",
+        "result": "pass",
+        "mobile_viewport": "390x844",
+        "checks": [
+          "no horizontal overflow",
+          "all assets load",
+          "keyboard comparison slider",
+          "algorithm selection",
+          "animation pause and play",
+          "reduced-motion support",
+          "256-entry palette catalog",
+          "query, category, and color-count filters",
+          "pagination",
+          "selection, exact clipboard text, and copy fallback",
+          "palette treatment images",
+          "format table on desktop and mobile",
+          "clay theme and readable color contrast",
+          "self-hosted fonts",
+          "orientation and input-color disclosure",
+          "normalization image and caption at desktop and mobile sizes"
+        ],
+        "note": "The normalization disclosure and responsive layout were checked after the input-normalization update. Earlier palette and media controls retain their verified implementation."
+      },
+      {
+        "command": "MCP protocol compatibility tests",
+        "result": "pass",
+        "protocol_versions": [
+          "2026-07-28",
+          "2025-11-25"
+        ],
+        "checks": [
+          "modern server/discover and request metadata",
+          "legacy initialize and initialized notification",
+          "tool listing and calls",
+          "structured JSON with text fallback",
+          "native preview image content",
+          "accurate tool annotations",
+          "strict input validation",
+          "tool errors and protocol errors",
+          "protocol-only stdout",
+          "metadata cannot enable video"
+        ]
+      },
+      {
+        "command": "Editorial and contract review",
+        "result": "pass",
+        "style": "Google developer documentation style and STE-flavored guidance",
+        "checks": [
+          "authored Markdown, code comments, CLI help, MCP descriptions, palette descriptions, and website copy",
+          "relative Markdown targets and heading anchors",
+          "palette IDs, names, colors, order, tags, and provenance unchanged",
+          "legal notices preserved",
+          "normalization guide, specifications, code comments, and site caption"
+        ],
+        "note": "The style checker provides review prompts. Technical vocabulary and precise requirements take precedence over advisory vocabulary findings."
+      },
+      {
+        "command": "Clean repository checkout: make verify",
+        "result": "pass",
+        "checks": [
+          "build with github.com/lennrt/dither-mcp module imports",
+          "Go tests and race checks",
+          "relative documentation targets",
+          "schema and palette consistency",
+          "real stdio MCP session"
+        ],
+        "note": "The prepared repository excludes local dependencies, build outputs, scratch files, and the separate website."
+      },
+      {
+        "command": "Normalization regression and independent color tests",
+        "result": "pass",
+        "checks": [
+          "all eight EXIF orientations and both byte orders",
+          "JPEG, PNG, WebP, TIFF, and supported BMP metadata",
+          "45 independent LittleCMS 2.19 RGB16 vectors",
+          "published CSS Color 4 reference values",
+          "8-bit and 16-bit alpha preservation",
+          "bounded metadata and explicit unsupported-profile errors",
+          "PNG metadata precedence",
+          "crop, masks, inspection, extraction, preview, comparison, animation, and print paths"
+        ],
+        "limitations": "Matrix/TRC RGB normalization with media-relative colorimetric conversion and clipping. No LUT profiles, CMYK conversion, HDR mapping, printer calibration, or perceptual gamut mapping."
+      }
+    ],
+    "note": "Historical checks retained from the earlier implementation. They were not rerun for MCP Apps unless listed in current checks."
   }
 }

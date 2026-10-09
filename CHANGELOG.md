@@ -1,5 +1,21 @@
 # Changes
 
+## 0.1.0-dev · MCP Apps studio
+
+- Add `dither_studio`, the fourteenth MCP tool, for read-only dithered previews.
+- Add `ui://dither/studio.html`, the third resource, with MIME type
+  `text/html;profile=mcp-app` and official MCP Apps tool metadata.
+- Provide algorithm, palette, and adjustment controls, Apply preview, zoom,
+  palette swatches, and an explicit Save PNG action in supporting hosts.
+- Use all 41 algorithms, 256 palettes, custom colors, and the shared Go engine.
+- Fit omitted preview dimensions within 512 × 512 without enlarging the source.
+  Bound all studio previews to 1,024 pixels per axis and 2 MiB PNG.
+- Save through `dither_render` with a new relative destination and the exact
+  recipe from the last successful preview.
+- Bundle the official MCP Apps SDK, HTML, CSS, and JavaScript in the Go binary.
+  Preserve local stdio operation and PNG plus JSON fallback for other hosts.
+- Add studio documentation and feature coverage to the standalone showcase site.
+
 ## 0.1.0-dev · Clay visual style revision
 
 - Use warm paper backgrounds, dark ink, serif typography, and clay accents.
@@ -40,7 +56,7 @@
 - Use positive language in the README and showcase.
 - Extend OpenSpec and Quint with palette compatibility and discovery contracts.
 
-The initial local implementation includes 41 dithering algorithms and 13 MCP tools.
+The initial local implementation included 41 dithering algorithms and 13 MCP tools.
 It also includes a CLI, image masks, recipes, animation, local video processing,
 and print exports. Original sample artwork and a standalone GitHub Pages showcase
 accompany the implementation.

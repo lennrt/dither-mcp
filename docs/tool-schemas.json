@@ -1923,6 +1923,39 @@
         "paths": {
           "type": "string"
         },
+        "studio": {
+          "additionalProperties": false,
+          "description": "This read-only preview operation can open an optional MCP Apps interface in supporting hosts.",
+          "properties": {
+            "default_max_dimension": {
+              "type": "integer"
+            },
+            "max_dimension": {
+              "type": "integer"
+            },
+            "max_png_bytes": {
+              "type": "integer"
+            },
+            "save_tool": {
+              "type": "string"
+            },
+            "tool": {
+              "type": "string"
+            },
+            "writes_files": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "tool",
+            "default_max_dimension",
+            "max_dimension",
+            "max_png_bytes",
+            "writes_files",
+            "save_tool"
+          ],
+          "type": "object"
+        },
         "version": {
           "type": "string"
         },
@@ -1944,7 +1977,8 @@
         "limits",
         "defaults",
         "paths",
-        "media"
+        "media",
+        "studio"
       ],
       "type": "object"
     }
@@ -4718,6 +4752,507 @@
         "format",
         "bytes",
         "sha256"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://dither/studio.html",
+        "visibility": [
+          "model",
+          "app"
+        ]
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "description": "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "Read a local still image relative to the workspace. GIF uses the first frame."
+        },
+        "palette": {
+          "type": "string",
+          "description": "Choose a built-in palette ID instead of colors. Omission selects mono."
+        },
+        "colors": {
+          "type": [
+            "null",
+            "array"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Supply 2 through 256 unique opaque hex colors instead of palette."
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "description": "Choose an algorithm ID from dither_catalog. Omission selects floyd-steinberg."
+            },
+            "width": {
+              "type": "integer",
+              "description": "Set output width from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when height is specified."
+            },
+            "height": {
+              "type": "integer",
+              "description": "Set output height from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when width is specified."
+            },
+            "pixel_scale": {
+              "type": "integer",
+              "description": "Set grid scale from 0 through 256. Zero or one keeps the full grid. Larger values reduce the grid before dithering and enlarge it afterward."
+            },
+            "resize_filter": {
+              "type": "string",
+              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+            },
+            "brightness": {
+              "type": "number",
+              "description": "Add an sRGB channel offset from -1 through 1. The default is 0."
+            },
+            "contrast": {
+              "type": [
+                "null",
+                "number"
+              ],
+              "description": "Set contrast from 0 through 4 around the channel midpoint 0.5. Omission selects 1. Zero produces a flat midpoint."
+            },
+            "gamma": {
+              "type": [
+                "null",
+                "number"
+              ],
+              "description": "Set gamma from 0.1 through 8. The engine applies channel^(1/gamma). Omission selects 1."
+            },
+            "saturation": {
+              "type": [
+                "null",
+                "number"
+              ],
+              "description": "Set saturation from 0 through 4. Omission selects 1. Zero produces grayscale."
+            },
+            "threshold": {
+              "type": [
+                "null",
+                "number"
+              ],
+              "description": "Set threshold from 0 through 1. Omission selects 0.5. Higher values darken the quantization vector."
+            },
+            "strength": {
+              "type": [
+                "null",
+                "number"
+              ],
+              "description": "Set dither strength from 0 through 2. Omission selects 1. Zero selects nearest-color quantization for ordered patterns."
+            },
+            "seed": {
+              "type": "integer",
+              "description": "Use this integer seed for reproducible noise and moving effects. The default is 0."
+            },
+            "serpentine": {
+              "type": "boolean",
+              "description": "Reverse diffusion scan direction on alternate rows. The default is false."
+            },
+            "invert": {
+              "type": "boolean",
+              "description": "Invert RGB channels before dithering. Alpha remains unchanged."
+            },
+            "grayscale": {
+              "type": "boolean",
+              "description": "Convert RGB to grayscale before dithering. Alpha remains unchanged."
+            },
+            "color_space": {
+              "type": "string",
+              "description": "Use srgb or linear-rgb for palette distance and diffusion error. Omission selects srgb."
+            },
+            "crop": {
+              "type": [
+                "null",
+                "object"
+              ],
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "description": "Set the nonnegative horizontal crop origin within the source."
+                },
+                "y": {
+                  "type": "integer",
+                  "description": "Set the nonnegative vertical crop origin within the source."
+                },
+                "width": {
+                  "type": "integer",
+                  "description": "Set a positive crop width that fits wholly within the source."
+                },
+                "height": {
+                  "type": "integer",
+                  "description": "Set a positive crop height that fits wholly within the source."
+                }
+              },
+              "description": "Crop within source bounds before resizing. Service inputs use upright coordinates after EXIF orientation, with a top-left origin.",
+              "required": [
+                "x",
+                "y",
+                "width",
+                "height"
+              ],
+              "additionalProperties": false
+            },
+            "mask": {
+              "type": [
+                "null",
+                "object"
+              ],
+              "properties": {
+                "shape": {
+                  "type": "string",
+                  "description": "Use rectangle, circle, or image. Image masks require a separate mask_input path in the request."
+                },
+                "x": {
+                  "type": "integer",
+                  "description": "Set the rectangle left edge or circle center on the reduced grid."
+                },
+                "y": {
+                  "type": "integer",
+                  "description": "Set the rectangle top edge or circle center on the reduced grid."
+                },
+                "width": {
+                  "type": "integer",
+                  "description": "Set a positive rectangle width in reduced-grid pixels."
+                },
+                "height": {
+                  "type": "integer",
+                  "description": "Set a positive rectangle height in reduced-grid pixels."
+                },
+                "radius": {
+                  "type": "integer",
+                  "description": "Set a circle radius from 1 through 16384 reduced-grid pixels."
+                },
+                "invert": {
+                  "type": "boolean",
+                  "description": "Dither the complement of this selection. The default is false."
+                }
+              },
+              "description": "Dither only selected pixels on the reduced grid. Pixels outside the selection retain their adjusted source values.",
+              "required": [
+                "shape"
+              ],
+              "additionalProperties": false
+            },
+            "effects": {
+              "type": "object",
+              "properties": {
+                "scanlines": {
+                  "type": "number",
+                  "description": "Set scanline shading strength from 0 through 1."
+                },
+                "scanline_spacing": {
+                  "type": "integer",
+                  "description": "Set scanline spacing from 0 through 256 pixels. Omission or zero selects 2."
+                },
+                "crt": {
+                  "type": "number",
+                  "description": "Set CRT shading strength from 0 through 1."
+                },
+                "noise": {
+                  "type": "number",
+                  "description": "Set seeded additive noise strength from 0 through 1."
+                },
+                "glitch": {
+                  "type": "integer",
+                  "description": "Set the maximum seeded horizontal row-band shift from 0 through 1024 pixels."
+                },
+                "pixel_sort": {
+                  "type": "boolean",
+                  "description": "Sort visible contiguous luminance runs above pixel_sort_threshold."
+                },
+                "pixel_sort_threshold": {
+                  "type": [
+                    "null",
+                    "number"
+                  ],
+                  "description": "Set the pixel-sorting threshold from 0 through 1. Omission selects 0.25."
+                }
+              },
+              "description": "Apply these effects after dithering. Shading and noise may produce colors outside the palette.",
+              "additionalProperties": false
+            }
+          },
+          "description": "Preview with these engine settings. Width and height, including inferred dimensions, must be at most 1024. Omit both to fit within 512 by 512 without enlargement. Seed must be a JavaScript-safe integer.",
+          "additionalProperties": false
+        },
+        "mask_input": {
+          "type": "string",
+          "description": "Read an optional local image mask with the same normalization and selection rules as dither_render."
+        }
+      },
+      "required": [
+        "input"
+      ],
+      "additionalProperties": false
+    },
+    "name": "dither_studio",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "type": "integer"
+        },
+        "mask_input": {
+          "type": "string"
+        },
+        "mime_type": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "recipe": {
+          "additionalProperties": false,
+          "description": "Replay this exact preview recipe with dither_render. Its dimensions describe the preview, not a full-resolution export.",
+          "properties": {
+            "colors": {
+              "description": "Supply 2 through 256 unique opaque hex colors instead of palette. Each color accepts RGB or RRGGBB with an optional leading #.",
+              "items": {
+                "type": "string"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "options": {
+              "additionalProperties": false,
+              "description": "These engine settings define a reusable processing recipe without input or output paths.",
+              "properties": {
+                "algorithm": {
+                  "description": "Choose an algorithm ID from dither_catalog. Omission selects floyd-steinberg.",
+                  "type": "string"
+                },
+                "brightness": {
+                  "description": "Add an sRGB channel offset from -1 through 1. The default is 0.",
+                  "type": "number"
+                },
+                "color_space": {
+                  "description": "Use srgb or linear-rgb for palette distance and diffusion error. Omission selects srgb.",
+                  "type": "string"
+                },
+                "contrast": {
+                  "description": "Set contrast from 0 through 4 around the channel midpoint 0.5. Omission selects 1. Zero produces a flat midpoint.",
+                  "type": [
+                    "null",
+                    "number"
+                  ]
+                },
+                "crop": {
+                  "additionalProperties": false,
+                  "description": "Crop within source bounds before resizing. Service inputs use upright coordinates after EXIF orientation, with a top-left origin.",
+                  "properties": {
+                    "height": {
+                      "description": "Set a positive crop height that fits wholly within the source.",
+                      "type": "integer"
+                    },
+                    "width": {
+                      "description": "Set a positive crop width that fits wholly within the source.",
+                      "type": "integer"
+                    },
+                    "x": {
+                      "description": "Set the nonnegative horizontal crop origin within the source.",
+                      "type": "integer"
+                    },
+                    "y": {
+                      "description": "Set the nonnegative vertical crop origin within the source.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "width",
+                    "height"
+                  ],
+                  "type": [
+                    "null",
+                    "object"
+                  ]
+                },
+                "effects": {
+                  "additionalProperties": false,
+                  "description": "Apply these effects after dithering. Shading and noise may produce colors outside the palette.",
+                  "properties": {
+                    "crt": {
+                      "description": "Set CRT shading strength from 0 through 1.",
+                      "type": "number"
+                    },
+                    "glitch": {
+                      "description": "Set the maximum seeded horizontal row-band shift from 0 through 1024 pixels.",
+                      "type": "integer"
+                    },
+                    "noise": {
+                      "description": "Set seeded additive noise strength from 0 through 1.",
+                      "type": "number"
+                    },
+                    "pixel_sort": {
+                      "description": "Sort visible contiguous luminance runs above pixel_sort_threshold.",
+                      "type": "boolean"
+                    },
+                    "pixel_sort_threshold": {
+                      "description": "Set the pixel-sorting threshold from 0 through 1. Omission selects 0.25.",
+                      "type": [
+                        "null",
+                        "number"
+                      ]
+                    },
+                    "scanline_spacing": {
+                      "description": "Set scanline spacing from 0 through 256 pixels. Omission or zero selects 2.",
+                      "type": "integer"
+                    },
+                    "scanlines": {
+                      "description": "Set scanline shading strength from 0 through 1.",
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "gamma": {
+                  "description": "Set gamma from 0.1 through 8. The engine applies channel^(1/gamma). Omission selects 1.",
+                  "type": [
+                    "null",
+                    "number"
+                  ]
+                },
+                "grayscale": {
+                  "description": "Convert RGB to grayscale before dithering. Alpha remains unchanged.",
+                  "type": "boolean"
+                },
+                "height": {
+                  "description": "Set output height from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when width is specified.",
+                  "type": "integer"
+                },
+                "invert": {
+                  "description": "Invert RGB channels before dithering. Alpha remains unchanged.",
+                  "type": "boolean"
+                },
+                "mask": {
+                  "additionalProperties": false,
+                  "description": "Dither only selected pixels on the reduced grid. Pixels outside the selection retain their adjusted source values.",
+                  "properties": {
+                    "height": {
+                      "description": "Set a positive rectangle height in reduced-grid pixels.",
+                      "type": "integer"
+                    },
+                    "invert": {
+                      "description": "Dither the complement of this selection. The default is false.",
+                      "type": "boolean"
+                    },
+                    "radius": {
+                      "description": "Set a circle radius from 1 through 16384 reduced-grid pixels.",
+                      "type": "integer"
+                    },
+                    "shape": {
+                      "description": "Use rectangle, circle, or image. Image masks require a separate mask_input path in the request.",
+                      "type": "string"
+                    },
+                    "width": {
+                      "description": "Set a positive rectangle width in reduced-grid pixels.",
+                      "type": "integer"
+                    },
+                    "x": {
+                      "description": "Set the rectangle left edge or circle center on the reduced grid.",
+                      "type": "integer"
+                    },
+                    "y": {
+                      "description": "Set the rectangle top edge or circle center on the reduced grid.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "shape"
+                  ],
+                  "type": [
+                    "null",
+                    "object"
+                  ]
+                },
+                "pixel_scale": {
+                  "description": "Set grid scale from 0 through 256. Zero or one keeps the full grid. Larger values reduce the grid before dithering and enlarge it afterward.",
+                  "type": "integer"
+                },
+                "resize_filter": {
+                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "type": "string"
+                },
+                "saturation": {
+                  "description": "Set saturation from 0 through 4. Omission selects 1. Zero produces grayscale.",
+                  "type": [
+                    "null",
+                    "number"
+                  ]
+                },
+                "seed": {
+                  "description": "Use this integer seed for reproducible noise and moving effects. The default is 0.",
+                  "type": "integer"
+                },
+                "serpentine": {
+                  "description": "Reverse diffusion scan direction on alternate rows. The default is false.",
+                  "type": "boolean"
+                },
+                "strength": {
+                  "description": "Set dither strength from 0 through 2. Omission selects 1. Zero selects nearest-color quantization for ordered patterns.",
+                  "type": [
+                    "null",
+                    "number"
+                  ]
+                },
+                "threshold": {
+                  "description": "Set threshold from 0 through 1. Omission selects 0.5. Higher values darken the quantization vector.",
+                  "type": [
+                    "null",
+                    "number"
+                  ]
+                },
+                "width": {
+                  "description": "Set output width from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when height is specified.",
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "palette": {
+              "description": "Select a built-in palette ID from dither_palettes. Omit colors when this field is present. Omission selects mono unless colors supplies a palette.",
+              "type": "string"
+            },
+            "version": {
+              "description": "The recipe version must be 1.",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "version",
+            "options"
+          ],
+          "type": "object"
+        },
+        "width": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "width",
+        "height",
+        "mime_type",
+        "recipe"
       ],
       "type": "object"
     }

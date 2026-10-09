@@ -5,12 +5,15 @@
 ```mermaid
 flowchart LR
     A[MCP client] --> B[stdio adapter]
+    U[MCP Apps studio in supported host] --> A
     C[CLI] --> D[internal/app Service]
     B --> D
     D --> E[Rooted local files]
     D --> F[engine: pure image processing]
     D --> G[Optional local FFmpeg]
     F --> H[Bounded encoder]
+    H --> P[In-memory PNG preview]
+    P --> B
     H --> I[Temporary file]
     I --> J[Atomic no-clobber publication]
 ```
@@ -21,7 +24,8 @@ flowchart LR
 |---|---|
 | `engine` | Validation, algorithms, palettes, extraction, resampling, masks, effects, still encoders |
 | `internal/app` | Rooted inputs, metadata, recipes, limits, comparison/batch/motion/print workflows, atomic artifacts |
-| `internal/mcpserver` | Typed tool registration, structured results, PNG preview content, resources, and prompts |
+| `internal/mcpserver` | Typed tool registration, structured results, PNG preview content, embedded MCP Apps resource, and prompts |
+| `ui` | Studio source, pinned SDK build, self-contained HTML bundle, and app bridge tests |
 | `internal/cli`, `cmd/dither-mcp` | CLI arguments, process lifecycle, bounded stdio framing, and stdout/stderr discipline |
 | `openspec` | Normative requirements, concrete scenarios, initial-suite, palette-library, and input-normalization changes |
 | `spec` | Executable finite Quint contracts and reproducible validation harness |
@@ -59,7 +63,7 @@ Color distance is squared Euclidean distance in either sRGB values or linearized
 
 ## Agent workflow
 
-The server exposes 13 tools: catalog, palettes, inspect, preview, palette extraction, render, compare, batch, animate, video, separate, recipe save, and recipe load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
+The server exposes 14 tools: catalog, palettes, inspect, preview, studio, palette extraction, render, compare, batch, animate, video, separate, recipe save, and recipe load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. `ui://dither/studio.html` supplies the embedded studio. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
 
 A typical agent follows this workflow:
 
@@ -72,6 +76,18 @@ A typical agent follows this workflow:
 7. Save its recipe.
 
 Candidate cell coordinates identify each comparison image without text embedded in the pixels. CLI operations call the same service as tools.
+
+## Embedded studio
+
+`dither_studio` adds an optional graphical view through the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). The tool remains read-only. It loads a rooted source, applies the shared engine pipeline, and encodes a bounded PNG in memory. It returns the image, metadata, and resolved version-1 recipe without entering the artifact publication path.
+
+When dimensions are omitted, the preview fits within 512 × 512 pixels without enlargement. Explicit dimensions, including a dimension derived from aspect ratio, must stay within 1,024 pixels per axis. Encoded PNG data stays within 2 MiB. Studio seed values use the safe JavaScript integer range.
+
+The tool's `_meta.ui.resourceUri` points to `ui://dither/studio.html`. This third resource uses `text/html;profile=mcp-app`. It embeds HTML, CSS, and JavaScript built with the official `@modelcontextprotocol/ext-apps` SDK. Development tools create the bundle. The Go binary embeds and serves it with no runtime Node.js process or external asset request.
+
+A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, apply read-only previews, and inspect the image and swatches. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that exact recipe and a user-selected new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
+
+Hosts must support both MCP Apps and local stdio servers to display this view. Other hosts receive the PNG and structured JSON from `dither_studio`. The original 13 tools retain their existing tool results. See the [MCP Apps guide](mcp-apps.md) for the detailed host and verification contracts.
 
 The embedded [palette library](palettes.md) contains 256 presets across 16 categories. Discovery filters by text, category, and color count. It then sorts by ID and returns a bounded page. Text terms combine with AND across palette identifiers, names, descriptions, categories, tags, origins, and color values. An empty request returns 32 entries. `limit` accepts up to 256.
 
@@ -126,7 +142,8 @@ Batch items commit independently. Earlier successes remain when a later item fai
 | Animation frames | 120 |
 | Batch / comparison candidates | 32 / 12 |
 | Operation timeout, including admission wait | 120 seconds |
-| Preview | Default 512 pixels. At most 1,024 pixels and 2 MiB. |
+| Source preview | Default width 512 pixels. At most 1,024 pixels per axis and 2 MiB. |
+| Studio preview | Default fit within 512 × 512 without enlargement. At most 1,024 pixels per axis and 2 MiB. |
 | Custom/extracted palette | 2–256 requested colors |
 | Palette discovery | Default 32 entries per page. At most 256 entries per page and 256 UTF-8 query bytes. |
 | Print inks | At most 16 |
@@ -149,11 +166,12 @@ These spot-color masks do not provide CMYK conversion, output device profiles, t
 
 ## Specifications and refinement
 
-OpenSpec captures 36 user-visible requirements in six capabilities and records three changes. Quint checks four deliberately small abstractions:
+OpenSpec captures user-visible requirements and records their implementation changes. Quint checks deliberately small abstractions:
 
 - Atomic publication under collisions and cancellation.
 - Deterministic quantization and selection.
 - Bounded filtered palette discovery.
 - Source normalization admission, orientation, alpha, and processing order.
+- Read-only studio previews and explicit saves of the last successful recipe.
 
 [The specification guide](../spec/README.md) lists assumptions, executable scenarios, verification bounds, and corresponding Go tests. Passing models provide evidence about those models. They do not prove that Go, codecs, or the operating system refine them.

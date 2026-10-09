@@ -55,7 +55,7 @@ func TestProtocolWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(listed.Tools) != 13 {
+	if len(listed.Tools) != 14 {
 		t.Fatalf("tools=%d", len(listed.Tools))
 	}
 	seen := map[string]bool{}
@@ -92,7 +92,7 @@ func TestProtocolWorkflow(t *testing.T) {
 		validators[tool.Name] = compiled
 	}
 	resources, err := c.ListResources(ctx, mcp.ListResourcesRequest{})
-	if err != nil || len(resources.Resources) != 2 {
+	if err != nil || len(resources.Resources) != 3 {
 		t.Fatalf("resources: %v %v", resources, err)
 	}
 	prompts, err := c.ListPrompts(ctx, mcp.ListPromptsRequest{})

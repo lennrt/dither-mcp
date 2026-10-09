@@ -1,7 +1,7 @@
 # Contributing
 
-Use Go 1.27. The runtime does not require Node.js. OpenSpec and Quint use the
-versions in `package.json` and `pnpm-lock.yaml`.
+Use Go 1.27. The runtime does not require Node.js. OpenSpec, Quint, and the MCP Apps
+bundle use the development versions in `package.json` and `pnpm-lock.yaml`.
 
 1. Describe the behavior change and failure cases in an OpenSpec change.
    Include concrete scenarios. When you adopt the change, update the baseline
@@ -14,7 +14,8 @@ versions in `package.json` and `pnpm-lock.yaml`.
    and external processes.
 4. Add tests that can detect a plausible implementation error. For algorithm
    changes, include a small reference fixture.
-5. Run `make verify`, `make spec-check`, and `make fuzz`. If dependencies change,
+5. Run `make spec-install` to install the pinned development dependencies.
+   Then run `make verify`, `make spec-check`, and `make fuzz`. If dependencies change,
    run `make vuln`. Record affected demos again. Update the documented limits.
 
 Follow the [writing style](docs/writing-style.md) for documentation, comments,
@@ -52,6 +53,24 @@ directory:
 The [showcase guide](docs/showcase.md) describes each generated asset.
 The `make verify` target checks palette data, rendering, discovery, and generated
 reference content.
+
+## Update the MCP Apps studio
+
+Read the [MCP Apps guide](docs/mcp-apps.md) before changing the studio or its bridge.
+Keep image processing in the shared Go service. The app provides controls and
+calls tools through the official `@modelcontextprotocol/ext-apps` SDK.
+
+1. Install pinned development dependencies with `make spec-install`.
+2. Edit the source files in `ui/`.
+3. Run `pnpm ui:build` to regenerate the self-contained HTML bundle.
+4. Run `pnpm ui:check` and `make ui-test`. The test target builds the Go binary.
+5. Exercise the app bridge harness and review the resulting view.
+
+Keep the HTML, CSS, SDK, and scripts bundled locally. Preserve host fallback to
+PNG and structured JSON. Previews must remain read-only and bounded. Save image
+must use `dither_render` with the exact recipe from the last successful preview
+and a new relative output path. Document host requirements without implying that
+every MCP client supports the Apps extension.
 
 ## Preserve runtime contracts
 

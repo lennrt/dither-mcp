@@ -19,7 +19,7 @@ fuzz:
 	go test ./internal/app -run '^$$' -fuzz FuzzStrictJSON -fuzztime 5s -parallel 2
 	go test ./internal/imagemeta -run '^$$' -fuzz FuzzMetadata -fuzztime 5s -parallel 2
 	go test ./internal/colorprofile -run '^$$' -fuzz FuzzICCProfile -fuzztime 5s -parallel 2
-verify: fmtcheck vet test race build docs-check schemas-check palette-docs-check demo-smoke
+verify: fmtcheck vet test race build docs-check schemas-check palette-docs-check demo-smoke ui-verify
 spec-install:
 	pnpm install --frozen-lockfile --ignore-scripts
 spec-check:
@@ -52,3 +52,12 @@ palette-docs:
 	go run ./scripts/palette-docs
 palette-docs-check:
 	go run ./scripts/palette-docs -check
+
+.PHONY: ui-build ui-check ui-test ui-verify
+ui-build:
+	node ui/build.mjs
+ui-check:
+	node ui/build.mjs --check
+ui-test: build
+	node --test ui/*.test.mjs
+ui-verify: ui-check ui-test

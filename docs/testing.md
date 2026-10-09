@@ -1,10 +1,10 @@
 # Verification
 
-The repository separates executable contracts from implementation checks. Runtime commands need Go 1.27. Specs need Node >=20.19 and the pinned pnpm development toolchain. Terminal recordings need VHS, ttyd, and FFmpeg. Optional video integration tests also need FFmpeg/ffprobe.
+The repository separates executable contracts from implementation checks. Building the server needs Go 1.27. The full verification suite and specifications need Node >=20.19 and the pinned pnpm development dependencies. The built server needs neither Node nor pnpm. Terminal recordings need VHS, ttyd, and FFmpeg. Optional video integration tests also need FFmpeg/ffprobe.
 
 ```sh
-make verify          # format, vet, tests, race, build, docs/schema drift, MCP session
-make spec-install    # pinned OpenSpec/Quint. No runtime Node dependency.
+make spec-install    # install pinned UI and specification development dependencies
+make verify          # Go checks, MCP session, docs/schema drift, UI build/state/bridge checks
 make spec-check      # strict OpenSpec + Quint typechecks/tests/simulations/mutation
 make fuzz            # four bounded five-second fuzz smoke runs
 make bench           # engine benchmarks with allocation counts
@@ -22,6 +22,8 @@ the current repository scope.
 - Filesystem and service tests cover traversal and URL rejection, symlink escapes, and named special files. They check two independent services that race for one destination, immutable destinations, and temporary-file cleanup. They also check argument validation, input/output budgets, canceled writes, and portable recipes with external masks.
 - Workflow tests cover comparison cell pixels and metadata, partial batch success, versioned recipe replay, print plates, and PNG DPI CRCs. They check animation determinism, sheet frames, source-GIF background/disposal/timing/loop, and 12 fps timing quantization. They also check rendering with extracted palettes and bounded previews.
 - MCP and CLI tests cover initialization, discovery, input/output schemas, native image results, and recoverable tool errors. They check protocol-only stdout, message framing limits, JSON CLI output, an actual subprocess demo, and overwrite rejection.
+- Studio tests check memory-only previews, default and inferred dimensions, crop, EXIF/color normalization, exact recipe replay, image masks, safe integer seeds, the 2 MiB PNG budget, and cancellation. MCP tests check negotiated UI linkage, fallback JSON/PNG, resource MIME/CSP, and unchanged shared descriptors.
+- JavaScript tests cover 20 concrete controller cases and two official SDK bridge cases. A third bridge test connects to the real Go stdio server, changes a preview, saves identical PNG bytes, and verifies overwrite rejection. These tests do not render browser DOM or establish compatibility with every host.
 - Palette tests render every catalog entry and check legacy ID/color compatibility, unique color sets, and combined category/term/color-count filters. They check stable pagination through every result, empty and out-of-range pages, argument bounds, and MCP/CLI parity.
 - Normalization tests cover all eight EXIF orientations, both byte orders, source alpha precision, and crop ordering. They check metadata across JPEG, PNG, WebP, TIFF, and supported BMP containers. They also check split JPEG profiles, metadata between scans, PNG precedence, malformed directories, external-profile rejection, and decompression limits. Application tests exercise the shared loader through inspection, preview, rendering, extraction, comparison, animation, separations, and masks.
 - Color tests compare 45 independent LittleCMS reference vectors across sRGB, Display P3, and Adobe RGB profiles. Original binary fixtures and recorded vectors keep these tests independent of native libraries. Published CSS Color 4 vectors provide another numerical check. Tests also cover malformed profiles, alpha precision, cancellation, and concurrent transforms. The runtime and normal test suite gain no native color-management dependency.
@@ -35,15 +37,15 @@ all operating systems, or byte compatibility across future codec versions.
 
 ## Formal checks
 
-There are 36 OpenSpec requirements across six capability specifications and three
-implementation changes. Strict validation checks all nine items for structure and scenario
+There are 40 OpenSpec requirements across six capability specifications and four
+implementation changes. Strict validation checks all ten items for structure and scenario
 coverage. Quint models describe artifact publication, quantization, palette
-discovery, and source normalization:
+discovery, source normalization, and MCP Apps interaction:
 
-- Four typechecks and 43 concrete model tests.
-- 40,000 seeded safety traces, each with at most 30 transitions.
-- 1,000 additional traces for each completion-focused schedule: quantization, palette browsing, and normalization. Each requires a completion witness, for 43,000 traces overall.
-- Three deliberate mutations weaken collision protection, overlap pagination boundaries, or bypass orientation before processing. The corresponding tests must detect all three regressions.
+- Five typechecks and 59 concrete model tests.
+- 50,000 seeded safety traces, each with at most 30 transitions.
+- 1,000 additional traces for each completion-focused schedule: quantization, palette browsing, normalization, and MCP Apps interaction. Each requires a completion witness, for 54,000 traces overall.
+- Six deliberate mutations challenge output collisions, page overlap, normalization order, preview writes, dirty saves, and stale results. The corresponding tests must detect all six regressions.
 
 The seed is 20261003. Exact command results, source hashes, durations, and limits
 are in [spec/verification.json](../spec/verification.json). The finite models do
@@ -61,4 +63,12 @@ implementation, not an assertion that a hosted CI system passed. Rerun the comma
 The showcase uses deterministic original scenes and actual engine outputs.
 Four VHS tapes record real CLI, palette discovery and MCP workflows. The site was
 checked at desktop and mobile dimensions, including palette filtering, algorithm
-selection, slider keyboard control, and overflow. See [showcase reproduction](showcase.md).
+selection, slider keyboard control, and overflow in the earlier showcase verification. The MCP Apps update has protocol and state-test evidence. Visual browser checks for this update remain pending. The new site illustration is a labeled workflow diagram. See [showcase reproduction](showcase.md).
+
+The October 8, 2026 dependency audit found one advisory in the OpenSpec development
+tool chain: [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+affects `braces` 3.0.3 when it parses deeply nested patterns. The advisory names
+3.0.4 as the fix, but that version was unavailable from the package registry
+during verification. This dependency is absent from the Go server and embedded
+studio bundle. The Quint archive dependency is pinned to patched `adm-zip`
+0.6.1 in `pnpm-workspace.yaml`. Rerun `pnpm audit` when updating development tools.

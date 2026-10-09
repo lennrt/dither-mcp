@@ -2,15 +2,25 @@
   "name": "dither-mcp-specifications",
   "version": "0.1.0",
   "private": true,
-  "description": "OpenSpec and Quint specifications for dither-mcp development.",
+  "description": "MCP Apps UI, OpenSpec, and Quint development tools for dither-mcp.",
+  "packageManager": "pnpm@11.19.0",
   "scripts": {
     "spec:check": "node spec/check.mjs",
     "spec:quint": "quint",
-    "spec:openspec": "openspec"
+    "spec:openspec": "openspec",
+    "ui:build": "node ui/build.mjs",
+    "ui:check": "node ui/build.mjs --check",
+    "ui:test": "node --test ui/*.test.mjs",
+    "ui:harness": "node ui/harness.mjs"
   },
-  "engines": { "node": ">=20.19.0" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "devDependencies": {
     "@fission-ai/openspec": "1.14.0",
-    "@informalsystems/quint": "0.33.0"
+    "@informalsystems/quint": "0.33.0",
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/client": "2.3.1",
+    "esbuild": "0.25.11"
   }
 }

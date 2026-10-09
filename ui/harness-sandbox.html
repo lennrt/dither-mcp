@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>MCP Apps sandbox proxy</title><style>html,body{margin:0;width:100%;height:100%}iframe{display:block;border:0;width:100%;height:100%}</style></head><body><script>
+// The SDK validates the parent/proxy source. This proxy checks both adjacent windows.
+const parentWindow = window.parent;
+let view;
+window.addEventListener('message', (event) => {
+  if (event.source === parentWindow) {
+    const message = event.data;
+    if (message?.jsonrpc !== '2.0') return;
+    if (message.method === 'ui/notifications/sandbox-resource-ready') {
+      if (view || typeof message.params?.html !== 'string') return;
+      view = document.createElement('iframe');
+      view.title = 'Dither studio view'; view.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; connect-src \'none\'; font-src \'none\'; frame-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'">';
+      view.srcdoc = message.params.html.replace('<head>', '<head>' + csp);
+      document.body.append(view);
+    } else if (view && !String(message.method ?? '').startsWith('ui/notifications/sandbox-')) view.contentWindow.postMessage(message, '*');
+  } else if (view && event.source === view.contentWindow && event.data?.jsonrpc === '2.0' && !String(event.data.method ?? '').startsWith('ui/notifications/sandbox-')) {
+    parentWindow.postMessage(event.data, '*');
+  }
+});
+parentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/sandbox-proxy-ready', params: {} }, '*');
+</script></body></html>
