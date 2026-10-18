@@ -111,7 +111,10 @@ func newBox(cs []histogramColor) colorBox {
 }
 
 // ExtractPalette uses deterministic, alpha-weighted median cut. It samples at
-// most 262,144 pixels on a fixed stride. It ignores fully transparent pixels.
+// most 262,144 pixels on a fixed stride. If those samples are all transparent,
+// it searches each stride block for its first visible pixel instead. This
+// fallback may read the full image, but retains the same sample bound.
+// Fully transparent pixels never contribute to the palette.
 // It returns up to count distinct opaque colors, sorted by luminance and then RGB.
 func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NRGBA, error) {
 	if count < 2 || count > 256 {
@@ -144,6 +147,36 @@ func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NR
 			key := uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
 			histogram[key] += int(c.A)
 		}
+	}
+	if len(histogram) == 0 && step > 1 {
+		// A regular stride can miss sparse artwork entirely. Search only when
+		// needed so successful extractions retain their existing colors. Each
+		// block contributes at most one visible sample, weighted by its alpha.
+		sampled := false
+		for y := 0; y < height; y++ {
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			for x := 0; x < width; x++ {
+				if (y*width+x)%step == 0 {
+					sampled = false
+					continue // The regular sample already found this pixel transparent.
+				}
+				if sampled {
+					continue
+				}
+				c := read(bounds.Min.X+x, bounds.Min.Y+y)
+				if c.A == 0 {
+					continue
+				}
+				key := uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
+				histogram[key] += int(c.A)
+				sampled = true
+			}
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	if len(histogram) == 0 {
 		return nil, fmt.Errorf("cannot extract a palette from a fully transparent image")

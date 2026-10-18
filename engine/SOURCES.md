@@ -140,7 +140,11 @@ It makes alpha at or above 128 opaque. Palette order and mapping remain
 deterministic. `Palettize` exposes the same mapping for animations.
 
 Palette extraction uses alpha-weighted median cut over at most 262,144 samples
-at a fixed stride. It excludes fully transparent pixels. Sorting before
+at a fixed stride. It excludes fully transparent pixels. If that sample is
+empty, extraction finds the first visible pixel in each stride-sized block.
+This fallback can read every source pixel, but keeps the same sample bound.
+Existing nonempty samples keep their behavior, including possible periodic
+sampling bias. Sorting before
 partitioning makes map iteration irrelevant. A single-color image produces one
 extracted color even when the request specifies more. A fully transparent image
 produces an error. All preset colors use portable opaque sRGB values, regardless
