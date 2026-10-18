@@ -185,3 +185,285 @@ Studio results SHALL include `source_sha256` and optional `mask_sha256` computed
 #### Scenario: Preview lacks valid guard metadata
 - **WHEN** a preview response omits or malforms a required source or image-mask fingerprint
 - **THEN** the UI does not enable saving from that response
+
+### Requirement: Bounded palette comparison
+
+The comparison tool SHALL accept either 1–12 algorithm IDs or 1–12 named palette IDs. Palette comparisons SHALL use one shared algorithm and options. Palette mode SHALL reject simultaneous algorithm candidates, a shared palette, custom colors, or a saved recipe. Cells SHALL follow request order and identify each palette and algorithm. Palette sheets SHALL omit a single shared artifact recipe and retain complete operation parameters. Existing image limits, guards, cancellation, and publication rules SHALL apply.
+
+#### Scenario: Compare three palettes
+- **WHEN** an agent supplies three palette IDs and a shared algorithm
+- **THEN** each cell matches a standalone render using that palette and the shared settings
+- **AND** cell metadata identifies the corresponding palette and rectangle in request order
+
+#### Scenario: Reject ambiguous candidates
+- **WHEN** a request supplies both palette and algorithm shortlists or combines palette candidates with a saved recipe
+- **THEN** comparison fails without publishing an artifact
+
+#### Scenario: Preserve algorithm comparisons
+- **WHEN** an existing caller supplies only algorithm candidates and one shared palette
+- **THEN** the existing algorithm comparison behavior remains available
+
+### Requirement: Explicit studio source-color extraction
+
+The studio SHALL offer an explicit read-only source-color extraction action with a requested count from 2 through 256. It SHALL use the existing extraction tool on the complete normalized source. It SHALL accept at least two valid distinct colors as custom draft colors while preserving all non-palette settings. Successful extraction SHALL require a new explicit preview before saving. Results SHALL apply only to the current operation and control revision. Canceled, stale, failed, or malformed results SHALL NOT replace the draft or publish files.
+
+#### Scenario: Use the image's colors
+- **WHEN** a user requests extraction and receives a current valid palette
+- **THEN** the studio selects those custom colors and preserves its other settings
+- **AND** Save remains disabled until Apply preview succeeds
+
+#### Scenario: User edits during extraction
+- **WHEN** controls or the source change before extraction returns
+- **THEN** the late response cannot replace the newer draft
+
+#### Scenario: A canceled extraction responds late
+- **WHEN** a completed extraction response arrives after local cancellation
+- **THEN** the studio ignores its colors and keeps preview and extraction available
+- **AND** a nonfatal SDK late-response diagnostic does not imply that the host connection closed
+
+#### Scenario: A source cannot supply two colors
+- **WHEN** the extraction tool rejects a transparent or single-color source
+- **THEN** the studio explains the error and preserves the previous settings
+
+### Requirement: Bounded embedding initialization and extraction authority
+
+The embedding example SHALL use the studio's default fit when initial dimensions are omitted. It SHALL add its default palette only when neither a palette nor custom colors is supplied. It SHALL permit palette extraction only from the selected source with the documented extraction fields. Preview and save SHALL retain the selected source and mask restrictions.
+
+#### Scenario: Open a tall portrait
+- **WHEN** the embedding session opens a tall portrait without explicit dimensions
+- **THEN** its initial preview fits within 512 × 512 pixels without enlargement
+
+#### Scenario: Open with custom colors
+- **WHEN** initial settings provide custom colors without a named palette
+- **THEN** the host preserves those colors without adding a conflicting palette
+
+#### Scenario: Reject extraction outside the selected source
+- **WHEN** an embedded app requests extraction from another path or supplies unrelated fields
+- **THEN** the host rejects the call before forwarding it to the server
+
+### Requirement: Explicit CLI flag admission
+
+The CLI SHALL reject explicitly supplied flags that its selected command does not consume. It SHALL identify the unsupported flag and command before opening the workspace or creating an output. Supplying zero or false SHALL NOT make an unsupported flag valid. Supported command flags, common startup flags, help, and generic tool-call JSON SHALL retain their documented behavior.
+
+#### Scenario: Inspection receives render settings
+- **WHEN** a caller supplies `inspect --width 100` or an output path flag
+- **THEN** the CLI returns an actionable error instead of silently ignoring those flags
+
+#### Scenario: Zero-valued irrelevant flag
+- **WHEN** a caller supplies `render --frames 0`
+- **THEN** the CLI rejects the unsupported frame flag
+
+#### Scenario: Valid palette comparison
+- **WHEN** a caller supplies the supported palette comparison flags
+- **THEN** the CLI forwards the intended comparison through the shared service
+
+### Requirement: Preserve mixed studio option edits
+
+When an engine control changes after pending valid advanced JSON, the studio SHALL merge the latest control field into those parsed options. It SHALL preserve all other options. If the JSON is malformed or not an object, the studio SHALL retain the raw text and draft, restore the control, and report the correction needed. Neither case SHALL call a tool without an explicit preview request. Direct Apply SHALL reject malformed or nonobject advanced JSON, including explicit `null`, without replacing the draft or calling a tool. Omitted host options SHALL continue to use defaults.
+
+#### Scenario: Adjust tone after advanced settings
+- **WHEN** a user enters valid JSON with an effect and then changes brightness
+- **THEN** the next preview receives both the effect and the latest brightness value
+
+#### Scenario: Control changes while JSON is invalid
+- **WHEN** a user changes a control while advanced JSON is malformed or not an object
+- **THEN** the studio preserves the JSON text and previous draft and explains the error
+- **AND** it makes no tool call
+
+#### Scenario: Apply explicit null options
+- **WHEN** a user enters `null` in advanced JSON and selects Apply preview
+- **THEN** the studio retains the text and existing draft, reports that options must be an object, and makes no tool call
+- **AND** correcting the JSON allows preview again
+### Requirement: Explicit studio recipe saving
+
+The studio SHALL offer an explicit recipe-save action using `dither_recipe_save`. It SHALL save the exact version-1 recipe from a current, clean, accepted preview. The recipe SHALL retain preview dimensions, custom colors, and advanced options independently of image export dimensions. Dirty settings, pending work, unavailable tools, or invalidated previews SHALL prevent recipe saving. Saving a recipe SHALL create no image and SHALL use a separate relative JSON destination.
+
+#### Scenario: Preserve an extracted treatment
+- **WHEN** a user extracts colors, accepts a preview, and saves its recipe to a new JSON destination
+- **THEN** loading that recipe and rendering the same source reproduces the accepted preview pixels
+- **AND** the saved recipe includes the accepted custom colors and advanced settings
+
+#### Scenario: Export dimensions remain independent
+- **WHEN** a user selects source-size or custom image export dimensions and saves a recipe
+- **THEN** the recipe still contains the accepted preview dimensions
+
+#### Scenario: Masked recipe reuse
+- **WHEN** an accepted preview uses an external image mask
+- **THEN** the saved recipe retains image-mask options without storing source or mask paths
+- **AND** the studio explains that reuse needs an external mask
+
+#### Scenario: Dirty or busy settings cannot save a recipe
+- **WHEN** another studio operation is pending
+- **THEN** the studio makes no recipe-save call until work is idle
+- **AND** settings edits or preview/extraction invalidation require a fresh current preview, while completed image or recipe saves preserve the accepted preview
+
+#### Scenario: Failed or stale recipe publication
+- **WHEN** a recipe destination exists, the tool fails, or a receipt does not match the requested path and recipe
+- **THEN** the studio reports failure rather than success and permits a new-destination retry
+- **AND** a completion from a superseded operation cannot alter newer state
+
+### Requirement: Restricted embedding recipe authority
+
+The reusable embedding host SHALL permit recipe saving only for its latest successful studio recipe. Preview or extraction initiation SHALL invalidate recipe permission until another successful preview. It SHALL admit only output and recipe arguments, a workspace-relative JSON destination, and a recipe matching the accepted settings. It SHALL NOT grant arbitrary recipe loading or unrelated tool access.
+
+#### Scenario: Save the accepted recipe
+- **WHEN** the embedded studio saves its current accepted recipe
+- **THEN** the host forwards that exact recipe to the existing server and preserves its artifact receipt
+
+#### Scenario: Reject broader recipe authority
+- **WHEN** a caller changes the recipe, supplies extra fields, or uses an absolute, traversal, source, or mask destination
+- **THEN** the host rejects the call before forwarding it to the server
+
+#### Scenario: Preview replacement revokes recipe permission
+- **WHEN** another preview or extraction starts, including an operation that later fails
+- **THEN** the host rejects recipe saving until a successful preview supplies the currently authorized recipe
+
+### Requirement: Reproducible random styles
+
+The server SHALL provide a read-only `dither_random_style` tool returning a seed and a validated version-1 style recipe. An optional signed JavaScript-safe integer seed SHALL reproduce selection within the current engine and catalog version. An omitted seed SHALL choose new random input. Generation SHALL require no source image, create no file, and omit dimensions, pixel scale, resize filter, crop, mask and source paths from its recipe.
+
+#### Scenario: Reproduce a generated look
+- **WHEN** a client repeats a returned seed with the same engine and catalog version
+- **THEN** the tool returns the same palette and engine settings
+- **AND** the returned recipe can be rendered, previewed or explicitly saved using existing tools
+
+#### Scenario: Validate seed boundaries
+- **WHEN** a client supplies zero or either signed JavaScript-safe integer boundary
+- **THEN** the tool accepts it as a reproducible seed
+- **AND** null, fractional, string and out-of-range seeds are rejected
+
+#### Scenario: Fresh selection without an image
+- **WHEN** a client omits seed and source image
+- **THEN** the tool returns a valid catalog palette and algorithm with moderate tone and texture settings
+- **AND** it returns the chosen seed without reading or writing an image
+
+### Requirement: Rapid random studio iteration
+
+The studio SHALL prominently offer Random style as a one-click generation and preview action. It SHALL preserve geometry and mask settings, replace style settings only after a valid current preview, and permit repeated clicks to supersede read-only work. It SHALL NOT supersede image or recipe writes. Both app and embedding host SHALL reject stale generation and preview completions and authorize saving only after the current preview succeeds.
+
+#### Scenario: Try a first look
+- **WHEN** a user selects Random style
+- **THEN** the studio generates and previews a new palette, algorithm, tone and texture without requiring Apply preview
+- **AND** dimensions, pixel scale, resize filter, crop and mask retain their meaning
+- **AND** no artifact is saved
+
+#### Scenario: Rapid clicks finish out of order
+- **WHEN** a user clicks again while generation, extraction or preview is pending
+- **THEN** the latest random operation supersedes the read-only request
+- **AND** older replies or cleanup cannot change the current controls, image, pending operation or authorized recipe
+
+#### Scenario: Failure or cancellation
+- **WHEN** generation or its preview fails, is canceled, or becomes stale after a settings edit
+- **THEN** no generated settings are adopted and no save is authorized
+- **AND** the last displayed image and user settings remain available
+
+#### Scenario: Invalid pending options and explicit writes
+- **WHEN** advanced JSON is invalid or an image or recipe save is pending
+- **THEN** Random style makes no tool call and preserves the user's work
+
+#### Scenario: Restricted random authority
+- **WHEN** the embedding receives a random-style call
+- **THEN** it admits only the optional seed argument
+- **AND** it permits superseding read-only work while preserving exclusive explicit writes and latest-preview recipe authority
+
+### Requirement: Bounded studio look history
+
+The studio SHALL retain at most 20 successful canonical preview requests in session memory, including initial, manual and random previews. It SHALL deduplicate equal requests using stable look identities and keep recent selections available through most-recently-used ordering. The history SHALL store settings rather than image data or save receipts. New host input SHALL clear history and navigation.
+
+#### Scenario: Recover a completed random look
+- **WHEN** several random previews succeed
+- **THEN** the user can identify and select a previous look by its algorithm, palette and seed
+- **AND** canceled, failed and superseded requests create no history entry
+
+#### Scenario: Keep discoveries after branching
+- **WHEN** a user restores an earlier look and generates another
+- **THEN** previously discovered looks remain selectable within the history capacity
+- **AND** Undo returns to the look displayed immediately before the new preview
+
+#### Scenario: Bound history and navigation
+- **WHEN** accepted looks exceed the 20-entry capacity
+- **THEN** the least recently used look is evicted and unavailable navigation IDs are pruned
+- **AND** restoring an old look before generating a new one preserves that immediate undo target
+
+#### Scenario: Avoid duplicate navigation and reset source scope
+- **WHEN** the accepted settings match the active look
+- **THEN** the studio creates no duplicate entry or undo loop and preserves Redo
+- **WHEN** new host input arrives
+- **THEN** the studio clears earlier history and rejects its pending completions
+
+### Requirement: Fresh preview history restoration
+
+The studio SHALL offer explicit Undo, Redo and direct history restoration near Random style. Restoration SHALL call `dither_studio` with the exact stored request, preserving all accepted settings. Only a validated current success SHALL change active history, navigation and controls, and grant save authority. Navigation SHALL require tool capability and idle operation state. Restoration SHALL create no file.
+
+#### Scenario: Restore and save exact settings
+- **WHEN** a user restores a look on unchanged source and mask files
+- **THEN** the fresh preview reproduces its pixels and refreshes the recipe available for explicit saving
+- **AND** history restoration makes no random-style generation call
+
+#### Scenario: Re-read changed source files
+- **WHEN** source or mask bytes change before restoration
+- **THEN** the existing preview tool reads current files and returns fresh fingerprints or an error
+- **AND** history does not silently reuse previous image data or authority
+
+#### Scenario: Retain work until a successful restore
+- **WHEN** current controls or advanced text contain unapplied changes and a restore is requested
+- **THEN** those changes remain until the restored preview succeeds
+- **AND** failed, canceled, malformed, edited or superseded responses do not move navigation or discard current text
+
+#### Scenario: Preserve exclusive writes and current request identity
+- **WHEN** another operation is pending or host tools are unavailable
+- **THEN** Undo, Redo and history restoration make no tool call
+- **WHEN** Random style supersedes a pending restoration
+- **THEN** the old response cannot change history or authorize saving
+
+### Requirement: Persistent named favorites
+
+The shared service SHALL expose typed save, list and load tools for named favorites within the configured workspace. Each favorite SHALL retain one validated version-1 recipe without source, mask or output paths. Saved names SHALL be trimmed, case-sensitive, valid UTF-8 with 1–80 Unicode characters and no control characters. IDs SHALL be lowercase SHA-256 digests of the trimmed names. Saves SHALL publish complete bounded JSON without replacing an existing destination. Listing and loading SHALL create no files.
+
+#### Scenario: Discover a look after restarting
+- **WHEN** a client saves a named recipe and opens another server or studio session on the same workspace
+- **THEN** listing returns its stable ID and name and loading returns the original recipe
+- **AND** another workspace does not inherit the favorite
+
+#### Scenario: Preserve a duplicate name
+- **WHEN** two saves target the same trimmed name, including from independent services
+- **THEN** at most one creates the destination and later saves report an error
+- **AND** the successful recipe remains unchanged
+
+#### Scenario: Bound and validate the library
+- **WHEN** a favorite name, ID, envelope, recipe, file type or byte size is invalid
+- **THEN** saving or loading rejects it without publishing an invalid favorite
+- **WHEN** a recognized favorite file is unavailable during listing
+- **THEN** other valid favorites remain visible and the result counts unavailable entries
+- **WHEN** the library exceeds the 512-directory-entry scan limit
+- **THEN** listing reports the limit rather than silently returning an incomplete library and direct loading remains available
+
+#### Scenario: Keep library access within the workspace
+- **WHEN** a client supplies a path in place of an ID or the library exposes a visible symlink or special file
+- **THEN** the service rejects that access
+- **AND** bounded root-relative operations prevent access outside the configured workspace
+
+### Requirement: Explicit studio favorites and current-source loading
+
+The studio SHALL discover saved favorites, offer refresh, and save the exact accepted preview under an explicit name. Saving SHALL require current clean settings, tool support and no pending operation. Loading SHALL retrieve a complete recipe and preview it on the current source and compatible mask before adopting controls, history or save authority. Metadata listing SHALL preserve existing preview authority. Favorites SHALL remain independent of session-only history and image export dimensions.
+
+#### Scenario: Keep a named random look
+- **WHEN** a random preview succeeds and the user saves it under a new name
+- **THEN** the app sends the exact accepted recipe and reports success only for a matching receipt
+- **AND** the library remains available after closing and reopening the studio
+
+#### Scenario: Reload complete settings
+- **WHEN** a saved favorite is loaded with compatible current source and mask files
+- **THEN** the studio preserves its custom colors, dimensions, crop, masks and effects through a fresh preview
+- **AND** only documented omitted defaults may be resolved and source fingerprints are refreshed before explicit image saving
+
+#### Scenario: Preserve edits on rejected loading
+- **WHEN** loading fails, is canceled, returns mismatched data, is superseded, or controls change while it runs
+- **THEN** the old result cannot replace current controls, raw text, history or save authority
+- **WHEN** a recipe needs a missing image mask, conflicts with the current external mask, or exceeds preview limits
+- **THEN** the app reports the problem rather than silently changing the favorite
+
+#### Scenario: Confine host authority
+- **WHEN** the embedding app calls a favorite tool
+- **THEN** list and load access only the fixed named library and save accepts only the host's latest accepted recipe
+- **AND** Random style may supersede favorite reads but cannot interrupt a favorite write

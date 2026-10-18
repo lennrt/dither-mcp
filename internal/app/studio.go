@@ -97,8 +97,8 @@ func (s *Service) studio(ctx context.Context, q StudioRequest) (StudioResult, er
 	if err != nil {
 		return StudioResult{}, err
 	}
-	buf := &boundedBuffer{max: StudioMaxPNGBytes}
-	if err := engine.Encode("png", buf, out); err != nil {
+	buf := &boundedBuffer{max: StudioMaxPNGBytes, ctx: ctx}
+	if err := engine.EncodeContext(ctx, "png", buf, out); err != nil {
 		return StudioResult{}, fmt.Errorf("studio PNG preview: %w. Choose smaller dimensions", err)
 	}
 	if err := ctx.Err(); err != nil {

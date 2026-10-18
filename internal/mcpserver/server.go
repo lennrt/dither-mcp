@@ -25,7 +25,7 @@ var Tools = []ToolInfo{
 	{"dither_preview", "Return a bounded PNG preview for visual inspection. The tool sends the preview to the MCP client.", true},
 	{"dither_palette_extract", "Extract 2..256 representative sRGB colors deterministically from a normalized local image.", true},
 	{"dither_render", "Apply a deterministic recipe to the first frame of a local image. The tool creates a new output and returns its dimensions, hash, and recipe. Optional source and mask SHA256 guards require the exact input bytes from a studio preview. A changed or unreadable guarded input creates no output and returns source_changed or mask_changed. Use dither_preview to inspect the result.", false},
-	{"dither_compare", "Render 1..12 algorithms into a contact sheet with exact cell coordinates. Cells default to 320 pixels wide.", false},
+	{"dither_compare", "Compare 1..12 algorithms with one palette, or 1..12 named palettes with one algorithm. Supply algorithms or palettes, not both. Palette mode rejects a shared palette, custom colors, and saved recipes. Cells identify candidates with exact coordinates and default to 320 pixels wide.", false},
 	{"dither_batch", "Render 1..32 requests in sequence. The tool publishes each successful output separately and reports each failed item.", false},
 	{"dither_animate", "Process source GIF frames or generate wave, orbit, pulse, noise, or palette-cycle motion. Export a GIF or PNG sprite sheet. GIF input defaults to source processing, which preserves frame count, delays, and loop count. Other input defaults to wave motion with 24 frames at 12 fps. Width defaults to 480 pixels when both dimensions are omitted or zero.", false},
 	{"dither_video", "Process a bounded local MP4, MOV, WebM, Matroska, or AVI segment when local ffmpeg support is enabled. Export MP4, WebM, GIF, or a PNG sheet. The output contains no audio.", false},
@@ -33,6 +33,10 @@ var Tools = []ToolInfo{
 	{"dither_recipe_save", "Validate a version-1 JSON recipe. Save it to a new relative path without replacing an existing file.", false},
 	{"dither_recipe_load", "Read and validate a saved version-1 JSON recipe.", true},
 	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. Metadata includes source and mask byte fingerprints, upright source dimensions after cropping, and export limits. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
+	{"dither_random_style", "Generate a portable version-1 dither recipe for creative exploration without reading or writing files. Chooses a current algorithm and palette, moderate tone adjustments, and occasional subtle texture. Omit seed for a fresh style; supply a JavaScript-safe signed integer to repeat the selection within this engine and catalog version. The result includes the seed and recipe, without source paths, dimensions, pixel scale, resize filter, crop, or mask. Preview with dither_studio before saving.", true},
+	{"dither_favorites_list", "Discover named recipes saved in this workspace's .dither/favorites library, sorted by case-sensitive name. Missing libraries return an empty list without creating files. Unreadable or invalid recognized entries are counted as unavailable. Scans at most 512 directory entries, including unrelated and temporary files; an oversized library returns an error, while loading a known ID remains available.", true},
+	{"dither_favorite_save", "Persist an exact version-1 recipe under a human-readable name in the workspace's .dither/favorites library. Trims surrounding name whitespace; names remain case-sensitive and Unicode spelling is preserved. Never replaces an existing name. Returns the favorite ID, name and recipe rather than an image artifact receipt. The library survives server restarts and contains no source or mask paths. Serial saves stop at the 512-entry listing limit; concurrent processes can exceed that advisory capacity.", false},
+	{"dither_favorite_load", "Load and validate a named favorite by its opaque ID, including when the library exceeds its listing limit. Returns the exact saved recipe without reading an image or creating files. Pass its palette or colors and options to dither_studio with the current input to preview; supply mask_input separately when its recipe requires an image mask.", true},
 }
 
 func New(svc *app.Service) *server.MCPServer {
@@ -51,6 +55,10 @@ func New(svc *app.Service) *server.MCPServer {
 	add[app.RecipeSaveRequest, app.Artifact](s, svc, Tools[11])
 	add[app.InputRequest, app.Recipe](s, svc, Tools[12])
 	add[app.StudioRequest, app.StudioMetadata](s, svc, Tools[13])
+	add[app.RandomStyleRequest, app.RandomStyleResult](s, svc, Tools[14])
+	add[app.Empty, app.FavoriteList](s, svc, Tools[15])
+	add[app.FavoriteSaveRequest, app.Favorite](s, svc, Tools[16])
+	add[app.FavoriteLoadRequest, app.Favorite](s, svc, Tools[17])
 	addStudioResource(s)
 	s.AddResource(mcp.NewResource("dither://capabilities", "Dither capabilities", mcp.WithMIMEType("application/json")), func(ctx context.Context, r mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		b, err := json.Marshal(svc.Catalog())
@@ -75,7 +83,15 @@ func New(svc *app.Service) *server.MCPServer {
 	return s
 }
 func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
-	tool := mcp.NewTool(info.Name, mcp.WithDescription(info.Description), mcp.WithInputSchema[T](), mcp.WithOutputSchema[O](), mcp.WithReadOnlyHintAnnotation(info.ReadOnly), mcp.WithDestructiveHintAnnotation(false), mcp.WithIdempotentHintAnnotation(info.ReadOnly), mcp.WithOpenWorldHintAnnotation(false))
+	tool := mcp.NewTool(info.Name, mcp.WithDescription(info.Description), mcp.WithInputSchema[T](), mcp.WithOutputSchema[O](), mcp.WithReadOnlyHintAnnotation(info.ReadOnly), mcp.WithDestructiveHintAnnotation(false), mcp.WithIdempotentHintAnnotation(info.ReadOnly && info.Name != "dither_random_style"), mcp.WithOpenWorldHintAnnotation(false))
+	if info.Name == "dither_random_style" {
+		// The optional pointer distinguishes omission from zero in Go; the wire
+		// contract permits only integers within the JavaScript-safe range.
+		tool.RawInputSchema = json.RawMessage(fmt.Sprintf(`{"type":"object","properties":{"seed":{"type":"integer","minimum":%d,"maximum":%d,"description":"Omit for a fresh random style. Supply a signed JavaScript-safe integer, including zero, to repeat a style within the current engine and catalog version."}},"additionalProperties":false}`, -app.MaxStyleSeed, app.MaxStyleSeed))
+	}
+	if info.Name == "dither_favorite_load" {
+		tool.RawInputSchema = json.RawMessage(`{"type":"object","properties":{"id":{"type":"string","pattern":"^[0-9a-f]{64}$","description":"Opaque ID returned by favorites list or favorite save."}},"required":["id"],"additionalProperties":false}`)
+	}
 	if info.Name == "dither_studio" {
 		tool.Meta = studioToolMeta()
 	}
@@ -133,6 +149,8 @@ Choose a new output name if the path already exists. Place engine settings under
 Masks use the reduced pixel grid. Post-effects may produce colors outside the palette. The engine preserves alpha. JPEG and PBM cannot represent alpha. GIF uses binary alpha.
 
 Use dither_palettes query, category, and color-count filters to discover a palette. Use next_offset with the same filters for more matches. Consult dither_catalog for actual IDs and budgets. Preview results to assess quality.
+
+Use dither_random_style for a fresh creative starting point without an image or output path. Pass its recipe.palette and recipe.options to dither_studio with an input image. The returned seed repeats the selection within the current engine and catalog version; save the recipe itself for a portable record of the chosen settings. Preserve existing crop, dimensions, pixel scale, resize filter, and mask settings when applying a style to an in-progress edit.
 
 Calls run synchronously within defined limits. If the service observes cancellation before publication, it leaves no output. A batch publishes each successful item separately.`
 

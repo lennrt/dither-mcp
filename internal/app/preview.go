@@ -46,7 +46,7 @@ func (s *Service) preview(ctx context.Context, q PreviewRequest) (PreviewResult,
 			out.Set(x, y, im.At(bounds.Min.X+x*bounds.Dx()/w, bounds.Min.Y+y*bounds.Dy()/h))
 		}
 	}
-	b, err := encodeBounded("png", out, 0)
+	b, err := encodeBounded(ctx, "png", out, 0)
 	if err != nil {
 		return PreviewResult{}, err
 	}

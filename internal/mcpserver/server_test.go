@@ -8,6 +8,8 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,7 +57,7 @@ func TestProtocolWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(listed.Tools) != 14 {
+	if len(listed.Tools) != 18 {
 		t.Fatalf("tools=%d", len(listed.Tools))
 	}
 	seen := map[string]bool{}
@@ -90,6 +92,77 @@ func TestProtocolWorkflow(t *testing.T) {
 			t.Fatal(err)
 		}
 		validators[tool.Name] = compiled
+		if strings.HasPrefix(tool.Name, "dither_favorite") {
+			readOnly := tool.Name != "dither_favorite_save"
+			if tool.Annotations.ReadOnlyHint == nil || *tool.Annotations.ReadOnlyHint != readOnly || tool.Annotations.IdempotentHint == nil || *tool.Annotations.IdempotentHint != readOnly || tool.Annotations.DestructiveHint == nil || *tool.Annotations.DestructiveHint || tool.Annotations.OpenWorldHint == nil || *tool.Annotations.OpenWorldHint {
+				t.Fatalf("favorite tool annotations misrepresent persistence: %s %+v", tool.Name, tool.Annotations)
+			}
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var valid any
+			var invalid []any
+			switch tool.Name {
+			case "dither_favorites_list":
+				valid = map[string]any{}
+				invalid = []any{nil, map[string]any{"input": "arbitrary"}}
+			case "dither_favorite_save":
+				valid = map[string]any{"name": "Café moon", "recipe": map[string]any{"version": 1, "options": map[string]any{}}}
+				invalid = []any{map[string]any{"name": nil, "recipe": map[string]any{"version": 1, "options": map[string]any{}}}, map[string]any{"name": "test", "recipe": nil}, map[string]any{"name": "test", "recipe": map[string]any{"version": 1, "options": nil}}}
+			case "dither_favorite_load":
+				valid = map[string]any{"id": strings.Repeat("a", 64)}
+				invalid = []any{map[string]any{"id": nil}, map[string]any{"id": "../escape"}, map[string]any{"id": strings.Repeat("A", 64)}, map[string]any{"id": strings.Repeat("a", 64), "output": "unexpected"}}
+			}
+			if err := inputSchema.Validate(valid); err != nil {
+				t.Fatalf("valid favorite input rejected: %s %v", tool.Name, err)
+			}
+			for _, value := range invalid {
+				if err := inputSchema.Validate(value); err == nil {
+					t.Fatalf("invalid favorite input admitted: %s %+v", tool.Name, value)
+				}
+			}
+		}
+		if tool.Name == "dither_compare" {
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := inputSchema.Validate(map[string]any{"input": "source.png", "output": "palettes.png", "palettes": []any{"gameboy", "cga"}}); err != nil {
+				t.Fatalf("palette comparison violates advertised input schema: %v", err)
+			}
+		}
+		if tool.Name == "dither_random_style" {
+			if tool.Annotations.ReadOnlyHint == nil || !*tool.Annotations.ReadOnlyHint || tool.Annotations.IdempotentHint == nil || *tool.Annotations.IdempotentHint || tool.Annotations.DestructiveHint == nil || *tool.Annotations.DestructiveHint || tool.Annotations.OpenWorldHint == nil || *tool.Annotations.OpenWorldHint {
+				t.Fatalf("random style annotations misrepresent file access or freshness: %+v", tool.Annotations)
+			}
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, args := range []map[string]any{{}, {"seed": 0}, {"seed": app.MaxStyleSeed}, {"seed": -app.MaxStyleSeed}} {
+				if err := inputSchema.Validate(args); err != nil {
+					t.Fatalf("valid random style request violates advertised schema: %v", err)
+				}
+			}
+			for _, args := range []map[string]any{{"seed": nil}, {"seed": 1.5}, {"seed": "1"}, {"seed": app.MaxStyleSeed + 1}, {"seed": -app.MaxStyleSeed - 1}, {"output": "unexpected.json"}} {
+				if err := inputSchema.Validate(args); err == nil {
+					t.Fatalf("invalid random style request satisfies advertised schema: %+v", args)
+				}
+			}
+		}
 	}
 	resources, err := c.ListResources(ctx, mcp.ListResourcesRequest{})
 	if err != nil || len(resources.Resources) != 3 {
@@ -123,6 +196,59 @@ func TestProtocolWorkflow(t *testing.T) {
 		}
 		return res
 	}
+	styleResult := call("dither_random_style", map[string]any{"seed": 42})
+	if styleResult.IsError {
+		t.Fatalf("random style failed: %+v", styleResult.Content)
+	}
+	styleWire, _ := json.Marshal(styleResult.StructuredContent)
+	var style app.RandomStyleResult
+	if err := json.Unmarshal(styleWire, &style); err != nil || style.Seed != 42 || style.Recipe.Options.Seed != 42 {
+		t.Fatalf("random style metadata: %+v / %v", style, err)
+	}
+	directStyle, err := svc.Do(ctx, "dither_random_style", []byte(`{"seed":42}`))
+	if err != nil || !reflect.DeepEqual(style, directStyle) {
+		t.Fatalf("MCP and service style generation disagree: %v", err)
+	}
+	if files, err := os.ReadDir(root); err != nil || len(files) != 1 {
+		t.Fatalf("random style wrote files: %v", err)
+	}
+	if preview := call("dither_studio", map[string]any{"input": "source.png", "palette": style.Recipe.Palette, "options": style.Recipe.Options}); preview.IsError || len(preview.Content) < 2 {
+		t.Fatalf("generated recipe did not preview through MCP: %+v", preview.Content)
+	}
+	for _, args := range []map[string]any{{"seed": nil}, {"seed": 1.5}, {"seed": "1"}, {"seed": app.MaxStyleSeed + 1}, {"seed": -app.MaxStyleSeed - 1}, {"input": "source.png"}} {
+		if result := call("dither_random_style", args); !result.IsError {
+			t.Fatalf("random style accepted invalid arguments: %+v", args)
+		}
+	}
+	if empty := call("dither_favorites_list", map[string]any{}); empty.IsError {
+		t.Fatalf("list empty favorites: %+v", empty.Content)
+	}
+	favoriteResult := call("dither_favorite_save", app.FavoriteSaveRequest{Name: "  Café moon  ", Recipe: style.Recipe})
+	if favoriteResult.IsError {
+		t.Fatalf("favorite save: %+v", favoriteResult.Content)
+	}
+	favoriteWire, _ := json.Marshal(favoriteResult.StructuredContent)
+	var favorite app.Favorite
+	if err := json.Unmarshal(favoriteWire, &favorite); err != nil || favorite.Name != "Café moon" || len(favorite.ID) != 64 || !reflect.DeepEqual(favorite.Recipe, style.Recipe) {
+		t.Fatalf("favorite result mismatch: %+v %v", favorite, err)
+	}
+	if duplicate := call("dither_favorite_save", app.FavoriteSaveRequest{Name: favorite.Name, Recipe: style.Recipe}); !duplicate.IsError {
+		t.Fatal("favorite overwrite accepted")
+	}
+	loadedResult := call("dither_favorite_load", app.FavoriteLoadRequest{ID: favorite.ID})
+	loadedWire, _ := json.Marshal(loadedResult.StructuredContent)
+	if loadedResult.IsError || string(loadedWire) != string(favoriteWire) {
+		t.Fatalf("favorite load mismatch: %+v", loadedResult.Content)
+	}
+	listedResult := call("dither_favorites_list", map[string]any{})
+	listedWire, _ := json.Marshal(listedResult.StructuredContent)
+	var favorites app.FavoriteList
+	if err := json.Unmarshal(listedWire, &favorites); err != nil || len(favorites.Favorites) != 1 || favorites.Favorites[0].ID != favorite.ID || favorites.Unavailable != 0 {
+		t.Fatalf("favorite discovery mismatch: %+v %v", favorites, err)
+	}
+	if preview := call("dither_studio", map[string]any{"input": "source.png", "palette": favorite.Recipe.Palette, "options": favorite.Recipe.Options}); preview.IsError {
+		t.Fatalf("favorite failed to preview: %+v", preview.Content)
+	}
 	result := call("dither_render", map[string]any{"input": "source.png", "output": "out.png", "palette": "gameboy", "options": map[string]any{"algorithm": "atkinson", "width": 48}})
 	if result.IsError {
 		t.Fatalf("render error: %+v", result)
@@ -151,11 +277,45 @@ func TestProtocolWorkflow(t *testing.T) {
 	if r := call("dither_catalog", map[string]any{}); r.IsError {
 		t.Fatal("session did not recover after tool errors")
 	}
+	paletteArgs := map[string]any{"input": "source.png", "output": "palettes.png", "palettes": []string{"gameboy", "cga"}, "options": map[string]any{"algorithm": "atkinson", "width": 16}, "columns": 2}
+	paletteResult := call("dither_compare", paletteArgs)
+	if paletteResult.IsError {
+		t.Fatalf("palette comparison failed: %v", paletteResult.Content)
+	}
+	wire, _ := json.Marshal(paletteResult.StructuredContent)
+	var comparison app.CompareResult
+	if err := json.Unmarshal(wire, &comparison); err != nil {
+		t.Fatal(err)
+	}
+	if comparison.Artifact.Recipe != nil || len(comparison.Cells) != 2 || comparison.Cells[0].Palette != "gameboy" || comparison.Cells[1].Palette != "cga" || comparison.Cells[0].Algorithm != "atkinson" {
+		t.Fatalf("MCP lost palette comparison metadata: %+v", comparison)
+	}
+	paletteArgs["output"] = "palettes-direct.png"
+	raw, _ := json.Marshal(paletteArgs)
+	direct, err := svc.Do(ctx, "dither_compare", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if direct.(app.CompareResult).Artifact.SHA256 != comparison.Artifact.SHA256 {
+		t.Fatal("MCP and shared service produced different palette comparison pixels")
+	}
+	paletteArgs["output"] = "palettes-invalid.png"
+	paletteArgs["algorithms"] = []string{"atkinson"}
+	if result := call("dither_compare", paletteArgs); !result.IsError {
+		t.Fatal("MCP accepted both comparison modes")
+	}
+	if _, err := os.Stat(filepath.Join(root, "palettes-invalid.png")); !os.IsNotExist(err) {
+		t.Fatal("invalid MCP comparison published output")
+	}
 	for _, step := range []struct {
 		name string
 		args any
 	}{
 		{"dither_palettes", map[string]any{}},
+		{"dither_random_style", map[string]any{}},
+		{"dither_random_style", map[string]any{"seed": 0}},
+		{"dither_random_style", map[string]any{"seed": -app.MaxStyleSeed}},
+		{"dither_random_style", map[string]any{"seed": app.MaxStyleSeed}},
 		{"dither_palettes", map[string]any{"query": "game boy", "category": "retro", "min_colors": 4, "max_colors": 4, "limit": 1}},
 		{"dither_inspect", map[string]any{"input": "source.png"}},
 		{"dither_palette_extract", map[string]any{"input": "source.png", "count": 4}},

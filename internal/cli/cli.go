@@ -25,7 +25,7 @@ Usage: dither-mcp <command> [flags]
   palettes        Search palettes by style, category, and color count
   inspect         Inspect a local image before processing
   render          Dither one image to a new output file
-  compare         Make an algorithm comparison contact sheet
+  compare         Make an algorithm or palette comparison contact sheet
   animate         Animate a still image or process an existing GIF
   video           Process a bounded local video (requires --allow-video)
   separate        Export spot-color PNG plates in a ZIP
@@ -53,6 +53,7 @@ Common flags (after command):
   --options '{...}'        Advanced engine options (crop, mask, effects)
   --mask-input path        Luminance/alpha mask image
   --algorithms A,B,C        Comparison algorithms
+  --palettes A,B,C          Comparison palettes, instead of --algorithms
   --columns N              Contact-sheet or sprite-sheet columns
   --effect wave            source, wave, orbit, pulse, noise, palette-cycle
   --frames 24 --fps 12      Animation/video budget
@@ -88,7 +89,7 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 	f.Usage = func() { fmt.Fprint(errout, Help) }
 	var q app.RenderRequest
 	var paletteQuery app.PaletteQuery
-	var root, colors, algorithms, options, effect string
+	var root, colors, algorithms, palettes, options, effect string
 	var allow bool
 	var frames, fps, columns int
 	var amplitude, start float64
@@ -121,6 +122,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 	f.StringVar(&q.MaskInput, "mask-input", "", "mask image")
 	f.StringVar(&options, "options", "", "advanced options JSON")
 	f.StringVar(&algorithms, "algorithms", "floyd-steinberg,atkinson,bayer-8", "comparison IDs")
+	if cmd == "compare" {
+		f.StringVar(&palettes, "palettes", "", "comparison palette IDs instead of algorithms")
+	}
 	f.StringVar(&effect, "effect", "", "motion effect")
 	f.IntVar(&frames, "frames", 0, "frame count")
 	f.IntVar(&fps, "fps", 0, "frame rate")
@@ -144,6 +148,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
+		return fmt.Errorf("%s: %w", cmd, err)
+	}
+	if err := validateCommandFlags(cmd, f); err != nil {
 		return err
 	}
 	if colors != "" {
@@ -184,7 +191,20 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 		request = q
 	case "compare":
 		name = "dither_compare"
-		request = app.CompareRequest{RenderRequest: q, Algorithms: strings.Split(algorithms, ","), Columns: columns}
+		comparison := app.CompareRequest{RenderRequest: q, Algorithms: strings.Split(algorithms, ","), Columns: columns}
+		var hasAlgorithms, hasPalettes bool
+		f.Visit(func(flag *flag.Flag) {
+			hasAlgorithms = hasAlgorithms || flag.Name == "algorithms"
+			hasPalettes = hasPalettes || flag.Name == "palettes"
+		})
+		if hasPalettes {
+			if hasAlgorithms {
+				return errors.New("choose --algorithms or --palettes, not both")
+			}
+			comparison.Algorithms = nil
+			comparison.Palettes = strings.Split(palettes, ",")
+		}
+		request = comparison
 	case "animate":
 		name = "dither_animate"
 		request = app.AnimateRequest{RenderRequest: q, Effect: effect, Frames: frames, FPS: fps, Amplitude: amplitude, Columns: columns}
@@ -211,4 +231,50 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 	e := json.NewEncoder(out)
 	e.SetIndent("", "  ")
 	return e.Encode(result)
+}
+
+// Validate explicit flags before decoding options or opening the workspace.
+// Defaults for other commands are harmless; explicitly ignored input is not.
+func validateCommandFlags(command string, flags *flag.FlagSet) error {
+	allowed := map[string]bool{"root": true, "allow-video": true}
+	permit := func(names string) {
+		for _, name := range strings.Fields(names) {
+			allowed[name] = true
+		}
+	}
+	switch command {
+	case "mcp", "catalog", "call":
+	case "inspect":
+		permit("input")
+	case "palettes":
+		permit("query category min-colors max-colors limit offset")
+	case "render", "separate", "compare", "animate", "video":
+		permit("input output recipe palette colors algorithm width height pixel-scale seed serpentine invert grayscale brightness contrast gamma saturation strength threshold format dpi mask-input options")
+	default:
+		return nil // Preserve the unknown-command diagnostic from dispatch.
+	}
+	switch command {
+	case "compare":
+		permit("algorithms palettes columns")
+	case "animate":
+		permit("effect frames fps columns amplitude")
+	case "video":
+		permit("frames fps start")
+	}
+	var err error
+	var hasAlgorithm, hasPalettes bool
+	flags.Visit(func(flag *flag.Flag) {
+		if err == nil && !allowed[flag.Name] {
+			err = fmt.Errorf("flag --%s is not supported by %s", flag.Name, command)
+		}
+		hasAlgorithm = hasAlgorithm || flag.Name == "algorithm"
+		hasPalettes = hasPalettes || flag.Name == "palettes"
+	})
+	if err != nil {
+		return err
+	}
+	if command == "compare" && hasAlgorithm && !hasPalettes {
+		return errors.New("flag --algorithm requires --palettes on compare. Use --algorithms for an algorithm comparison")
+	}
+	return nil
 }

@@ -18,36 +18,74 @@ import (
 // Formats lists supported export formats.
 func Formats() []string { return []string{"png", "jpeg", "gif", "svg", "pbm", "ascii"} }
 
-func encode(format string, w io.Writer, img image.Image) error {
+func encode(ctx context.Context, format string, w io.Writer, img image.Image) (err error) {
+	if ctx == nil {
+		return fmt.Errorf("context is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	defer func() {
+		if err == nil {
+			err = ctx.Err()
+		}
+	}()
 	if w == nil {
 		return fmt.Errorf("writer is nil")
 	}
 	if err := checkImage(img); err != nil {
 		return err
 	}
+	w = contextWriter{ctx: ctx, writer: w}
 	switch format {
 	case "png":
 		return png.Encode(w, img)
 	case "jpeg", "jpg":
 		opaque := image.NewRGBA(image.Rect(0, 0, img.Bounds().Dx(), img.Bounds().Dy()))
-		draw.Draw(opaque, opaque.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
-		draw.Draw(opaque, opaque.Bounds(), img, img.Bounds().Min, draw.Over)
+		white := image.NewUniform(color.White)
+		for y := 0; y < opaque.Bounds().Dy(); y++ {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			row := image.Rect(0, y, opaque.Bounds().Dx(), y+1)
+			draw.Draw(opaque, row, white, image.Point{}, draw.Src)
+			draw.Draw(opaque, row, img, img.Bounds().Min.Add(image.Pt(0, y)), draw.Over)
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		return jpeg.Encode(w, opaque, &jpeg.Options{Quality: 95})
 	case "gif":
-		p, err := Palettize(img)
+		p, err := PalettizeContext(ctx, img)
 		if err != nil {
 			return err
 		}
 		return gif.Encode(w, p, nil)
 	case "svg":
-		return encodeSVG(w, img)
+		return encodeSVG(ctx, w, img)
 	case "pbm":
-		return encodePBM(w, img)
+		return encodePBM(ctx, w, img)
 	case "ascii":
-		return encodeASCII(w, img)
+		return encodeASCII(ctx, w, img)
 	default:
 		return fmt.Errorf("unsupported output format %q", format)
 	}
+}
+
+type contextWriter struct {
+	ctx    context.Context
+	writer io.Writer
+}
+
+func (w contextWriter) Write(p []byte) (int, error) {
+	if err := w.ctx.Err(); err != nil {
+		return 0, err
+	}
+	n, err := w.writer.Write(p)
+	if err != nil {
+		return n, err
+	}
+	return n, w.ctx.Err()
 }
 
 // Palettize preserves all visible RGB colors when they fit into GIF's 256 slots.
@@ -57,6 +95,18 @@ func encode(format string, w io.Writer, img image.Image) error {
 //
 // Palettize maps colors without adding a second dither pattern.
 func Palettize(img image.Image) (*image.Paletted, error) {
+	return PalettizeContext(context.Background(), img)
+}
+
+// PalettizeContext is Palettize with cancellation checks between image rows.
+// Palette extraction uses the same context. Cancellation returns no partial image.
+func PalettizeContext(ctx context.Context, img image.Image) (*image.Paletted, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("context is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err := checkImage(img); err != nil {
 		return nil, err
 	}
@@ -66,6 +116,9 @@ func Palettize(img image.Image) (*image.Paletted, error) {
 	transparent := false
 	overflow := false
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := read(x, y)
 			if c.A < 128 {
@@ -80,6 +133,9 @@ func Palettize(img image.Image) (*image.Paletted, error) {
 				}
 			}
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	limit := 256
 	if transparent {
@@ -97,7 +153,7 @@ func Palettize(img image.Image) (*image.Paletted, error) {
 		}
 	} else {
 		var err error
-		colors, err = ExtractPalette(context.Background(), &gifPaletteImage{Image: img, read: pixelReader(img)}, limit)
+		colors, err = ExtractPalette(ctx, &gifPaletteImage{Image: img, read: pixelReader(img)}, limit)
 		if err != nil {
 			return nil, err
 		}
@@ -121,6 +177,9 @@ func Palettize(img image.Image) (*image.Paletted, error) {
 	}
 	q := newQuantizer(colors, false)
 	for y := 0; y < bounds.Dy(); y++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		for x := 0; x < bounds.Dx(); x++ {
 			c := read(bounds.Min.X+x, bounds.Min.Y+y)
 			index := uint8(0)
@@ -137,10 +196,13 @@ func Palettize(img image.Image) (*image.Paletted, error) {
 			out.SetColorIndex(x, y, index)
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
-func encodeSVG(w io.Writer, img image.Image) error {
+func encodeSVG(ctx context.Context, w io.Writer, img image.Image) error {
 	b := bufio.NewWriter(w)
 	r := img.Bounds()
 	read := pixelReader(img)
@@ -148,6 +210,9 @@ func encodeSVG(w io.Writer, img image.Image) error {
 		return err
 	}
 	for y := 0; y < r.Dy(); y++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		for x := 0; x < r.Dx(); {
 			c := read(r.Min.X+x, r.Min.Y+y)
 			start := x
@@ -180,7 +245,7 @@ func encodeSVG(w io.Writer, img image.Image) error {
 }
 
 func matteLuminance(c color.NRGBA) float64 { a := float64(c.A) / 255; return luminance(c)*a + (1 - a) }
-func encodePBM(w io.Writer, img image.Image) error {
+func encodePBM(ctx context.Context, w io.Writer, img image.Image) error {
 	b := bufio.NewWriter(w)
 	r := img.Bounds()
 	read := pixelReader(img)
@@ -189,6 +254,9 @@ func encodePBM(w io.Writer, img image.Image) error {
 	}
 	row := make([]byte, (r.Dx()+7)/8)
 	for y := 0; y < r.Dy(); y++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		clear(row)
 		for x := 0; x < r.Dx(); x++ {
 			c := read(r.Min.X+x, r.Min.Y+y)
@@ -202,7 +270,7 @@ func encodePBM(w io.Writer, img image.Image) error {
 	}
 	return b.Flush()
 }
-func encodeASCII(w io.Writer, img image.Image) error {
+func encodeASCII(ctx context.Context, w io.Writer, img image.Image) error {
 	const ramp = "@%#*+=-:. "
 	b := bufio.NewWriter(w)
 	r := img.Bounds()
@@ -210,6 +278,9 @@ func encodeASCII(w io.Writer, img image.Image) error {
 	row := make([]byte, r.Dx()+1)
 	row[len(row)-1] = '\n'
 	for y := 0; y < r.Dy(); y++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		for x := 0; x < r.Dx(); x++ {
 			c := read(r.Min.X+x, r.Min.Y+y)
 			index := int(matteLuminance(c)*float64(len(ramp)-1) + .5)

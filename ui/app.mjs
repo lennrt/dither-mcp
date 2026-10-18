@@ -1,5 +1,5 @@
 import { App, PostMessageTransport, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
-import { StudioState, clone, exportDimensions, parseColors, studioRequest } from './state.mjs';
+import { StudioState, clone, editOption, exportDimensions, parseColors, studioRequest } from './state.mjs';
 
 const app = new App({ name: 'Dither studio', version: '0.1.0' }, {}, { autoResize: true });
 const state = new StudioState();
@@ -9,6 +9,10 @@ let zoom = 'fit';
 let jsonDirty = false;
 let customDirty = false;
 let lastCatalog = '';
+let historyChoice = '';
+let lastHistoryActive = null;
+let favoritesAutoPending = true;
+let favoriteChoice = '';
 
 const ranges = [
   ['strength', 'Dither', 0, 2, .05, 1], ['brightness', 'Brightness', -1, 1, .05, 0],
@@ -72,9 +76,11 @@ function renderSwatches() {
   $('swatches').replaceChildren(...swatches);
   $('palette-info').textContent = paletteMode() === 'custom' ? `${colors.length || '2–256'} custom colors` : palette?.description ?? '';
 }
-function syncControls() {
+function syncControls(preserveInput) {
   const options = state.draft?.options ?? {};
   document.querySelectorAll('[data-option]').forEach((element) => {
+    // Number inputs retain intermediate typing such as '-' outside .value.
+    if (element === preserveInput) return;
     const value = options[element.dataset.option] ?? defaults[element.dataset.option];
     if (element.type === 'checkbox') element.checked = !!value;
     else element.value = value ?? '';
@@ -89,18 +95,57 @@ function syncControls() {
   $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === options.algorithm)?.description || 'Choose the texture that suits your image.';
   renderSwatches();
 }
+function renderHistory() {
+  if (state.historyActive !== lastHistoryActive || !state.history.some(entry => String(entry.id) === historyChoice)) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+  lastHistoryActive = state.historyActive;
+  const entries = [...state.history].reverse().map(entry => {
+    const request = entry.request;
+    const algorithm = state.algorithms.find(item => item.id === request.options.algorithm)?.name || request.options.algorithm;
+    const palette = request.colors ? `${request.colors.length} custom colors` : state.palettes.find(item => item.id === request.palette)?.name || request.palette;
+    const option = document.createElement('option'); option.value = String(entry.id);
+    option.textContent = `Look ${entry.id} · ${algorithm} · ${palette} · seed ${request.options.seed ?? 0}`;
+    return option;
+  });
+  if (!entries.length) { const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'Your accepted previews appear here'; entries.push(empty); }
+  $('history-look').replaceChildren(...entries); $('history-look').value = historyChoice;
+  $('history-count').textContent = `${state.history.length} / 20`;
+  $('history-look').disabled = !state.canHistory;
+  $('history-restore').disabled = !state.canHistory || !historyChoice;
+  $('history-undo').disabled = !state.canUndo;
+  $('history-redo').disabled = !state.canRedo;
+}
+function renderFavorites() {
+  if (!state.favorites.some(item => item.id === favoriteChoice)) favoriteChoice = state.favorites[0]?.id || '';
+  const options = state.favorites.map(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.name; return option; });
+  if (!options.length) { const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'No saved favorites'; options.push(empty); }
+  $('favorite-list').replaceChildren(...options); $('favorite-list').value = favoriteChoice;
+  $('favorite-list').disabled = !state.canFavorites || !state.favorites.length;
+  $('favorite-refresh').disabled = !state.canFavorites;
+  $('favorite-load').disabled = !state.canFavorites || !favoriteChoice;
+  $('favorite-name').disabled = state.saving;
+  $('favorite-save').disabled = !state.canSave || jsonDirty || customDirty || !$('favorite-name').value;
+  $('favorite-note').textContent = `${state.favoritesUnavailable ? `${state.favoritesUnavailable} unavailable favorites were skipped. ` : ''}Favorites keep the complete preview settings across sessions. Loading uses the current source and mask. Names are unique.`;
+}
 function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
-  $('settings').disabled = !state.draft || state.pending?.kind === 'save';
+  renderHistory(); renderFavorites();
+  $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
+  $('extract').disabled = !state.canPreview;
+  $('random-style').disabled = !state.canRandom;
   const exportValid = renderExport();
   $('save').disabled = !state.canSave || jsonDirty || customDirty || !exportValid || !$('output').value.trim();
-  $('output').disabled = state.pending?.kind === 'save';
-  $('cancel').hidden = state.pending?.kind !== 'preview';
+  $('output').disabled = state.saving;
+  $('recipe-output').disabled = state.saving;
+  $('save-recipe').disabled = !state.canSave || jsonDirty || customDirty || !$('recipe-output').value.trim();
+  $('recipe-note').textContent = state.rendered?.request.mask_input
+    ? `Keeps the preview dimensions and settings. Image and mask paths stay separate. Reuse with mask_input: ${state.rendered.request.mask_input}`
+    : 'Keeps the preview dimensions and settings, including custom colors. Source paths and export size choices stay separate.';
+  $('cancel').hidden = !['preview', 'extract', 'random', 'history', 'favorites-list', 'favorite-load', 'favorite-preview'].includes(state.pending?.kind);
   $('status').textContent = state.status;
   $('status-dot').className = `status-dot${state.busy ? ' busy' : ''}${state.error ? ' error' : ''}`;
   const dirty = state.dirty || jsonDirty || customDirty;
-  $('preview-badge').textContent = state.busy ? (state.pending.kind === 'save' ? 'SAVING' : 'RENDERING') : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
+  $('preview-badge').textContent = state.busy ? ({ 'favorites-list': 'FAVORITES', 'favorite-load': 'LOADING FAVORITE', 'favorite-preview': 'LOADING FAVORITE', 'favorite-save': 'SAVING FAVORITE', history: 'RESTORING', random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
   $('preview-badge').classList.toggle('dirty', dirty && !!state.rendered);
   $('source').textContent = state.draft?.input?.split(/[\\/]/).pop() || 'Waiting for a source image';
   if (state.rendered) {
@@ -112,6 +157,7 @@ function render(sync = false) {
     $('preview-hint').textContent = dirty ? 'The image shows the last applied settings. Apply preview to see your changes.' : 'Choose an export size below. Save checks that the source and mask still match this preview.';
     setZoom(zoom);
   }
+  if (favoritesAutoPending && state.canFavorites && state.validPreview) { favoritesAutoPending = false; queueMicrotask(() => { void refreshFavorites(true); }); }
 }
 function exportSelection() {
   return { mode: $('export-size').value, width: Number($('export-width').value), height: Number($('export-height').value) };
@@ -150,10 +196,22 @@ function updateDraft(update) {
   const draft = clone(state.draft); update(draft); state.edit(draft); render();
 }
 document.querySelectorAll('[data-option]').forEach((element) => element.addEventListener('input', () => {
-  updateDraft((draft) => { draft.options[element.dataset.option] = element.type === 'checkbox' ? element.checked : element.tagName === 'SELECT' ? element.value : element.value === '' ? 0 : Number(element.value); });
-  if (element.type === 'range') $(`${element.id}-value`).textContent = String(Number(element.value));
-  if (!jsonDirty) $('options-json').value = JSON.stringify(state.draft.options, null, 2);
-  if (element.dataset.option === 'algorithm') $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === element.value)?.description ?? '';
+  if (!state.draft) return;
+  try {
+    const mergeJSON = jsonDirty;
+    const value = element.type === 'checkbox' ? element.checked : element.tagName === 'SELECT' ? element.value : element.value === '' ? 0 : Number(element.value);
+    const draft = clone(state.draft);
+    draft.options = editOption(draft.options, element.dataset.option, value, jsonDirty ? $('options-json').value : undefined);
+    state.edit(draft);
+    jsonDirty = false;
+    if (mergeJSON) syncControls(element.type === 'number' ? element : undefined);
+    else {
+      if (element.type === 'range') $(`${element.id}-value`).textContent = String(Number(element.value));
+      $('options-json').value = JSON.stringify(state.draft.options, null, 2);
+      if (element.dataset.option === 'algorithm') $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === element.value)?.description ?? '';
+    }
+  } catch (error) { state.fail(error); syncControls(); }
+  render();
 }));
 $('palette-search').addEventListener('input', renderPalettes);
 $('palette').addEventListener('change', () => { updateDraft((draft) => { draft.palette = $('palette').value; delete draft.colors; }); renderSwatches(); });
@@ -184,8 +242,110 @@ $('apply').addEventListener('click', async (event) => {
     const accepted = state.finishPreview(operation, result); render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
-$('cancel').addEventListener('click', () => { abortController?.abort(); state.cancel(); render(); });
+async function refreshFavorites(automatic = false) {
+  if (!state.canFavorites) { if (automatic) favoritesAutoPending = true; return; }
+  let operation;
+  try {
+    operation = state.beginFavoritesList(); const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_favorites_list', arguments: {} }, { signal: controller.signal });
+    state.finishFavoritesList(operation, result); render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+}
+$('favorite-refresh').addEventListener('click', () => { void refreshFavorites(); });
+$('favorite-list').addEventListener('change', () => { favoriteChoice = $('favorite-list').value; });
+$('favorite-name').addEventListener('input', () => render());
+$('favorite-save').addEventListener('click', async () => {
+  if (!state.canSave || jsonDirty || customDirty) return;
+  let operation;
+  try {
+    operation = state.beginFavoriteSave($('favorite-name').value); render();
+    const result = await app.callServerTool({ name: 'dither_favorite_save', arguments: operation.request });
+    if (state.finishFavoriteSave(operation, result)) favoriteChoice = result.structuredContent.id;
+    render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('favorite-load').addEventListener('click', async () => {
+  if (!state.canFavorites) return;
+  let operation;
+  try {
+    operation = state.beginFavoriteLoad(favoriteChoice); const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_favorite_load', arguments: operation.request }, { signal: controller.signal });
+    const preview = state.finishFavoriteLoad(operation, result);
+    if (!preview) { render(); return; }
+    operation = preview; render();
+    const rendered = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const accepted = state.finishFavoritePreview(operation, rendered);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('history-look').addEventListener('change', () => { historyChoice = $('history-look').value; });
+async function restoreHistory(target) {
+  if (!state.canHistory) return;
+  let operation;
+  try {
+    operation = state.beginHistory(target);
+    historyChoice = String(operation.targetId);
+    const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const current = state.current(operation);
+    const accepted = state.finishHistory(operation, result);
+    if (current) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) {
+    if (operation) {
+      if (state.reject(operation, error)) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+    } else state.fail(error);
+    render();
+  }
+}
+$('history-restore').addEventListener('click', () => { void restoreHistory(Number(historyChoice)); });
+$('history-undo').addEventListener('click', () => { void restoreHistory('undo'); });
+$('history-redo').addEventListener('click', () => { void restoreHistory('redo'); });
+$('random-style').addEventListener('click', async () => {
+  if (!state.canRandom) return;
+  let operation;
+  try {
+    const draft = clone(state.draft);
+    if (jsonDirty) {
+      try { draft.options = JSON.parse($('options-json').value); }
+      catch { throw new Error('Correct the advanced options JSON before choosing a random style.'); }
+    }
+    // Validate geometry before canceling work or replacing any pending text.
+    const base = studioRequest(draft);
+    historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+    abortController?.abort();
+    operation = state.beginRandom(base);
+    const controller = new AbortController(); abortController = controller; render();
+    const style = await app.callServerTool({ name: 'dither_random_style', arguments: operation.request }, { signal: controller.signal });
+    const preview = state.finishRandom(operation, style);
+    if (!preview) { render(); return; }
+    operation = preview; render();
+    const result = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const accepted = state.finishPreview(operation, result);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('extract-count').addEventListener('input', () => {
+  if (state.pending?.kind === 'extract') { state.edit(clone(state.draft)); render(); }
+});
+$('extract').addEventListener('click', async () => {
+  if (!state.canPreview) return;
+  let operation;
+  try {
+    operation = state.beginExtraction(Number($('extract-count').value));
+    abortController = new AbortController(); render();
+    const result = await app.callServerTool({ name: 'dither_palette_extract', arguments: operation.request }, { signal: abortController.signal });
+    const accepted = state.finishExtraction(operation, result);
+    if (accepted) customDirty = false;
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('cancel').addEventListener('click', () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'favorites-list' ? 'Favorite refresh cancelled.' : kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
+$('recipe-output').addEventListener('input', () => render());
 for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
 $('save').addEventListener('click', async (event) => {
   event.preventDefault();
@@ -197,14 +357,23 @@ $('save').addEventListener('click', async (event) => {
     state.finishSave(operation, result); render();
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+$('save-recipe').addEventListener('click', async () => {
+  if (!state.canSave || jsonDirty || customDirty) return;
+  let operation;
+  try {
+    operation = state.beginRecipeSave($('recipe-output').value, $('output').value); render();
+    const result = await app.callServerTool({ name: 'dither_recipe_save', arguments: operation.request });
+    state.finishRecipeSave(operation, result); render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
 
 // MCP Apps hosts can omit allow-forms. Route explicit actions through buttons.
-for (const [form, button] of [['controls', 'apply'], ['save-form', 'save']]) {
+for (const [form, button] of [['controls', 'apply'], ['save-form', 'save'], ['recipe-form', 'save-recipe'], ['favorite-form', 'favorite-save']]) {
   $(form).addEventListener('submit', (event) => event.preventDefault());
   $(form).addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
       event.preventDefault();
-      $(button).click();
+      $(event.target.id === 'extract-count' ? 'extract' : button).click();
     }
   });
 }
@@ -234,16 +403,27 @@ function applyContext(context) {
 
 // Lifecycle handlers are registered before connecting so initial data cannot race them.
 app.ontoolinput = ({ arguments: arguments_ }) => {
-  abortController?.abort(); jsonDirty = false; customDirty = false;
+  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null; favoriteChoice = ''; favoritesAutoPending = true;
   $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = '';
   try { state.setInput(arguments_); } catch (error) { state.fail(error); }
   render(true);
 };
 app.ontoolresult = (result) => { const accepted = state.hostResult(result); if (accepted) { jsonDirty = false; customDirty = false; } render(accepted); };
-app.ontoolcancelled = () => { abortController?.abort(); state.cancel('The host cancelled the request. Apply preview to try again.'); render(); };
+app.ontoolcancelled = () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); abortController?.abort(); state.cancel('The host cancelled the request. Apply preview to try again.'); render(); };
 app.onhostcontextchanged = applyContext;
-app.onteardown = async () => { abortController?.abort(); state.cancel('The studio has closed.'); state.canCallTools = false; render(); return {}; };
-app.onerror = () => { state.canCallTools = false; $('host-note').hidden = false; $('host-note').textContent = 'The host connection was interrupted. Open the studio again to continue.'; render(); };
+app.onteardown = async () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); abortController?.abort(); state.cancel('The studio has closed.'); state.canCallTools = false; render(); return {}; };
+// Protocol.onerror also reports late replies after cancellation; it does not
+// establish transport closure. Ignore only those stale-response diagnostics.
+app.onerror = (error) => {
+  if (error?.message?.startsWith('Received a response for an unknown message ID:') || error?.message?.startsWith('Received a progress notification for an unknown token:')) return;
+  state.fail(new Error('The host reported a communication error. Try the operation again.')); render();
+};
+app.onclose = () => {
+  historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+  state.canCallTools = false;
+  state.cancel('The host connection closed. Open the studio again to continue.');
+  $('host-note').hidden = false; $('host-note').textContent = state.status; render();
+};
 
 render();
 if (window.parent === window) {

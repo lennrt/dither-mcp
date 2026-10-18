@@ -40,6 +40,18 @@ Garden recipes use `docs/assets/source/moon-garden.png`. The mineral recipe uses
 
 `hero.png` compares the Moon Garden source and its six-color clay result. The generator composes `algorithm-study.png` and `palette-study.png` from the processed images. The contact sheets follow the order in the README captions. The assets directory retains the original files alongside their exports.
 
+### Palette comparison
+
+`palette-comparison.png` is a real CLI contact sheet with Oat and Ink, Game Boy,
+and Sepia in that order. Generate it under a new destination, because outputs
+are immutable:
+
+```sh
+bin/dither-mcp compare --root docs/assets --input source/moon-garden.png \
+  --output palette-comparison-new.png --palettes oat-and-ink,gameboy,sepia \
+  --algorithm atkinson --width 320 --columns 3
+```
+
 ### Palette atlas and treatments
 
 `scripts/palette-atlas` reads `engine.Palettes()` directly. It generates the complete atlas, the explorer’s catalog, twelve rendered treatments, a contact sheet, and their recipes:

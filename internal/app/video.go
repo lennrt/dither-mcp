@@ -164,7 +164,7 @@ func (s *Service) video(ctx context.Context, q VideoRequest) (Artifact, error) {
 			return Artifact{}, errors.New("rendered video exceeds frame-pixel budget")
 		}
 		frames = append(frames, out)
-		encoded, err := encodeBounded("png", out, 0)
+		encoded, err := encodeBounded(ctx, "png", out, 0)
 		if err != nil {
 			return Artifact{}, err
 		}

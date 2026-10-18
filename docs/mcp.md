@@ -7,12 +7,13 @@ All tool arguments and results are JSON objects. Tools advertise input and outpu
 
 See [formats and video](formats.md) for the complete support matrix, setup, examples, and tested codec combinations.
 
-The server provides **14 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
+The server provides **18 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
 
 ## Tools
 
 | Tool | Inputs | Result |
 |---|---|---|
+| `dither_random_style` | Optional integer `seed` | Seed and validated style recipe; no image input or file output |
 | `dither_catalog` | `{}` | Algorithms, formats, defaults, effects and limits |
 | `dither_palettes` | `query`, `category`, `min_colors`, `max_colors`, `limit`, `offset` (all optional) | Searchable palette pages with exact colors, descriptions, tags, provenance and category counts |
 | `dither_inspect` | `input` | Upright dimensions, normalization details, first-frame alpha, frame count, size, and SHA256 |
@@ -20,13 +21,16 @@ The server provides **14 tools**, **3 resources**, and **3 prompts**. The read-o
 | `dither_studio` | `input`, optional `palette` or `colors`, `options`, and `mask_input` | In-memory dithered PNG preview, resolved recipe, and optional interactive studio |
 | `dither_palette_extract` | `input`, `count` (default 8) | Deterministic array of up to the requested 2–256 colors |
 | `dither_render` | Render request | Artifact and recipe |
-| `dither_compare` | Render request, `algorithms`, optional `columns` | Contact sheet plus indexed cell rectangles |
+| `dither_compare` | Render request, either `algorithms` or `palettes`, optional `columns` | Contact sheet plus indexed cell rectangles and candidate identities |
 | `dither_batch` | `items`: 1–32 render requests | Each item's artifact or error, in input order |
 | `dither_animate` | Render request, `effect`, `frames`, `fps`, `amplitude`, `columns` | GIF or PNG sprite sheet |
 | `dither_video` | Render request, `frames`, `fps`, `start` | MP4, WebM, GIF or PNG sprite sheet |
 | `dither_separate` | Render request | ZIP of spot-color PNG plates and manifest |
 | `dither_recipe_save` | `output`, versioned `recipe` | JSON artifact |
 | `dither_recipe_load` | `input` | Validated versioned recipe |
+| `dither_favorite_save` | `name`, versioned `recipe` | Immutable named favorite with ID, name and recipe |
+| `dither_favorites_list` | Empty object | Sorted ID/name summaries and unavailable-entry count |
+| `dither_favorite_load` | `id` | Validated favorite with ID, name and recipe |
 
 Render requests use `input`, `output`, either `palette` or `colors`, and nested
 `options`. Optional `recipe` replaces all inline options and palette selection.
@@ -54,7 +58,152 @@ The result records a relative path, actual dimensions, encoded byte count, and S
 
 A comparison's `cells` supply labels and exact rectangles. The contact sheet contains no embedded typography. `dither_inspect` can hash source files when a caller needs to keep a complete input manifest.
 
+Compare 1–12 named palettes with one shared algorithm:
+
+```json
+{
+  "input": "photo.png",
+  "output": "studies/palettes.png",
+  "palettes": ["oat-and-ink", "gameboy", "sepia"],
+  "options": {"algorithm": "atkinson", "width": 240},
+  "columns": 3
+}
+```
+
+Palette mode rejects `algorithms`, a common `palette`, `colors`, and `recipe`.
+Each cell records its palette and effective algorithm in request order. The
+artifact retains submitted parameters and omits a single shared recipe, which
+cannot describe multiple palettes. To replay a cell, use its palette and
+algorithm, set `options.width` and `options.height` to the cell dimensions, and
+retain the other original options and mask. Comparison defaults to width 320
+when dimensions are omitted; a standalone render otherwise uses source size.
+Algorithm comparisons retain
+their existing shared palette and recipe behavior. Both modes enforce the
+same geometry, source guards, and output limits.
+
+Palette extraction scans the complete normalized source, before crop, masks,
+and tone changes. Each visible pixel contributes its alpha weight. The histogram
+keeps up to 262,144 distinct RGB values exactly. If that bound is exceeded,
+6-bit-per-channel bins retain original weighted RGB sums before median cut.
+Small accents and periodic colors can no longer disappear between sample positions.
+Reduction to 2–256 output colors can still merge rare colors.
+
+Sources with at most 262,144 pixels retain exact extraction behavior. Larger
+sources may produce different palettes and overflow GIF colors. Full scanning
+reads more pixels than earlier stride sampling, within the existing image limits.
+
 Solid-color sources cannot produce two distinct extracted colors. Extraction returns an actionable error instead of an unusable one-color render palette.
+
+## Random style iteration
+
+Call `dither_random_style` with `{}` to choose a fresh look. Supply a `seed` to
+repeat it. Seeds must be integers from -9007199254740991 through 9007199254740991.
+Zero is valid. Null, fractional values, strings, unknown arguments, and values
+outside that range are rejected. The tool is read-only but is not annotated
+idempotent because omitted seeds choose new values.
+
+The response contains `seed` and a version-1 `recipe`. It selects from all 41
+algorithms and 256 palettes, adds moderate tone adjustments, and sometimes adds
+one subtle scanline, CRT, or noise effect. It omits geometry, masks, and source
+paths. It needs no image and publishes no artifact.
+
+Example MCP sequence, using the structured result from each tool call:
+
+```js
+// `client` is an already-connected MCP client.
+const generated = await client.callTool({ name: 'dither_random_style', arguments: { seed: 42 } });
+if (generated.isError) throw new Error('Style generation failed');
+const { seed, recipe } = generated.structuredContent;
+const preview = await client.callTool({ name: 'dither_studio', arguments: {
+  input: 'photo.png', palette: recipe.palette,
+  options: { ...recipe.options, width: 320, pixel_scale: 2 },
+} });
+if (preview.isError) throw new Error('Preview failed');
+// After choosing the look, explicitly save its accepted settings.
+const saved = await client.callTool({ name: 'dither_recipe_save', arguments: {
+  output: `recipes/style-${seed}.json`, recipe: preview.structuredContent.recipe,
+} });
+if (saved.isError) throw new Error('Recipe save failed; choose a new destination');
+```
+
+To render directly, pass `recipe.palette` and `recipe.options` as inline fields
+to `dither_render`, with an input and new output path. Its `recipe` argument is
+a saved JSON path, not an inline object. To preserve an existing composition in a studio, retain its width, height,
+pixel scale, resize filter, crop and mask when replacing style options. The
+built-in Random style button does this automatically and previews the result.
+Its Recent looks picker and Undo/Redo controls can restore the last 20 accepted
+looks through a fresh `dither_studio` preview. History is session-local.
+The named-favorites tools below provide persistent reuse in the workspace.
+
+A repeated seed returns the same selection within the current engine and catalog
+version. Save the complete recipe for later reuse. The engine's existing JSON
+format omits a zero `options.seed`; omission still means zero. The outer `seed`
+is always present. The [runnable example](../examples/random-styles.mjs) renders
+three fixed seeds and saves matching recipes.
+
+## Named favorites
+
+Favorites share a library under `.dither/favorites/` in the configured workspace.
+Save a full version-1 recipe, list its display name and stable ID from another
+session, and load it by ID. Save/load return `{id, name, recipe}`; list returns
+`{favorites: [{id, name}], unavailable}`. An empty library returns an empty array
+without creating directories. Listing and loading are read-only.
+
+With an initialized MCP SDK client:
+
+```js
+async function call(name, args) {
+  const result = await client.callTool({ name, arguments: args });
+  if (result.isError) throw new Error(JSON.stringify(result.content));
+  return result.structuredContent;
+}
+const style = await call('dither_random_style', { seed: 42 });
+const preview = await call('dither_studio', {
+  input: 'photo.png', palette: style.recipe.palette, options: style.recipe.options,
+});
+const saved = await call('dither_favorite_save', {
+  name: 'Moonlit paper', recipe: preview.recipe,
+});
+// In this or a later connection to the same workspace:
+const library = await call('dither_favorites_list', {});
+const choice = library.favorites.find(item => item.name === 'Moonlit paper');
+if (!choice) throw new Error('Favorite is unavailable.');
+const favorite = await call('dither_favorite_load', { id: choice.id });
+const restored = await call('dither_studio', {
+  input: 'photo.png', palette: favorite.recipe.palette, colors: favorite.recipe.colors,
+  options: favorite.recipe.options,
+});
+```
+
+Use a new name when repeating a save. Names are trimmed, case-sensitive valid
+UTF-8 strings of 1–80 Unicode characters without controls. IDs are 64 lowercase
+hexadecimal characters: SHA-256 of the trimmed name. The service validates the
+name, ID, version and recipe on load; names never become user-controlled paths.
+`Moonlit paper` and `moonlit paper` are different names.
+
+Each file is a version-1 envelope containing the name and recipe, limited to
+64 KiB. Publication uses the same immutable atomic-link protocol as outputs.
+There is no overwrite, rename or delete tool. The recipe carries no source or
+mask paths. Use its palette/colors/options inline for rendering or previews;
+the `dither_render.recipe` field expects a portable recipe-file path, not a
+favorite ID or envelope path. Image-mask recipes need a compatible `mask_input`.
+
+Listing sorts names and counts unavailable recognized favorite files. It scans
+at most 512 directory entries, including unrelated files and temporary files;
+an oversized directory reports an error rather than hiding part of the library.
+Save checks that capacity before publication. Concurrent different-name saves
+from separate processes can exceed it; this is not a global storage quota.
+Direct loading by ID still works. An operator can move old favorite files to a
+separate workspace or remove abandoned temporary files when no writer is active.
+Visible library symlinks and nonregular favorite files are refused. Other
+rooted-access and cancellation limitations apply as described in [security](security.md).
+
+The studio loads a favorite on its current source and mask through a fresh
+preview. Complete geometry and appearance settings are preserved; only omitted
+engine/preview defaults are resolved. Mask incompatibility, an out-of-bounds crop
+or dimensions above the studio limit report an error without discarding edits.
+Saving a favorite preserves settings without rereading source bytes. Future
+engine versions may produce different pixels from the same recipe.
 
 ## Guard a render against changed inputs
 

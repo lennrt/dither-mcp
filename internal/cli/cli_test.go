@@ -5,12 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"image"
+	"image/color"
 	"image/png"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lennrt/dither-mcp/internal/app"
 )
 
 func TestCLI(t *testing.T) {
@@ -108,5 +111,76 @@ func TestPaletteDiscoveryCLI(t *testing.T) {
 	out.Reset()
 	if err := Run(context.Background(), []string{"palettes", "--root", root, "--limit", "257"}, nil, &out, &diagnostics); err == nil {
 		t.Fatal("invalid limit accepted")
+	}
+}
+
+func TestPaletteComparisonCLI(t *testing.T) {
+	root := t.TempDir()
+	source := image.NewNRGBA(image.Rect(0, 0, 8, 6))
+	for y := 0; y < 6; y++ {
+		for x := 0; x < 8; x++ {
+			source.SetNRGBA(x, y, color.NRGBA{R: uint8(x * 32), G: uint8(y * 40), B: 100, A: 255})
+		}
+	}
+	var imageData bytes.Buffer
+	if err := png.Encode(&imageData, source); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "source.png"), imageData.Bytes(), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var out, diagnostics bytes.Buffer
+	args := []string{"compare", "--root", root, "--input", "source.png", "--output", "palettes.png", "--palettes", "gameboy,cga", "--algorithm", "atkinson", "--width", "4", "--columns", "2"}
+	if err := Run(context.Background(), args, nil, &out, &diagnostics); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics.Len() != 0 {
+		t.Fatal(diagnostics.String())
+	}
+	var result app.CompareResult
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Artifact.Width != 8 || result.Artifact.Height != 3 || result.Artifact.Recipe != nil || len(result.Cells) != 2 || result.Cells[0].Palette != "gameboy" || result.Cells[1].Palette != "cga" || result.Cells[0].Algorithm != "atkinson" {
+		t.Fatalf("incorrect CLI comparison: %+v", result)
+	}
+	out.Reset()
+	if err := Run(context.Background(), []string{"call", "--root", root, "dither_compare", `{"input":"source.png","output":"call.png","palettes":["gameboy","cga"],"options":{"algorithm":"atkinson","width":4},"columns":2}`}, nil, &out, &diagnostics); err != nil {
+		t.Fatal(err)
+	}
+	var called app.CompareResult
+	if err := json.Unmarshal(out.Bytes(), &called); err != nil {
+		t.Fatal(err)
+	}
+	if result.Artifact.SHA256 != called.Artifact.SHA256 {
+		t.Fatal("compare flags and tool-shaped call produced different pixels")
+	}
+	for _, flags := range [][]string{
+		{"--palettes", "gameboy", "--algorithms", "atkinson"},
+		{"--palettes", "gameboy", "--algorithms", "floyd-steinberg,atkinson,bayer-8"},
+		{"--palettes", ""},
+		{"--palettes", "gameboy", "--palette", "mono"},
+		{"--palettes", "gameboy", "--colors", "#000,#fff"},
+		{"--palettes", "gameboy", "--recipe", "recipe.json"},
+	} {
+		out.Reset()
+		args := append([]string{"compare", "--root", root, "--input", "source.png", "--output", "invalid.png"}, flags...)
+		if err := Run(context.Background(), args, nil, &out, &diagnostics); err == nil || out.Len() != 0 {
+			t.Fatalf("invalid comparison flags succeeded: %v", flags)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(root, "invalid.png")); !os.IsNotExist(err) {
+		t.Fatal("invalid comparison flags published output")
+	}
+	out.Reset()
+	if err := Run(context.Background(), []string{"compare", "--root", root, "--input", "source.png", "--output", "algorithms.png", "--width", "4"}, nil, &out, &diagnostics); err != nil {
+		t.Fatal(err)
+	}
+	var algorithms app.CompareResult
+	if err := json.Unmarshal(out.Bytes(), &algorithms); err != nil {
+		t.Fatal(err)
+	}
+	if algorithms.Artifact.Recipe == nil || len(algorithms.Cells) != 3 || algorithms.Cells[0].Algorithm != "floyd-steinberg" || algorithms.Cells[1].Algorithm != "atkinson" || algorithms.Cells[2].Algorithm != "bayer-8" || algorithms.Cells[0].Palette != "" {
+		t.Fatalf("default algorithm mode changed: %+v", algorithms)
 	}
 }

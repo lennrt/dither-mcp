@@ -4,46 +4,144 @@
 
 **Color with character. Local image dithering for your agent.**
 
-dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotocol.io/) server for image dithering. Your agent can inspect images, compare algorithms, apply palettes, and save recipes. The new **MCP Apps studio** adds image controls inside supported MCP hosts. One Go binary provides the same image pipeline through MCP and the CLI.
+dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotocol.io/) server for image dithering. Your agent can generate random styles, inspect images, compare treatments, and save recipes. The new **MCP Apps studio** adds image controls inside supported MCP hosts. One Go binary provides the same image pipeline through MCP and the CLI.
 
 ![Moon Garden: original procedural still life on the left, Atkinson dithering in six clay and paper colors on the right](docs/assets/hero.png)
 
 *Moon Garden original → Atkinson / six-color clay palette / 2× pixels. Local Go programs generated the artwork and dithered treatments.*
 
-[Open the studio](#an-image-studio-inside-your-chat) · [Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
+[Try random styles](#try-a-random-style) · [Open the studio](#an-image-studio-inside-your-chat) · [Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
 
 [Website](http://ka2a.dev/dither-mcp-site/) · [MCP Apps guide](docs/mcp-apps.md) · [Source code](https://github.com/lennrt/dither-mcp) · [Website source](https://github.com/k-a2a/dither-mcp-site)
 
 ## What your agent can do
 
-The toolkit provides **14 tools with typed inputs**, **3 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. File-producing tools also return local artifact paths and SHA-256 digests. Image artifacts include dimensions.
+The toolkit provides **18 tools with typed inputs**, **3 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. Artifact-producing tools also return local paths and SHA-256 digests. Named favorites return a stable ID and recipe. Image artifacts include dimensions.
 
 | Ask your agent | Workflow |
 |---|---|
-| “Open a studio for this image so I can choose the colors and texture.” | `dither_studio` → choose settings → Apply preview → Save image |
+| “Surprise me with a new dither style.” | `dither_random_style` → `dither_studio` or `dither_render` |
+| “Open a studio so I can try a few looks.” | `dither_studio` → **Random style** → Undo or Recent looks → Save favorite or Save image |
 | “Find four warm colors for a botanical print.” | Filter `dither_palettes` by name, category, and color count → `dither_render` |
 | “Build a palette from this image’s own colors.” | `dither_inspect` → `dither_palette_extract` → `dither_render` |
 | “Show me Atkinson, Floyd–Steinberg, and Bayer side by side.” | `dither_catalog` → `dither_compare` |
+| “Compare Oat and Ink, Game Boy, and Sepia with the same texture.” | `dither_palettes` → `dither_compare` with `palettes` |
 | “Apply the same settings to this folder of images.” | `dither_recipe_load` → `dither_batch` |
 | “Dither the subject. Keep the background. Add CRT texture.” | `dither_render` with a geometric or local image mask and effects |
 | “Create a short looping animation from this image.” | `dither_animate` → GIF or sprite sheet |
 | “Process a short clip with this palette.” | `dither_video`, with local FFmpeg enabled |
-| “Keep the settings so I can make this again.” | `dither_recipe_save` |
+| “Keep this as Moonlit paper and use it next time.” | `dither_favorite_save` → `dither_favorites_list` → `dither_favorite_load` |
+| “Export these settings as a portable file.” | `dither_recipe_save` |
 | “Show me the result. Create separate print plates.” | `dither_preview` → `dither_separate` |
 
 Image processing stays in your configured workspace, with source files and artifacts under your control. Your connected MCP host receives tool results and controls which information reaches its model.
 
+## Try a random style
+
+Ask your agent: **“Open this image in the studio. I want to try random looks.”**
+Select **Random style** above the preview, then keep clicking until something catches your eye.
+Went past a favorite? Use **Undo** or **Redo**, or select it under **Recent looks**
+and choose **Restore look**. The studio keeps 20 recently used looks, including
+your starting preview and manual refinements. New experiments keep other recent
+looks available.
+
+For example: try three random looks, select Undo to return to the second, then
+enter **Moonlit paper** under Favorites and select **Save favorite**. To compare an older look, choose its algorithm,
+palette, and seed label in Recent looks and select Restore look.
+
+History lasts for this studio session. Restoring re-previews the complete
+settings against the current source and mask. Named favorites survive closing
+the studio and are shared by sessions using the same workspace.
+
+For API-driven iteration, call `dither_random_style` with `{}` for a fresh look or
+`{"seed":42}` for a repeatable one. It returns `{seed, recipe}` without reading an
+image or creating a file. Pass its palette and options to `dither_render` or `dither_studio`. Keep a named look with `dither_favorite_save`.
+
+```sh
+./bin/dither-mcp call --root . dither_random_style '{}'
+./bin/dither-mcp call --root . dither_random_style '{"seed":42}'
+```
+
+![Three actual random dither styles of Moon Garden, generated with seeds 42, 314, and 2026](docs/assets/random-styles.png)
+
+*Seeds 42, 314, and 2026, left to right. Same source, 320-pixel width, and 2× pixel grid.*
+
+Reproduce these images and save their recipes with the dependency-free
+[example script](examples/random-styles.mjs), using Node.js 20.19 or later:
+
+```sh
+make build
+node examples/random-styles.mjs docs/assets/source/moon-garden.png output/random-styles 42 314 2026
+```
+
+Use a new output directory on another run. The script prints each selected
+algorithm, palette, artifact path, and digest. Replay a saved recipe:
+
+```sh
+./bin/dither-mcp render --root . \
+  --input docs/assets/source/moon-garden.png \
+  --recipe output/random-styles/seed-42.json --output output/replayed-42.png
+```
+
+Seeds reproduce selections within the current engine and catalog version.
+Save the full recipe to retain its settings for later reuse.
+[See the exact API and preview examples](docs/mcp.md#random-style-iteration).
+
+## Keep named favorites across sessions
+
+After a preview succeeds, enter a name under **Favorites** and select **Save
+favorite**. Open another studio on the same workspace, choose the saved name,
+and select **Load favorite**. **Refresh** discovers favorites added by another
+client. Loading previews the saved settings on the current source before
+changing your controls. Undo can return to the look you had before loading.
+
+Favorites preserve custom colors, dimensions, crop, masks, and effects. They
+live in `.dither/favorites/` under the server's configured workspace, shared by
+the MCP API and studio. They contain settings, not images or source paths. Use
+the same workspace to find them later; copy the directory to carry the library
+to another workspace. **Save recipe** remains available for individual portable
+JSON files.
+
+Names are case-sensitive, trimmed, and limited to 80 Unicode characters without
+control characters. Existing names cannot be replaced; save a revised look under
+a new name. Loading requires a compatible source and, for image-mask recipes,
+a current external mask. Geometry is preserved, so incompatible crops or
+preview dimensions report an error and retain your edits.
+
+Try the executable example, which saves, discovers, and reloads a favorite
+through separate CLI processes, then checks identical preview and PNG bytes:
+
+```sh
+make build
+node examples/favorites.mjs docs/assets/source/moon-garden.png 'Moonlit paper' output/moonlit-paper.png
+./bin/dither-mcp call --root . dither_favorites_list '{}'
+```
+
+Use a new name and PNG destination when repeating the example. MCP clients use
+`dither_favorite_save` with `{name, recipe}`, `dither_favorites_list` with `{}`,
+and `dither_favorite_load` with the returned `{id}`. See the
+[named-favorites API example and limits](docs/mcp.md#named-favorites).
+
 ## An image studio inside your chat
 
-![Actual MCP Apps studio showing Moon Garden with algorithm and palette controls, adjustments, preview zoom, and an explicit Save image action](docs/assets/mcp-app-studio.png)
+![Actual MCP Apps studio showing Random style, Recent looks, named Favorites, plus Moon Garden and image controls](docs/assets/mcp-app-studio.png)
 
-*Actual studio connected to the local Go server through the official MCP Apps bridge. Atkinson / Oat and Ink.*
+*Actual studio connected to the local Go server through the official MCP Apps bridge. Bayer 8×8 / six extracted colors / “Warm press” favorite.*
 
 Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
 
-Choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
+Start with the **Random style** button above the image. Each click generates and previews a new palette, algorithm, and treatment. Click again to explore another look; the newest click wins. Your crop, mask, dimensions, and pixel size stay in place. Use Undo, Redo, or Recent looks to revisit a successful preview. Nothing is saved until you choose **Save favorite**, **Save image**, or **Save recipe**.
+
+To refine a look manually, choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
+
+To build a palette from your image, choose a color count and select **Extract colors**. The studio uses the complete normalized source before crop, tone, and mask settings. It puts the colors into your custom palette. Select **Apply preview** to see them, then save the accepted result.
 
 Previews run in memory and create no file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Every preview stays within 1,024 pixels per axis and 2 MiB PNG. Choose **Preview**, **Source**, or **Custom dimensions** for export, then enter a new relative output path. Preview size reproduces the accepted settings. Source size uses the upright image dimensions after cropping. Custom size requires both dimensions. A different resolution can change the dither pattern. The studio preserves all other settings and checks source and mask fingerprints before saving. The filename extension selects the output format.
+
+Select **Save recipe** to keep the accepted treatment in a new relative `.json`
+file. It saves the preview's exact colors, dimensions, and advanced settings.
+Image export dimensions do not change the recipe. Reuse image-mask recipes with
+an external mask file; source and mask paths are not stored.
 
 The Go binary bundles the complete app and official MCP Apps SDK. It keeps the stdio setup and needs no runtime Node.js process, CDN, or external asset service. Hosts without Apps support receive the PNG preview and structured JSON.
 
@@ -107,7 +205,7 @@ For an MCP client that uses an `mcpServers` configuration, supply absolute paths
 
 1. Reconnect the client.
 2. Ask it to inspect an image.
-3. Ask it to open the studio or compare a few algorithms.
+3. Ask it to open the studio, then try **Random style**.
 
 Paths in tool calls are relative to `--root`. The server exchanges MCP messages on stdin/stdout and sends diagnostics to stderr.
 
@@ -160,7 +258,7 @@ The categories are:
   --width 960 --pixel-scale 2
 ```
 
-Use a preset or supply **2–256 unique hex colors**. Custom palettes are explicit recipe inputs. Extract a palette from a local image when you want the image’s own colors to guide the result.
+Use a preset or supply **2–256 unique hex colors**. Custom palettes are explicit recipe inputs. Extract a palette from a local image when you want the image’s own colors to guide the result. Extraction scans every visible pixel, so small accents and periodic stripes contribute. A bounded histogram and median cut reduce those colors to your requested count.
 
 ```sh
 ./bin/dither-mcp render --root . \
@@ -191,6 +289,23 @@ Start with an inspection and a comparison sheet:
   --algorithms atkinson,floyd-steinberg,bayer-8 \
   --palette sepia --width 320
 ```
+
+To compare colors with the same texture, use a palette shortlist:
+
+```sh
+./bin/dither-mcp compare --root . \
+  --input docs/assets/source/moon-garden.png \
+  --output palette-studies.png \
+  --palettes oat-and-ink,gameboy,sepia --algorithm atkinson --width 320
+```
+
+![Moon Garden in Oat and Ink, Game Boy, and Sepia, rendered with the same Atkinson settings](docs/assets/palette-comparison.png)
+
+*Left to right: Oat and Ink · Game Boy · Sepia. Each cell reports its palette, algorithm, and exact rectangle.*
+
+Compare either palettes or algorithms, with at most 12 candidates. Palette mode
+uses shared inline options and excludes a common palette, custom colors, and
+saved recipes. Each candidate can then be rendered separately.
 
 Save the settings in a versioned recipe. Use that recipe to render the image:
 

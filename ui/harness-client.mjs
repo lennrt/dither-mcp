@@ -12,7 +12,7 @@ const capabilities = new URLSearchParams(location.search).has('no-tools') ? {} :
 const bridge = new AppBridge(null, { name: 'Dither local test host', version: '0.1.0' }, capabilities, { hostContext: { theme: 'light', displayMode: 'inline', containerDimensions: { maxWidth: 1100 } } });
 const calls = [];
 bridge.oncalltool = async (params, extra) => {
-  if (!['dither_studio', 'dither_render'].includes(params.name)) throw new Error('The test host only allows studio and render tools.');
+  if (!['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load', 'dither_favorite_save'].includes(params.name)) throw new Error('The test host only allows studio, render, palette extraction, recipe save, random style, and favorite tools.');
   calls.push({ name: params.name, arguments: params.arguments });
   audit.textContent = JSON.stringify(calls, null, 2);
   const response = await fetch('/call', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params), signal: extra.mcpReq.signal });

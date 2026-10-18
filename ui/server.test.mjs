@@ -46,7 +46,7 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   app.ontoolresult = (value) => { assert.equal(state.hostResult(value), true); ready(); };
   const calls = [];
   bridge.oncalltool = async (params) => {
-    assert.ok(['dither_studio', 'dither_render'].includes(params.name));
+    assert.ok(['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style'].includes(params.name));
     calls.push(structuredClone(params));
     return client.callTool(params);
   };
@@ -62,6 +62,10 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.rendered.width, 96);
   assert.deepEqual(await readdir(workspace), ['source.png']);
 
+  const extraction = state.beginExtraction(6);
+  assert.equal(state.finishExtraction(extraction, await app.callServerTool({ name: 'dither_palette_extract', arguments: extraction.request })), true);
+  assert.equal(state.draft.colors.length, 6); assert.equal(state.draft.palette, undefined); assert.equal(state.canSave, false);
+  assert.deepEqual(await readdir(workspace), ['source.png']);
   const changed = structuredClone(state.draft);
   changed.options.algorithm = 'bayer-8';
   changed.options.strength = .7;
@@ -82,7 +86,18 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(existing.isError, true);
   assert.equal(state.finishSave(collision, existing), false);
   assert.deepEqual(await readFile(path.join(workspace, 'preview.png')), png);
-  assert.deepEqual(calls.map((call) => call.name), ['dither_studio', 'dither_render', 'dither_render']);
+  assert.deepEqual(calls.map((call) => call.name), ['dither_palette_extract', 'dither_studio', 'dither_render', 'dither_render']);
+  const recipeSave = state.beginRecipeSave('recipes/extracted.json');
+  assert.equal(state.finishRecipeSave(recipeSave, await app.callServerTool({ name: 'dither_recipe_save', arguments: recipeSave.request })), true);
+  const loaded = await client.callTool({ name: 'dither_recipe_load', arguments: { input: 'recipes/extracted.json' } });
+  assert.ok(!loaded.isError); assert.deepEqual(loaded.structuredContent, state.rendered.recipe);
+  assert.deepEqual(loaded.structuredContent.colors, state.draft.colors);
+  const replay = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', output: 'replay.png', recipe: 'recipes/extracted.json' } });
+  assert.ok(!replay.isError); assert.deepEqual(await readFile(path.join(workspace, 'replay.png')), png);
+  const recipeBytes = await readFile(path.join(workspace, 'recipes/extracted.json'));
+  const duplicateRecipe = state.beginRecipeSave('recipes/extracted.json');
+  assert.equal(state.finishRecipeSave(duplicateRecipe, await app.callServerTool({ name: 'dither_recipe_save', arguments: duplicateRecipe.request })), false);
+  assert.equal(state.canSave, true); assert.deepEqual(await readFile(path.join(workspace, 'recipes/extracted.json')), recipeBytes);
   const source = state.beginSave('source-size.png', { mode: 'source' });
   assert.equal(state.finishSave(source, await app.callServerTool({ name: 'dither_render', arguments: source.request })), true);
   const sourcePNG = await readFile(path.join(workspace, 'source-size.png'));
@@ -102,5 +117,60 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.finishPreview(fresh, await app.callServerTool({ name: 'dither_studio', arguments: fresh.request })), true);
   assert.notEqual(state.rendered.sourceSHA256, initial.structuredContent.source_sha256);
   assert.equal(state.canSave, true);
+  for (const explicitMask of [false, true]) {
+    const maskedArgs = { ...state.draft, mask_input: 'source.png', options: { ...state.draft.options, crop: { x: 2, y: 3, width: 90, height: 80 }, effects: { noise: .1 }, seed: 17, ...(explicitMask ? { mask: { shape: 'image', invert: true } } : {}) } };
+    state.edit(maskedArgs);
+    const maskedPreview = state.beginPreview();
+    assert.equal(state.finishPreview(maskedPreview, await app.callServerTool({ name: 'dither_studio', arguments: maskedPreview.request })), true);
+    assert.equal(state.rendered.recipe.options.mask.shape, 'image');
+    assert.equal(!!state.rendered.recipe.options.mask.invert, explicitMask);
+    const recipePath = `recipes/masked-${explicitMask}.json`;
+    const maskedSave = state.beginRecipeSave(recipePath);
+    assert.equal(state.finishRecipeSave(maskedSave, await app.callServerTool({ name: 'dither_recipe_save', arguments: maskedSave.request })), true);
+    const maskedLoad = await client.callTool({ name: 'dither_recipe_load', arguments: { input: recipePath } });
+    assert.deepEqual(maskedLoad.structuredContent, state.rendered.recipe);
+    const missingMask = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', output: 'missing-mask.png', recipe: recipePath } });
+    assert.equal(missingMask.isError, true);
+    const replayPath = `masked-${explicitMask}.png`;
+    const maskedReplay = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', mask_input: 'source.png', output: replayPath, recipe: recipePath } });
+    assert.ok(!maskedReplay.isError); assert.deepEqual(await readFile(path.join(workspace, replayPath)), Buffer.from(state.rendered.src.split(',')[1], 'base64'));
+  }
+  const randomStart = state.beginRandom();
+  const randomStyle = await app.callServerTool({ name: 'dither_random_style', arguments: { seed: 101 } });
+  const randomPreview = state.finishRandom(randomStart, randomStyle); assert.ok(randomPreview);
+  assert.deepEqual(randomPreview.request.options.crop, state.draft.options.crop);
+  assert.deepEqual(randomPreview.request.options.mask, state.draft.options.mask);
+  assert.equal(state.finishPreview(randomPreview, await app.callServerTool({ name: 'dither_studio', arguments: randomPreview.request })), true);
+  const randomSave = state.beginRecipeSave('recipes/random.json');
+  assert.equal(state.finishRecipeSave(randomSave, await app.callServerTool({ name: 'dither_recipe_save', arguments: randomSave.request })), true);
+  const randomLoaded = await client.callTool({ name: 'dither_recipe_load', arguments: { input: 'recipes/random.json' } });
+  assert.deepEqual(randomLoaded.structuredContent, state.rendered.recipe);
+  const randomReplay = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', mask_input: 'source.png', output: 'random.png', recipe: 'recipes/random.json' } });
+  assert.ok(!randomReplay.isError); assert.deepEqual(await readFile(path.join(workspace, 'random.png')), Buffer.from(state.rendered.src.split(',')[1], 'base64'));
+  const beforeHistoryFiles = (await readdir(workspace)).sort();
+  const randomPixels = state.rendered.src;
+  const undo = state.beginHistory('undo');
+  assert.equal(state.finishHistory(undo, await app.callServerTool({ name: 'dither_studio', arguments: undo.request })), true);
+  assert.deepEqual(Buffer.from(state.rendered.src.split(',')[1], 'base64'), await readFile(path.join(workspace, 'masked-true.png')));
+  const restoredRecipe = state.beginRecipeSave('recipes/restored.json');
+  assert.equal(state.finishRecipeSave(restoredRecipe, await app.callServerTool({ name: 'dither_recipe_save', arguments: restoredRecipe.request })), true);
+  assert.deepEqual(JSON.parse(await readFile(path.join(workspace, 'recipes/restored.json'), 'utf8')), JSON.parse(await readFile(path.join(workspace, 'recipes/masked-true.json'), 'utf8')));
+  const redo = state.beginHistory('redo');
+  assert.equal(state.finishHistory(redo, await app.callServerTool({ name: 'dither_studio', arguments: redo.request })), true);
+  assert.equal(state.rendered.src, randomPixels);
+  assert.deepEqual((await readdir(workspace)).sort(), beforeHistoryFiles);
+  // Restoring an old look rereads changed source bytes and renews the save guard.
+  const originalLook = state.beginHistory(state.history.find(entry => entry.request.palette === 'oat-and-ink').id);
+  assert.equal(state.finishHistory(originalLook, await app.callServerTool({ name: 'dither_studio', arguments: originalLook.request })), true);
+  assert.notEqual(state.rendered.sourceSHA256, initial.structuredContent.source_sha256);
+  assert.equal(state.canSave, true);
+  const solid = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', output: 'solid.png', palette: 'mono', options: { width: 1, height: 1 } } });
+  assert.ok(!solid.isError);
+  state.setInput({ input: 'solid.png', palette: 'mono' });
+  const settings = structuredClone(state.draft);
+  const mono = state.beginExtraction();
+  assert.equal(state.finishExtraction(mono, await app.callServerTool({ name: 'dither_palette_extract', arguments: mono.request })), false);
+  assert.match(state.status, /fewer than two visible colors/); assert.deepEqual(state.draft, settings);
+  assert.equal(state.canSave, false);
 
 });

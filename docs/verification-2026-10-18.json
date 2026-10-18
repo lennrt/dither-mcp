@@ -1,0 +1,256 @@
+{
+  "status": "automated-checks-passed-with-documented-limitations",
+  "date": "2026-10-18",
+  "environment": {
+    "go": "go1.27.0",
+    "os": "darwin",
+    "arch": "arm64",
+    "node": "24.19.0",
+    "pnpm": "11.25.0",
+    "ffmpeg": "9.0.1",
+    "openspec": "1.14.0",
+    "quint": "0.33.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34"
+  },
+  "scope": "Workspace-backed named favorites shared by MCP and studio across sessions, bounded look history with Undo/Redo and exact fresh-preview restoration, random style generation and rapid iteration, accepted recipe saving and mask reuse, full-source rare-color histograms, palette comparisons, source-color studio workflows, cancellable encoders, explicit CLI flags and mixed studio option edits. Local checks and finite models; no hosted CI or external-client compatibility claim.",
+  "checks": [
+    {
+      "command": "make spec-install",
+      "result": "pass",
+      "note": "Frozen lockfile with ignored install scripts. No dependency changes."
+    },
+    {
+      "command": "make verify",
+      "result": "pass",
+      "includes": [
+        "Go formatting, vet, full tests and race tests",
+        "native build",
+        "documentation links, schemas and palette snapshot consistency",
+        "real stdio MCP subprocess",
+        "UI bundle freshness and JavaScript state/bridge tests",
+        "embedding stdio and source/path authority tests"
+      ],
+      "ui_tests": 59,
+      "embedding_tests": 8
+    },
+    {
+      "command": "make spec-check",
+      "result": "pass",
+      "openspec_items": 17,
+      "quint_models": 8,
+      "quint_run_tests": 151,
+      "simulation_traces": 88000,
+      "mutation_checks": 42,
+      "detail": "../spec/verification.json"
+    },
+    {
+      "command": "make fuzz",
+      "result": "pass",
+      "seconds_per_target": 5,
+      "parallel": 2,
+      "executions": {
+        "FuzzProcess": 110184,
+        "FuzzStrictJSON": 74470,
+        "FuzzMetadata": 233341,
+        "FuzzICCProfile": 242641
+      }
+    },
+    {
+      "command": "make video-test",
+      "result": "pass",
+      "coverage": [
+        "MP4, MOV, WebM, Matroska and AVI inputs",
+        "MP4 detected despite .bin extension",
+        "GIF, sprite PNG, H.264 MP4 and VP9 WebM outputs"
+      ],
+      "note": "Rerun after extracting the shared immutable publication helper for favorites; real FFmpeg checks pass."
+    },
+    {
+      "command": "make ui-browser embedding-browser",
+      "result": "pass",
+      "details": [
+        "mcp-apps-browser-verification.json",
+        "embedding-browser-verification.json"
+      ],
+      "studio_workflows": 20,
+      "embedding_checks": 12,
+      "visual_review": [
+        "desktop",
+        "mobile",
+        "dark mode"
+      ],
+      "browser_errors": 0,
+      "external_requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "command": "node examples/random-styles.mjs <source> <fresh directory> 42 314 2026, followed by saved-recipe render",
+      "result": "pass",
+      "note": "Executed in the preceding random-style batch; example and engine unchanged. All three saved recipes replay320x213PNGs byte-for-byte. Independent real MCP snippet review verified save errors, seed boundaries and immutable outputs."
+    },
+    {
+      "command": "Independent deterministic history state challenge",
+      "result": "pass",
+      "transitions": 15000,
+      "assertions": [
+        "Gallery and navigation each bounded to20",
+        "No duplicate canonical look requests",
+        "Current look is most recently used",
+        "No dangling or no-op navigation references",
+        "Canceled restoration preserves history"
+      ]
+    },
+    {
+      "command": "node examples/favorites.mjs <source> <new name> <new PNG>",
+      "result": "pass",
+      "note": "Each call launches a fresh CLI/service process. Saved name is discovered and loaded; accepted/restored PNG data and rendered artifact digest match. Duplicate-name rerun rejects before publishing a second image."
+    },
+    {
+      "command": "Execute docs/mcp.md Named favorites SDK snippet over real stdio, then reconnect",
+      "result": "pass",
+      "note": "Independent review executed the exact snippet with a copied source. Save/list/load/re-preview reproduces exact PNG bytes; reconnection discovers the same ID and recipe. Duplicate rerun preserves original favorite bytes."
+    },
+    {
+      "command": "Independent favorites diff, focused state/session/Go tests and actual-code mutations",
+      "result": "pass",
+      "note": "Focused favorites Go checks and63 state/session tests pass. Removing lone-surrogate name validation fails a stored-envelope regression. Replacing atomic Link with overwriting Rename fails duplicate and concurrent-winner tests. Replacing exact favorite preview matching with permissive subset matching fails the added-brightness regression. Mutants run outside tracked source."
+    }
+  ],
+  "regression_evidence": [
+    "Seven original nonempty fixed-stride fixtures missed singleton or minority stripe colors. Full-source histograms pass them, including nonzero origins; earlier transparent-sample regressions remain covered.",
+    "Replacing every comparison cell palette with the first candidate fails two exact-pixel reference checks.",
+    "Replacing application EncodeContext with legacy Encode fails five deterministic cancellation checks; background GIF palette training also fails its cancellation bound.",
+    "Six pre-change output hashes verify byte compatibility for PNG, JPEG, GIF, SVG, PBM and ASCII.",
+    "Original CLI silently accepted inspect render flags; unregistered-flag diagnostics also failed command-context checks before correction.",
+    "Original mixed-edit handler lost the latest control value. Removing active numeric-input preservation reproduces seed -17 becoming 17 in Chromium.",
+    "Direct Apply of explicit null previously coerced options to defaults; state and browser checks now retain invalid text and make no tool call.",
+    "A deterministic canceled reply exposed false disconnection in the original onerror handler. The final browser suite requires preserved connection and subsequent successful preview/save.",
+    "The documented palette-comparison CLI command reproduces the published contact sheet byte-for-byte.",
+    "Full-source histogram independently checks exact-cap overflow, alpha weights, 64-bit maximum-image totals and cancellation. A deliberate double-rounding mutation fails the original-sum centroid test.",
+    "Implicit mask_input previously produced a recipe without its external mask requirement. Save/load/replay now reproduces the preview and missing masks fail before publication, with caller-owned mask options unchanged.",
+    "Random styles exercise signed safe seeds, omission, zero, rejected null/fraction/string/overflow/unknown fields, 512 styles, all 41 algorithms, real MCP transport, reproducible rendering and no workspace reads/writes.",
+    "Six rapid random clicks hold actual Go/HTTP generation and preview responses and release them out of order. Only the newest preview restores recipe authority; old cleanup cannot clear a new operation.",
+    "Recipe state/browser tests cover extracted custom colors, hidden options, independent export dimensions, matched receipts, collisions, dirty/unsupported/pending states and masked save/load/replay.",
+    "The documentation example initially omitted checking the recipe-save MCP isError result. Independent real-stdio collision testing caught it, and the corrected example now reports the failure.",
+    "History restores exact canonical requests, not regenerated seeds or cached PNGs. Real stdio and browser tests verify byte-identical Undo/Redo images, masked recipe replay and refreshed source fingerprints after source bytes change.",
+    "Independent review found the normal preview subset matcher accepted added options during history restore. Exact request equality now rejects the response; reinstating the old matcher fails the added-brightness regression.",
+    "History state tests cover branch retention, MRU promotion, capacity/pruning, clone isolation, duplicate settings, initial/manual previews, new host input, busy/no-tools guards and failed/canceled/edited/superseded requests.",
+    "Browser tests restore invalid JSON and custom-color drafts only after successful preview. Delayed restoration and random supersession cannot restore old recipe authority; explicit saves replay the current restored look.",
+    "Named favorites retain exact custom/masked recipes across real service, MCP and browser sessions. New browser/Go host discovery loads on the current source/mask, reproduces exact preview/rendered PNG and portable recipe bytes, and requires a fresh preview before saving.",
+    "Storage admission covers Unicode names, surrogate pairs/replacement characters, rejected invalid UTF-8 and lone surrogates, strict IDs/envelopes/versions/options, byte and directory bounds, unavailable entries, observable symlinks/special files, cancellation and independent same-name races.",
+    "Controller and restricted-host tests cover dirty/no-tools/busy states, exclusive favorite writes, metadata-refresh authority, failed/canceled/edited/superseded reads/previews, mask incompatibility, mathematically inferred defaults, exact receipt and full preview equality.",
+    "Independent mutation overlays replacing atomic Link with overwriting Rename produced8 concurrent winners and failed duplicate preservation; removing name validation admitted a substituted lone surrogate; permissive favorite preview matching accepted extra brightness. The unmodified implementation passes all corresponding checks.",
+    "Favorites model review fixed read-stage edit cleanup, disallowed write-time control edits and made adoption monitoring independent of the behavior predicate. New tests demonstrate retry after an edited read and reject write-time edits."
+  ],
+  "limitations": [
+    "Only native macOS arm64 was exercised in this pass.",
+    "Standard codecs may work between writer calls; a blocked external writer cannot be interrupted by context checks.",
+    "Service-level cancellation admission test uses a pre-canceled request; deterministic mid-encoding tests cover the engine and bounded helper.",
+    "Finite seeded simulations and mutations do not prove Go or UI refinement.",
+    "External MCP hosts, MCP Inspector, static showcase and terminal recordings were not rerun. Current studio screenshots and palette contact sheet were regenerated.",
+    "No vulnerability audit was rerun because dependencies did not change; earlier advisory results remain historical.",
+    "The repository has no hosted CI.",
+    "Full-source scans increase work on large low-color images. More than 262144 distinct colors fold into 6-bit/channel bins; reduction to 2\u2013256 output colors may still merge rare colors.",
+    "The active histogram key count is bounded, but the exact map, 8 MiB overflow bins and result storage may temporarily coexist. Allocation measurements are not peak resident memory.",
+    "Random seed selection is reproducible within the current engine/catalog version. Recipes retain settings; future engine versions need not reproduce exact output bytes.",
+    "Look history is session-local, limited to20 recently used canonical requests and20 entries per navigation stack. Restoration rereads current source/mask files; it does not preserve historical source bytes or undo published files.",
+    "Named favorites are workspace-scoped create-only recipes, not source snapshots or synchronized user storage. Each envelope is limited to64KiB; listing admits512 directory entries. Save preflights capacity, but concurrent distinct-name writers can cross it; direct ID loading remains available. No rename/delete/overwrite tool is provided. Loading on incompatible source/mask or beyond studio size/seed limits reports an error."
+  ],
+  "source_sha256": {
+    "engine/SOURCES.md": "78019740c9a6ab37b12c0378e52d76c5eb6705a00333ad0748216c3b5955559d",
+    "engine/encode.go": "8f07aace687b593f8aeb996dbd9a2a2447df106cdc92271d22e7c2fa2d0d7db7",
+    "engine/encode_context_test.go": "d6d5260366c3a14b2aded5dfab97ba393cd192cb937be4fb982bed203a55b3f6",
+    "engine/palette.go": "f7f472842471b963d5fc1408f0ddeddd39420ffc3ae893a89b26b70b688f6b34",
+    "engine/palette_histogram_test.go": "f3e9a259cdda614b328243b2e19fc3d3e673eb3936ae0fc1d40ce46a99bb8851",
+    "engine/palette_sampling_test.go": "5df9175ec9513acc155e01a13f1dba9cc32db258b931454dec15d4dd95386d3e",
+    "engine/types.go": "c3a2388de0cf7f486c76501cb570b83b88896afe86900af95386af88455f053d",
+    "examples/embedding/browser-check.mjs": "d644c0195d887738d3004f6f79fafa534807689f708c1a04a87cf9e00a48a723",
+    "examples/embedding/server.mjs": "787515ad38ee718137538e2a178fa0443bf4b243a800a5f898e17f3447c48fba",
+    "examples/embedding/session.mjs": "699b08c30b7cce1a7c83cef7fc5c66acf369c162843c7dd06bbde30d720ec7e1",
+    "examples/embedding/session.test.mjs": "383bf52586964435fc55f4de380771e9240a436f2ffd4427a5d17bd7db3dab86",
+    "examples/embedding/studio-host.mjs": "2a68298b66c5a81512ceb31a0d936fdb118bfd5efca339977041971ccbe3c5c1",
+    "examples/random-styles.mjs": "af4cd5948173109b9d121e6f3922db55d7bc6d4974b6bea378716907a84730ad",
+    "internal/app/encode_context_test.go": "8451f3e5e335eca4524f0ec14e6128cae89e48b710a70e5c5c351f7fa4b124a7",
+    "internal/app/export.go": "09d7392ddbf6fc218f5497b9183d213397f9cd5d341ad393b408a98e5d4fb85c",
+    "internal/app/palette_compare_test.go": "2c0db430032ae695de7da24b227ee33a2da344b16adb8f886cf98f3d0bf91b3f",
+    "internal/app/preview.go": "e008bf27d711a6984c5e7b26b77691af82a4464ab76dfa82f27b5398dc204477",
+    "internal/app/random_style.go": "5958800ce79f1547508c944e64d3b2612247457381a28c3be955766cfd260b34",
+    "internal/app/random_style_test.go": "5be56b43c33518c7595f297a098c8619cf12b3547e7e784e2dc0aebcc53a2462",
+    "internal/app/service.go": "b72db7a88e84604aa17851bc3d71ccf7a63c2321adddfd371ad51a487fb23ebb",
+    "internal/app/studio.go": "cdbd4c84c1915dcb5873b1bd731c21f4e70e08fc9a48ff73812bb2ba492411df",
+    "internal/app/studio_recipe_test.go": "263e8bc33dc589cd40ff2cd251791959dc0a5f90448698b2a9b440ca5b00cb78",
+    "internal/app/types.go": "d6f2b69f43b341eac4e1246a3b26ef8ab91b9e3805d76f408f8d14905cc9f743",
+    "internal/app/video.go": "80c0dbf0cf19463f7c7b08b2d7cad168192c4754bb659aafd0c2db6f265e47a6",
+    "internal/cli/cli.go": "5686700eaa90b4b50f649e296a63593007249a77d79ea2cf17e76b15f62081a0",
+    "internal/cli/cli_test.go": "73b417854d4b23571f776a3506671ef04b11125c104886acaae47d675bfae296",
+    "internal/cli/flag_admission_test.go": "5fda1c08ca87c3b0b1d3ac43feafe266b7544635b65b3a6286b79c766f60d38c",
+    "internal/mcpapp/studio.html": "d1bb436be0269e2b32ce340a69d924784dd904ba000bc96e6bfd5cba2d75d631",
+    "internal/mcpserver/server.go": "e2ae6e2c5fba9f1523f0556981df62119b95434afbbbd7091bcb26c75aa99e40",
+    "internal/mcpserver/server_test.go": "6a25aa6a33919c54b79be4a1e2f36cbae4d5fac6d0971bd29ce7b25bbb74d114",
+    "internal/mcpserver/transport_test.go": "21f8b57e7643e416852f633c3332871892d2fb6228d8f3ebaea58f6b5a06177f",
+    "spec/README.md": "7d3d4100e1da8b4b996a89a72c2225c12722ce0b7d7964705f4882b51f8baa73",
+    "spec/check.mjs": "0238715319b5bc57a8eb3b715940a00bdeb23291872fcdd960cf677bc3b91e62",
+    "spec/mcp_apps.qnt": "edad4430435486c6414453dcc8f118489767f5199a09ef48b721b9ae6cc7a1fc",
+    "spec/publication.qnt": "71c86b97da500d36ac9f917f36198214716e75181b31a10488ce4c4f2c4d254e",
+    "spec/quantization.qnt": "571bbcf2c71b72e3e465abbfe27cf290e4b5957dfd9a0f7203bfaed1952af362",
+    "spec/style_history.qnt": "1ae7b890492f52a34d52a1446ddb79ca44044d61e1906947c160e7a7c06641f1",
+    "ui/app.mjs": "24079133a921e62afd7db450b67054aca577491f679a3d341a51758eada363d0",
+    "ui/browser-check.mjs": "f28bb81348b262e9a03760b2b1ce2e7b4f35f9c27e57820c99812e2a79ec62bd",
+    "ui/bundle-meta.json": "8d69f75a106864af799b3a25852d1ad4282c24d2b2e4a8affa00875c41a128a5",
+    "ui/harness-client.mjs": "7eb0387f87514467437d0a936f9eaf3f565b6467b0dd90faaeefe8747aa416fb",
+    "ui/harness.mjs": "c2642b58bb2ae192abbf0d2f19f7170b989efa25956da37d60d4c69202d1aac3",
+    "ui/index.html": "168ead5d9c8eb1cb1b575ba0a2320c4271807d720e3c202003395af2a3625d22",
+    "ui/server.test.mjs": "1a64bf360ce1692c8222b85346f9c8546899f3f80e54c960563f5340af243be8",
+    "ui/state.mjs": "36d958b2076eb719b2be3027799b623db6d23a22a77e995df029c6d0747d04ce",
+    "ui/state.test.mjs": "84bf45543c28513c26bbd686ae01143673a68124900e895f6aa0b6cfbd32db7d",
+    "ui/style.css": "993b07e67db56a1713debded4ecc806eacec55656d158a3c8cfca717f4b13154",
+    "internal/app/favorites.go": "e8ca33c7a37f47d776a933476d683f04781280dbb50abdb7d2f4bf0605eb2123",
+    "internal/app/favorites_test.go": "f94ed88185d3f46d69faeba50de35cc00d688712f72d22eb7ed3ca7eb089cf77",
+    "examples/favorites.mjs": "756999bd4fd77284525b6c8fa4a4369995f8429e0554b925f7d7fb75ef1888ec",
+    "spec/favorites.qnt": "425ccb7cd24acebd0bdc42b808642d35828b39b3b60387ae3d1a3d7e5fd77143"
+  },
+  "asset_sha256": {
+    "assets/palette-comparison.png": "c46662798e0486fbc82fe46f9ad4dcd240751ad0708418d378df9bad1d956b15",
+    "assets/random-styles.png": "71d8465cb22b0246322051ac19fc82f6a5abb4edf98b4818703a356b03915b04",
+    "assets/mcp-app-studio.png": "e0db6627e899241cf95755d3eae89b8230e5bc7c1cbdee3be896ebf9da1ac7c4",
+    "assets/mcp-app-studio-mobile.png": "f6ad4f227ade813053452db6c7b685bdfaf0ee2e81bee144e61abb02f4bb670c",
+    "assets/mcp-app-studio-dark.png": "0baf9556c4c43f1337ae2f5b7a45e46ad0c0a55bad9bc972220653c5ffd31df7"
+  },
+  "independent_review": "Go storage/API/schema, studio/embedding, history/navigation, finite models and runnable examples independently reviewed. Favorites review corrected Unicode parity/lone-surrogate handling, mask/default exactness and three finite-model details; no remaining findings. Full67Node tests, actual-code overwrite/Unicode/matcher mutation checks, real browser restart/replay and prior history stress checks pass. Source/model/asset hashes checked after integration.",
+  "performance": {
+    "method": "Median of three local benchmark runs on Apple M3 Pro, Go 1.27.0, 16 requested colors, fixture creation excluded. Old branch implementation compared with new full-source histogram. Illustrative fixtures, not a throughput guarantee.",
+    "allocated_bytes_note": "Total allocated bytes per operation, not peak memory.",
+    "cases": [
+      {
+        "source": "1024x1024 16-color pattern",
+        "old_ms": 2.183,
+        "new_ms": 11.59,
+        "old_bytes_per_op": 824,
+        "new_bytes_per_op": 5800
+      },
+      {
+        "source": "1024x1024 high diversity",
+        "old_ms": 208.72,
+        "new_ms": 28.789,
+        "old_bytes_per_op": 24163432,
+        "new_bytes_per_op": 27965040
+      },
+      {
+        "source": "4096x4096 16-color pattern",
+        "old_ms": 4.124,
+        "new_ms": 188.502,
+        "old_bytes_per_op": 96,
+        "new_bytes_per_op": 5800
+      },
+      {
+        "source": "4096x4096 high diversity",
+        "old_ms": 176.237,
+        "new_ms": 289.848,
+        "old_bytes_per_op": 24163416,
+        "new_bytes_per_op": 37795328
+      }
+    ],
+    "coverage_note": "The old pattern sample saw 4 of 16 colors at1024 and 1 of 16 at4096; full scans include all16. Fixed bins reduced an initial high-diversity4096 implementation from112MB to37.8MB allocated/op."
+  }
+}

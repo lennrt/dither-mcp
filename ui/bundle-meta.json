@@ -3111,12 +3111,12 @@
       "format": "esm"
     },
     "ui/state.mjs": {
-      "bytes": 12789,
+      "bytes": 31117,
       "imports": [],
       "format": "esm"
     },
     "ui/app.mjs": {
-      "bytes": 17297,
+      "bytes": 29225,
       "imports": [
         {
           "path": "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js",
@@ -3145,13 +3145,13 @@
           "bytesInOutput": 180
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/external.js": {
-          "bytesInOutput": 4202
+          "bytesInOutput": 4203
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/index.js": {
-          "bytesInOutput": 5747
+          "bytesInOutput": 5748
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js": {
-          "bytesInOutput": 13452
+          "bytesInOutput": 13461
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/core.js": {
           "bytesInOutput": 1769
@@ -3175,7 +3175,7 @@
           "bytesInOutput": 33
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/schemas.js": {
-          "bytesInOutput": 37209
+          "bytesInOutput": 37220
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/memoizer.js": {
           "bytesInOutput": 3322
@@ -3376,7 +3376,7 @@
           "bytesInOutput": 749
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/compile.js": {
-          "bytesInOutput": 29252
+          "bytesInOutput": 29259
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/api.js": {
           "bytesInOutput": 10557
@@ -3394,7 +3394,7 @@
           "bytesInOutput": 10
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/schemas.js": {
-          "bytesInOutput": 23897
+          "bytesInOutput": 23898
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/checks.js": {
           "bytesInOutput": 481
@@ -3415,13 +3415,13 @@
           "bytesInOutput": 12189
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/visit.js": {
-          "bytesInOutput": 2074
+          "bytesInOutput": 2085
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/deep-partial.js": {
           "bytesInOutput": 127
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/in-out.js": {
-          "bytesInOutput": 459
+          "bytesInOutput": 460
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/coerce.js": {
           "bytesInOutput": 243
@@ -3433,7 +3433,7 @@
           "bytesInOutput": 16548
         },
         "node_modules/.pnpm/@modelcontextprotocol+client@2.3.1/node_modules/@modelcontextprotocol/client/dist/src-WCy6ifGf.mjs": {
-          "bytesInOutput": 89462
+          "bytesInOutput": 89478
         },
         "node_modules/.pnpm/@modelcontextprotocol+client@2.3.1/node_modules/@modelcontextprotocol/client/dist/cfWorkerProvider-BylNJ1R5.mjs": {
           "bytesInOutput": 6145
@@ -3448,13 +3448,13 @@
           "bytesInOutput": 30587
         },
         "ui/state.mjs": {
-          "bytesInOutput": 8541
+          "bytesInOutput": 20930
         },
         "ui/app.mjs": {
-          "bytesInOutput": 11431
+          "bytesInOutput": 18665
         }
       },
-      "bytes": 550567
+      "bytes": 570248
     }
   }
 }

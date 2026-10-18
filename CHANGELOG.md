@@ -1,5 +1,63 @@
 # Changes
 
+## Studio history and undo
+
+- Keep the 20 most recently used accepted preview settings, including the
+  starting look, random styles and manual refinements.
+- Add Undo, Redo and Recent looks beside Random style. Preserve discoveries
+  after branching, deduplicate settings, and bound navigation memory.
+- Restore exact settings through a fresh preview before enabling saves.
+  Reject stale, canceled, edited or mismatched responses without losing edits.
+- Keep history session-local and reset it on new host input. Save recipes
+  for durable reuse; Undo does not remove published files.
+
+## Random style iteration
+
+- Add `dither_random_style`, the fifteenth MCP tool. Generate a valid style
+  recipe without an image, and return a safe integer seed for repeatable trials.
+- Put Random style above the studio preview. Generate and preview in one click,
+  preserve geometry and masks, and let repeated clicks supersede read-only work.
+- Reject stale generation and preview results. Keep explicit writes exclusive
+  and extend the restricted embedding host to the new tool.
+- Add runnable seed examples, rendered comparisons, and README/API guidance.
+
+## Studio recipes and rare source colors
+
+- Save exact accepted studio recipes to new JSON files, including extracted
+  palettes and advanced options. Keep image export dimensions independent.
+- Restrict embedding recipe saves to the latest accepted preview. Validate
+  publication receipts and preserve collision/error recovery.
+- Preserve external image-mask requirements in returned recipes, including
+  masks supplied implicitly. Reuse requires a mask file; paths remain excluded.
+- Replace periodic palette sampling with a full-source alpha-weighted histogram.
+  Keep up to 262,144 exact RGB values and use bounded 6-bit bins on overflow.
+  Preserve original weighted sums, deterministic median cut, and cancellation.
+- Large-image extraction and overflow GIF colors may change. Sources within
+  the former 262,144-pixel sample budget retain exact extraction behavior.
+
+## Request reliability
+
+- Add context-aware encoding and palette mapping. Propagate request cancellation
+  through GIF training, handwritten encoder loops, and encoded writes.
+  Preserve successful export bytes and existing background-context APIs.
+- Reject CLI flags that a command would silently ignore, including explicit
+  zero and false values. Require `compare --palettes` for `--algorithm`.
+- Preserve advanced studio options when a later slider or control changes.
+  Retain malformed JSON and explain corrections without silently discarding edits.
+  Reject explicit null options instead of resetting the draft on Apply.
+
+## Palette workflows
+
+- Compare 1–12 named palettes with one algorithm through MCP and the CLI.
+  Contact sheets identify each cell's palette and retain the submitted settings.
+- Extract source colors directly in the studio. Require an explicit preview
+  before saving, and discard canceled or stale extraction responses.
+  Keep the host connection usable when a canceled request responds late.
+- Recover visible colors when a sparse image falls between extraction samples.
+  Preserve bounded sampling and existing successful extraction results.
+- Fit initial embedded previews within 512 × 512 pixels, including portraits.
+  Preserve initial custom colors without adding a conflicting default palette.
+
 ## Browser verification follow-up
 
 - Preserve JavaScript dollar sequences when building the embedded HTML. Add a

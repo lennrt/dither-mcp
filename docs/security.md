@@ -33,7 +33,19 @@ The host controls the app's sandbox and mediates tool calls through the MCP Apps
 
 `dither_studio` is read-only. It creates an in-memory PNG and returns the resolved recipe. It accepts no destination and publishes no artifact. The default preview fits within 512 × 512 pixels without enlargement. Every preview stays within 1,024 pixels per axis and 2 MiB PNG.
 
-Only **Save image** in the app requests a file write. The app calls `dither_render` with a new relative output path and the accepted recipe, explicit export dimensions, and source/mask fingerprints. Unsaved control changes and failed previews do not replace that recipe. The normal atomic publication rules protect existing destinations. The host continues to control authorization for tool calls.
+**Save image**, **Save recipe**, and **Save favorite** explicitly request writes. For images, the app calls `dither_render` with a new relative output path and the accepted recipe, explicit export dimensions, and source/mask fingerprints. Unsaved control changes and failed previews do not replace that recipe. The normal atomic publication rules protect existing destinations. The host continues to control authorization for tool calls.
+
+Named favorites use a fixed `.dither/favorites/` directory inside the workspace.
+Names become validated SHA-256 IDs; the app cannot supply favorite file paths.
+The service rejects visible symlink directories and entries, bounds reads and
+directory scans, validates envelopes and recipes, and pins the opened library
+for access. Concurrent local replacement remains subject to the `os.Root`
+containment boundary; this is not protection from a hostile workspace owner.
+Save uses the same create-only atomic publication as other artifacts. Listing
+and loading never create directories. Recipe and favorite saves preserve settings
+without rereading source files; loaded settings require a fresh studio preview
+before image export. The library is shared by clients authorized for that root,
+not separated by browser session. See [favorite limits](mcp.md#named-favorites).
 
 ## Input metadata
 

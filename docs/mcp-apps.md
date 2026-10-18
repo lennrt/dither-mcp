@@ -28,9 +28,127 @@ Ask the agent to open an image with `dither_studio`, or call the tool directly:
 
 Choose an algorithm, search the palette library, or enter custom hex colors. Adjust tone, dimensions, and texture. Advanced JSON exposes the complete engine options, including crop, masks, and effects. The source and image-mask paths come from the tool call.
 
+If you edit advanced JSON and then change a control, the latest control value
+merges into those options. Hidden settings remain intact. Invalid JSON stays
+visible and must be corrected before a control can change those options or Apply
+can submit them. Options must be a JSON object; `null` does not reset defaults.
+
+Select **Extract colors** to build a custom palette from the source. Choose
+2–256 colors; the default is 8. Extraction reads the complete normalized source
+before crop, tone adjustments, and masking. It may return fewer colors than
+requested. A source with fewer than two distinct colors returns an error.
+
+Extraction preserves your other settings and creates no file. After it succeeds,
+select **Apply preview** to see the new colors. Changes or cancellation during
+extraction prevent a late result from replacing your draft. A late response after
+cancellation leaves the connected studio available for another preview.
+
 Select **Apply preview** to process changed settings. Editing controls marks the displayed image as stale. Save stays disabled until those settings have a successful preview. Pending, canceled, and late results cannot authorize a save of unpreviewed settings.
 
 Enter a new workspace-relative destination, then select **Save image**. Saving calls the existing `dither_render` tool. Choose **Preview**, **Source**, or **Custom dimensions** for the export. The filename extension selects the output format. The destination must not exist.
+
+## Start with Random style
+
+Select **Random style** above the preview. One click generates a new palette,
+algorithm, tone treatment, and occasional subtle texture, then previews it.
+Click again while it works to try another look. Only the newest result can
+replace the controls, preview, or recipe available for saving.
+
+The action preserves dimensions, pixel scale, resize filter, crop, and masks.
+It replaces prior appearance settings, including custom colors and effects.
+Valid pending advanced options supply the preserved geometry. Invalid JSON
+stays visible and causes no call until corrected. Failed or canceled work
+keeps your controls and last image; apply a fresh preview before saving.
+
+Use Cancel during generation or preview. Random style remains available during
+read-only operations, but image, recipe, and favorite writes must finish first. The seed
+can reproduce the selection through `dither_random_style`; save the recipe to
+keep the accepted treatment. See [API examples](mcp.md#random-style-iteration).
+
+## Revisit a look
+
+Use **Undo** to return to the previous accepted look and **Redo** to move forward.
+Choose an entry in **Recent looks**, then select **Restore look** to jump directly
+to it. Labels show the look number, algorithm, palette or custom-color count,
+and seed. The starting preview and successful manual refinements are included.
+
+The studio keeps 20 recently used looks in memory. Restoring a look moves it to
+the top of the list. A new preview clears Redo navigation but keeps other recent
+looks in the picker. Reapplying the current settings creates no duplicate and
+preserves Redo. Least recently used entries are removed when the list fills.
+
+Restoration sends the complete stored settings to `dither_studio`, including
+custom colors, crop, masks, pixel scale, dimensions, and effects. It reads the
+current source and mask again. On unchanged files, the preview reproduces the
+look. Changed files can produce a different image or an error. Saving becomes
+available only after the new preview succeeds.
+
+History controls wait while any operation is running. Random style can replace
+a pending restoration; canceled or stale results cannot move history or enable
+saving. Restoration can recover from invalid JSON or unfinished custom colors,
+but replaces that text only on success. Failure keeps your edits and previous
+image. Use Cancel to stop restoration.
+
+History contains settings, not cached PNGs or source files. Closing the studio
+or receiving new host input clears it. Use **Save favorite** for named reuse across sessions, or **Save recipe** for a portable file.
+Undo affects preview settings; it does not remove saved files or change export
+paths and export-size choices.
+
+## Keep named favorites
+
+The **Favorites** library appears below Recent looks. After a successful preview,
+enter a name and select **Save favorite**. This saves the exact accepted recipe
+under that name in the configured workspace. It does not save the source, mask,
+or a rendered image. Image export-size choices do not change the favorite.
+
+Names are trimmed, case-sensitive, and limited to 80 Unicode characters without
+control characters. Existing names cannot be replaced. Save a revised look under
+a new name. Changed settings, pending operations, or unavailable tool support
+disable saving. A matching receipt confirms persistence and adds the name to
+the chooser; a later refresh error does not undo that confirmation.
+
+Opening another studio on the same workspace discovers the library automatically.
+Use **Refresh** to see entries added by another client. Metadata discovery does
+not invalidate your preview. An unavailable-entry count identifies damaged or
+unreadable favorite files without hiding valid entries. See the
+[API library limits](mcp.md#named-favorites).
+
+Choose a name and select **Load favorite**. Loading retrieves its recipe and
+calls `dither_studio` on your current source. Complete settings are preserved,
+including dimensions, crop, masks, custom colors and effects. API-created recipes
+may omit default settings; only documented defaults and inferred preview sizes
+are filled in. Current source bytes are read again. Only a matching current
+preview replaces the controls and pending text, enters recent history and enables
+saving. Undo can return to the previous accepted look.
+
+Loading an image-mask favorite needs the session's current external mask. An
+unmasked or geometric-mask favorite cannot silently use an external mask already
+fixed by the host. Incompatible masks, invalid crops, or dimensions exceeding the
+studio preview limit report an error and preserve your edits. Canceled, failed,
+edited or superseded loads cannot change the current look. Random style can
+supersede favorite reads; it cannot interrupt a favorite save.
+
+Favorites live in `.dither/favorites/`, persist through server restarts, and are
+shared by the MCP tools. They are independent of the 20-look session history.
+Use the same workspace to find them later. The library does not use browser
+storage or synchronize between unrelated workspace roots.
+
+## Save a reusable recipe
+
+After accepting a preview, enter a new workspace-relative `.json` destination
+and select **Save recipe**. This calls `dither_recipe_save` and creates only the
+recipe file. It preserves the accepted colors, dimensions, crop, effects, and
+other settings. Source-size or custom image export dimensions do not alter it.
+
+Changed settings and pending operations disable recipe saving. Existing files
+cannot be replaced. If publication fails, choose another destination and retry.
+A malformed receipt may arrive after publication; check the destination before
+retrying when the studio asks you to do so.
+
+Recipes contain no source or mask paths. An image-mask recipe retains its mask
+options and needs `mask_input` when reused. This also applies when the original
+tool call supplied a mask file without explicit mask options. Saving a recipe
+preserves settings without rereading or verifying the current source bytes.
 
 ## Preview and save behavior
 
@@ -78,7 +196,7 @@ The public resource returns a complete HTML document through `resources/read`. E
 
 Scripts, styles, and the SDK are embedded in the Go binary. The running studio uses the host bridge and in-memory PNG data. It needs no CDN, HTTP listener, or external network access.
 
-The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable interactive preview and save. Without that capability, the UI can show its supplied result and explains the unavailable controls.
+The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable random styles, interactive preview, extraction, image saving, and recipe saving. Without that capability, the UI can show its supplied result and explains the unavailable controls.
 
 For supporting clients, result `_meta.dither` supplies the canonical request and the algorithm/palette catalogs. The normal result still contains structured metadata, serialized JSON text, and native PNG image content. The server omits UI linkage and presentation metadata when the client does not advertise the supported MIME type.
 
@@ -114,7 +232,7 @@ make ui-browser
 The check uses the actual embedded HTML with external connections and native
 form submission blocked. It covers initial rendering, palette search, changed
 previews, exact PNG saving, overwrite rejection, custom-color validation,
-keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
+random-style generation and cancellation, history Undo/Redo and exact restored pixels, source-color extraction, exact recipe saving and receipt validation, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
 `serverTools`. Screenshots and a JSON report go to `work/browser-check/`.
 
 To include the separate showcase, serve its directory locally and set
@@ -126,5 +244,7 @@ DITHER_SITE_TEST_URL=http://localhost:8080 make ui-browser
 
 The browser check verifies navigation to the studio section, visible image
 loading, and desktop/mobile overflow. It fails on browser script errors,
-unexpected request failures, or external requests. On October 8, 2026, it passed
-with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.
+unexpected request failures, or external requests. On October 18, 2026, the studio and embedding checks passed
+with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate showcase was not rerun in this pass. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.
+
+Published captures: [desktop](assets/mcp-app-studio.png), [mobile](assets/mcp-app-studio-mobile.png), and [dark mode](assets/mcp-app-studio-dark.png).

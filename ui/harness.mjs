@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { build } from 'esbuild';
+import { validateStudioCall } from '../examples/embedding/session.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.dirname(directory);
@@ -28,7 +29,8 @@ const result = await client.callTool({ name: 'dither_studio', arguments: args })
 if (result.isError) throw new Error('The initial sample preview failed.');
 const script = (await build({ entryPoints: [path.join(directory, 'harness-client.mjs')], bundle: true, write: false, format: 'esm', platform: 'browser', target: ['es2022'], logLevel: 'silent' })).outputFiles[0].text;
 const staticPaths = new Map([['/', ['harness.html', 'text/html; charset=utf-8']], ['/sandbox', ['harness-sandbox.html', 'text/html; charset=utf-8']]]);
-let pending = false;
+let pending = null;
+let acceptedRecipe = structuredClone(result.structuredContent.recipe);
 function send(response, status, type, value) {
   response.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
   response.end(value);
@@ -46,22 +48,27 @@ const server = http.createServer(async (request, response) => {
     if (request.method === 'GET' && url.pathname === '/bootstrap') return send(response, 200, 'application/json', JSON.stringify({ resource, arguments: args, result }));
     if (request.method !== 'POST' || url.pathname !== '/call') return send(response, 404, 'text/plain', 'Not found.');
     if (request.headers.origin !== origin || request.headers['content-type']?.split(';')[0] !== 'application/json') return send(response, 403, 'text/plain', 'Use the local host interface.');
-    if (pending) return send(response, 429, 'application/json', JSON.stringify({ error: 'A tool call is already running.' }));
     let body = '';
     for await (const chunk of request) {
       body += chunk.toString('utf8');
       if (Buffer.byteLength(body) > 1 << 20) return send(response, 413, 'text/plain', 'Request too large.');
     }
+    if (request.aborted || response.destroyed) return;
     const call = JSON.parse(body);
-    if (!['dither_studio', 'dither_render'].includes(call.name) || call.arguments?.input !== 'source.png' || call.arguments.mask_input || call.arguments.recipe) return send(response, 403, 'application/json', JSON.stringify({ error: 'This test host uses only its copied sample image.' }));
-    if (pending) return send(response, 429, 'application/json', JSON.stringify({ error: 'A tool call is already running.' }));
-    pending = true;
+    try { validateStudioCall(call, { input: 'source.png', acceptedRecipe }); } catch (error) { return send(response, 403, 'application/json', JSON.stringify({ error: error.message })); }
+    const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load'].includes(name);
+    if (pending && (call.name !== 'dither_random_style' || !readOnly(pending.name))) return send(response, 429, 'application/json', JSON.stringify({ error: 'A tool call is already running.' }));
+    pending?.controller.abort();
     const controller = new AbortController();
+    const operation = { name: call.name, controller };
+    pending = operation;
+    if (readOnly(call.name) && call.name !== 'dither_favorites_list') acceptedRecipe = undefined;
     response.on('close', () => { if (!response.writableEnded) controller.abort(); });
     try {
       const toolResult = await client.callTool({ name: call.name, arguments: call.arguments }, { signal: controller.signal });
+      if (pending === operation && call.name === 'dither_studio' && !toolResult.isError && !controller.signal.aborted) acceptedRecipe = structuredClone(toolResult.structuredContent?.recipe);
       send(response, 200, 'application/json', JSON.stringify(toolResult));
-    } finally { pending = false; }
+    } finally { if (pending === operation) pending = null; }
   } catch (error) {
     if (!response.headersSent) send(response, 500, 'application/json', JSON.stringify({ error: error instanceof Error ? error.message : 'The test host request failed.' }));
     else response.end();

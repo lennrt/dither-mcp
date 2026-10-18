@@ -63,7 +63,7 @@ Color distance is squared Euclidean distance in either sRGB values or linearized
 
 ## Agent workflow
 
-The server exposes 14 tools: catalog, palettes, inspect, preview, studio, palette extraction, render, compare, batch, animate, video, separate, recipe save, and recipe load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. `ui://dither/studio.html` supplies the embedded studio. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
+The server exposes 18 tools: random style, catalog, palettes, inspect, preview, studio, palette extraction, render, compare, batch, animate, video, separate, recipe save/load, and favorite save/list/load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. `ui://dither/studio.html` supplies the embedded studio. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
 
 A typical agent follows this workflow:
 
@@ -75,7 +75,13 @@ A typical agent follows this workflow:
 6. Render the final artifact.
 7. Save its recipe.
 
-Candidate cell coordinates identify each comparison image without text embedded in the pixels. CLI operations call the same service as tools.
+Candidate cell coordinates identify each comparison image without text embedded in the pixels. Comparisons vary algorithms with one palette, or named palettes with one algorithm. Palette cells also identify their palette and algorithm. A palette sheet omits a single shared recipe and retains full operation parameters. CLI operations call the same service as tools.
+
+Palette extraction scans all admitted pixels. It retains exact alpha-weighted
+RGB counts up to 262,144 distinct values. Overflow folds into at most 262,144
+6-bit-per-channel bins. Original weighted RGB sums survive binning and final
+median-cut averaging. Temporary fold storage is bounded too; the histogram bound
+does not describe total process memory. Source size still controls scan work.
 
 ## Embedded studio
 
@@ -85,7 +91,7 @@ When dimensions are omitted, the preview fits within 512 × 512 pixels without e
 
 The tool's `_meta.ui.resourceUri` points to `ui://dither/studio.html`. This third resource uses `text/html;profile=mcp-app`. It embeds HTML, CSS, and JavaScript built with the official `@modelcontextprotocol/ext-apps` SDK. Development tools create the bundle. The Go binary embeds and serves it with no runtime Node.js process or external asset request.
 
-A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, apply read-only previews, and inspect the image and swatches. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
+A supporting host displays the resource and bridges app tool calls to the same stdio server. A prominent Random style action generates a seedable style and previews it in one operation. It preserves geometry and masks, supersedes pending read-only work, and accepts only the newest successful preview. The controls also discover algorithms and palettes, extract source colors into a custom draft, apply read-only previews, and inspect the image and swatches. Extraction uses the complete normalized source and requires a new explicit preview before saving. Its response must match the current request and control revision. The app retains up to 20 canonical preview requests in a session-local MRU history with stable IDs and bounded Undo/Redo navigation. Restoration uses the existing preview tool and accepts only an exact current response. History holds settings, not PNGs or source bytes; new host input resets it. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. **Save recipe** calls `dither_recipe_save` with the accepted preview recipe and a separate JSON destination. Image export dimensions do not change it. Recipes retain external image-mask requirements without storing mask paths. Changes that have not produced a successful preview cannot silently change a saved result. **Save favorite** stores the same exact accepted recipe under a name in the workspace library. Favorite discovery preserves preview authority; loading fetches the recipe and requires a fresh exact preview on the current source/mask before adoption. History remains session-local while favorites persist across server and app sessions.
 
 Hosts must support both MCP Apps and local stdio servers to display this view. Other hosts receive the PNG and structured JSON from `dither_studio`. The original 13 tools retain their existing tool results. See the [MCP Apps guide](mcp-apps.md) for the detailed host and verification contracts.
 
@@ -123,7 +129,7 @@ There is no overwrite option. A concurrent collision has at most one winner. Thi
 
 An unclean process termination may leave a temporary file. It never leaves a partially published destination.
 
-Cancellation is cooperative. A cancellation **observed before publication** stops that publication. A cancellation that arrives after the final check may race with a successful atomic commit. The complete artifact may exist even if a client stops waiting. The service bounds standard-library codec calls, but does not interrupt them on every pixel.
+Cancellation is cooperative. A cancellation **observed before publication** stops that publication. A cancellation that arrives after the final check may race with a successful atomic commit. The complete artifact may exist even if a client stops waiting. Handwritten encoder loops check cancellation between rows, including GIF palette mapping and JPEG matting. Palette training receives the request context. Standard-library codecs check cancellation through their output writer and may continue work between writes. A blocked caller-provided writer cannot be interrupted by these checks.
 
 Batch items commit independently. Earlier successes remain when a later item fails or cancellation stops the sequence.
 
@@ -179,3 +185,19 @@ OpenSpec captures user-visible requirements and records their implementation cha
 ## Guarded studio exports
 
 A studio preview returns SHA-256 fingerprints of the source and mask bytes it decoded. A save verifies the same captured buffers it will render. A mismatch creates no artifact and requires a fresh preview. Source-size export uses upright dimensions after crop; custom export requires both dimensions. The service enforces its usual dimension and pixel limits. The [embedding example](embedding.md) adds a separate loopback host with a narrow tool allowlist; it is optional and is not part of the Go server runtime.
+
+## Named favorites
+
+`internal/app/favorites.go` owns the fixed `.dither/favorites/` library. It trims
+and validates display names, hashes them to opaque IDs, and publishes versioned
+recipe envelopes through the shared immutable file helper. Each entry is bounded
+to 64 KiB; discovery admits at most 512 directory entries, sorts valid names and
+counts unavailable entries. The capacity preflight is conservative admission,
+not a cross-process storage quota. Direct ID loading does not scan the library.
+
+The studio uses save/list/load tools with names or IDs rather than arbitrary
+paths. The restricted embedding host exposes these three tools alongside its
+existing five; only the latest accepted recipe can be saved. A favorite load
+revokes recipe authority until a current matching `dither_studio` preview
+succeeds. API-saved recipes may omit defaults; the UI resolves only documented
+engine defaults and inferred preview dimensions when checking exactness.

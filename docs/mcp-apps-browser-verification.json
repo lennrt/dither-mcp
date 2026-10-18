@@ -1,36 +1,44 @@
 {
-  "date": "2026-10-09",
+  "date": "2026-10-18",
   "browser": "151.0.7922.34",
   "checks": [
     "Initial preview, complete catalogs, and explicit save gating",
     "Dirty settings reject late initial results; filtered palette library and real preview call",
     "Zoom, byte-identical PNG save, and overwrite rejection",
+    "Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels",
+    "Recipe save keeps accepted dimensions, extracted colors and effects; rejects overwrite and mismatched receipt; freezes pending settings and permits retry",
+    "Advanced JSON merges later slider, checkbox, and select edits while preserving crop and effects in the real preview request",
+    "Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction",
+    "Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection",
+    "Undo and Redo rerender exact saved settings; branching retains the random look in the gallery; explicit restore recovers unfinished JSON and palette text without regeneration",
+    "History controls pause during restores; cancellation and a forced late reply preserve unfinished text, displayed pixels, gallery entries and save gating",
+    "Prominent random action preserves geometry, replaces unfinished custom colors and all style effects, validates pending JSON, and discards edited or cancelled generation before auto-preview",
     "Custom-color validation and real custom-palette preview",
     "Host theme changes, 370px host and 390px viewport without horizontal overflow",
     "Host cancellation invalidates saving and a fresh preview recovers",
     "Keyboard save works without sandbox form permission",
     "Source-size and custom exports, pixel-budget validation, and unchanged preview size",
     "Changed source creates no artifact, invalidates save, and requires a fresh preview",
-    "Host without serverTools displays result and disables mutations",
-    "Showcase studio navigation, all visible images loaded, desktop/mobile layout without overflow"
+    "Named favorite saves once, recovers invalid JSON through exact fresh preview, preserves save authority after refresh cancellation, and ignores edited pending loads",
+    "Monochrome source extraction reports the tool error and keeps the current custom palette",
+    "Host without serverTools displays result and disables mutations"
   ],
   "errors": [],
   "externalRequests": [],
   "failedRequests": [],
   "screenshots": [
-    "work/browser-check/studio-desktop.png",
-    "work/browser-check/studio-dark.png",
-    "work/browser-check/studio-narrow-dark.png",
-    "work/browser-check/studio-mobile.png",
-    "work/browser-check/studio-export-mobile.png",
-    "work/browser-check/site-studio-desktop.png",
-    "work/browser-check/site-studio-mobile.png",
-    "work/browser-check/site-mobile.png"
+    "studio-desktop.png",
+    "studio-dark.png",
+    "studio-narrow-dark.png",
+    "studio-mobile.png",
+    "studio-export-mobile.png",
+    "studio-favorites-desktop.png",
+    "studio-favorites-dark.png",
+    "studio-favorites-mobile.png"
   ],
-  "scope": "Chromium through the official SDK test host and real local Go server; external-client checks are recorded separately in hosts.md.",
-  "playwright": "1.62.1",
-  "published_screenshots": {
-    "mcp-app-studio.png": "aae94293b09bda354437d6929fbefe9b2cfff60bff0c12766bebc23e066c5318",
-    "mcp-app-studio-mobile.png": "5c97ece6fca391590e9f66cfb146143f8c24068dd9fb1cf78aaaefa118acf4da"
+  "published_screenshot_sha256": {
+    "assets/mcp-app-studio.png": "e0db6627e899241cf95755d3eae89b8230e5bc7c1cbdee3be896ebf9da1ac7c4",
+    "assets/mcp-app-studio-mobile.png": "f6ad4f227ade813053452db6c7b685bdfaf0ee2e81bee144e61abb02f4bb670c",
+    "assets/mcp-app-studio-dark.png": "0baf9556c4c43f1337ae2f5b7a45e46ad0c0a55bad9bc972220653c5ffd31df7"
   }
 }

@@ -6,9 +6,23 @@ export function fingerprint(value) {
   return JSON.stringify(value);
 }
 
+// A control edit follows any pending JSON edit and wins for that one field.
+export function editOption(options, key, value, pendingJSON) {
+  let source = options;
+  if (pendingJSON !== undefined) {
+    try {
+      source = JSON.parse(pendingJSON);
+      if (!source || Array.isArray(source) || typeof source !== 'object') throw new Error('object required');
+    } catch {
+      throw new Error('Correct the advanced options JSON before changing controls. Use a valid JSON object.');
+    }
+  }
+  return { ...clone(source), [key]: value };
+}
+
 export function studioRequest(value) {
   if (!value || typeof value !== 'object' || typeof value.input !== 'string' || !value.input.trim()) throw new Error('The studio needs a source image from its tool call.');
-  const request = { input: value.input, options: clone(value.options ?? {}) };
+  const request = { input: value.input, options: clone(value.options === undefined ? {} : value.options) };
   if (value.palette) request.palette = value.palette;
   if (value.colors) request.colors = clone(value.colors);
   if (value.mask_input) request.mask_input = value.mask_input;
@@ -72,6 +86,52 @@ export function decodePreview(result) {
   return { request, width: data.width, height: data.height, sourceWidth: data.source_width, sourceHeight: data.source_height, sourceSHA256: data.source_sha256, maskSHA256: data.mask_sha256, exportLimits: clone(data.export_limits), src: `data:image/png;base64,${image.data}`, algorithms: clone(meta.algorithms ?? []), palettes: clone(meta.palettes ?? []), recipe: clone(recipe) };
 }
 
+export function favoriteName(value) {
+  if (typeof value !== 'string') throw new Error('Enter a favorite name.');
+  const name = value.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '');
+  if (!name || [...name].length > 80 || (/[\u0000-\u001f\u007f-\u009f]/.test(name) || /[\uD800-\uDFFF]/u.test(name))) throw new Error('Favorite names use 1–80 characters without control characters.');
+  return name;
+}
+function favoriteIdentity(value) {
+  if (!value || typeof value.id !== 'string' || !/^[a-f0-9]{64}$/.test(value.id) || favoriteName(value.name) !== value.name) throw new Error('The host returned an invalid favorite.');
+  return { id: value.id, name: value.name };
+}
+function favoriteRequest(current, recipe) {
+  if (!recipe || recipe.version !== 1 || Object.keys(recipe).some(key => !['version', 'palette', 'colors', 'options'].includes(key)) || !recipe.options || Array.isArray(recipe.options) || typeof recipe.options !== 'object') throw new Error('The host returned an invalid favorite recipe.');
+  const imageMask = recipe.options.mask?.shape === 'image';
+  if (imageMask && !current.mask_input) throw new Error('This favorite needs an image mask. Open the studio with mask_input to use it.');
+  if (current.mask_input && !imageMask) throw new Error('This favorite does not use an image mask. Open the studio without mask_input to keep its exact settings.');
+  return studioRequest({ input: current.input, ...(current.mask_input ? { mask_input: current.mask_input } : {}), ...(recipe.palette ? { palette: recipe.palette } : {}), ...(recipe.colors ? { colors: recipe.colors } : {}), options: recipe.options });
+}
+function matchesFavorite(expected, preview) {
+  const normalized = clone(expected);
+  if (!normalized.palette && !normalized.colors) normalized.palette = 'mono';
+  if (!normalized.options.algorithm) normalized.options.algorithm = 'floyd-steinberg';
+  if (normalized.options.effects === undefined) normalized.options.effects = {};
+  let width = normalized.options.width || 0, height = normalized.options.height || 0;
+  if (!width && !height) {
+    const scale = Math.min(1, 512 / Math.max(preview.sourceWidth, preview.sourceHeight));
+    width = Math.max(1, Math.round(preview.sourceWidth * scale)); height = Math.max(1, Math.round(preview.sourceHeight * scale));
+  } else if (!width) width = Math.max(1, Math.round(preview.sourceWidth * height / preview.sourceHeight));
+  else if (!height) height = Math.max(1, Math.round(preview.sourceHeight * width / preview.sourceWidth));
+  normalized.options.width = width; normalized.options.height = height;
+  return fingerprint(normalized) === fingerprint(preview.request);
+}
+
+// Random styles replace appearance while keeping the user's composition and mask.
+export function randomStyleRequest(current, result, algorithms = [], palettes = []) {
+  if (result?.isError) throw new Error(toolError(result));
+  const data = result?.structuredContent;
+  const recipe = data?.recipe;
+  const options = recipe?.options;
+  const geometry = ['width', 'height', 'crop', 'mask', 'pixel_scale', 'resize_filter'];
+  if (!Number.isSafeInteger(data?.seed) || recipe?.version !== 1 || typeof recipe.palette !== 'string' || !recipe.palette || Object.keys(recipe).some(key => !['version', 'palette', 'options'].includes(key)) || !options || Array.isArray(options) || typeof options !== 'object' || typeof options.algorithm !== 'string' || (options.seed ?? 0) !== data.seed || geometry.some(key => key in options) || (algorithms.length && !algorithms.some(item => item.id === options.algorithm)) || (palettes.length && !palettes.some(item => item.id === recipe.palette))) throw new Error('The host returned an invalid random style. Your settings were kept.');
+  const request = { input: current.input, palette: recipe.palette, options: clone(options) };
+  if (current.mask_input) request.mask_input = current.mask_input;
+  for (const key of geometry) if (current.options[key] !== undefined) request.options[key] = clone(current.options[key]);
+  return studioRequest(request);
+}
+
 // Export size is separate from preview settings. Every other option stays intact.
 export function exportDimensions(preview, selection = { mode: 'preview' }) {
   if (!preview) throw new Error('Apply preview to choose an export size.');
@@ -100,14 +160,29 @@ export class StudioState {
     this.validPreview = false;
     this.hostPending = null;
     this.canCallTools = false;
+    this.favorites = [];
+    this.favoritesUnavailable = 0;
+    this.history = [];
+    this.historyActive = null;
+    this.historySequence = 0;
+    this.undoIDs = [];
+    this.redoIDs = [];
     this.status = 'Connecting to your host…';
     this.error = false;
   }
   get dirty() { return !this.rendered || !this.draft || fingerprint(this.draft) !== fingerprint(this.rendered.request); }
   get busy() { return !!this.pending; }
+  get saving() { return ['save', 'recipe', 'favorite-save'].includes(this.pending?.kind); }
+  get canFavorites() { return this.canCallTools && !!this.draft && !!this.rendered && !this.hostPending && !this.busy; }
+  get canHistory() { return this.canCallTools && !!this.draft && !!this.history.length && !this.busy; }
+  get canUndo() { return this.canHistory && !!this.undoIDs.length; }
+  get canRedo() { return this.canHistory && !!this.redoIDs.length; }
+  get canRandom() { return this.canCallTools && !!this.draft && !this.saving; }
   get canPreview() { return this.canCallTools && !!this.draft && !this.busy; }
   get canSave() { return this.canCallTools && this.validPreview && !!this.rendered && !this.dirty && !this.busy; }
   setInput(value) {
+    this.favorites = []; this.favoritesUnavailable = 0;
+    this.history = []; this.historyActive = null; this.historySequence = 0; this.undoIDs = []; this.redoIDs = [];
     this.pending = null;
     this.validPreview = false;
     this.hostPending = null;
@@ -141,6 +216,185 @@ export class StudioState {
       return true;
     } catch (error) { this.hostPending = null; this.fail(error); return false; }
   }
+  beginFavoritesList() {
+    if (!this.canFavorites) throw new Error('Favorites are unavailable while another request is running or without host tools.');
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'favorites-list', request: {}, status: this.status, error: this.error };
+    this.pending = operation; this.status = 'Loading favorites…'; this.error = false;
+    return clone(operation);
+  }
+  finishFavoritesList(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    try {
+      if (result?.isError) throw new Error(toolError(result));
+      const data = result?.structuredContent;
+      if (!Array.isArray(data?.favorites) || data.favorites.length > 512 || !Number.isSafeInteger(data.unavailable) || data.unavailable < 0) throw new Error('The host returned an invalid favorites list.');
+      const favorites = data.favorites.map(favoriteIdentity);
+      if (new Set(favorites.map(item => item.id)).size !== favorites.length || new Set(favorites.map(item => item.name)).size !== favorites.length) throw new Error('The host returned duplicate favorites.');
+      this.favorites = favorites.sort((a, b) => a.name.localeCompare(b.name)); this.favoritesUnavailable = data.unavailable;
+      if (operation.revision === this.revision) { this.status = operation.status; this.error = operation.error; }
+      return true;
+    } catch (error) { this.fail(error); return false; }
+  }
+  beginFavoriteSave(value) {
+    if (!this.canSave) throw new Error('Apply the current preview before saving a favorite.');
+    const request = { name: favoriteName(value), recipe: clone(this.rendered.recipe) };
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'favorite-save', request };
+    this.pending = operation; this.status = `Saving favorite “${request.name}”…`; this.error = false;
+    return clone(operation);
+  }
+  finishFavoriteSave(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) { this.status = 'Settings changed while saving the favorite. Refresh favorites to check the saved name.'; return false; }
+    try {
+      if (result?.isError) throw new Error(toolError(result));
+      const data = result?.structuredContent; const favorite = favoriteIdentity(data);
+      if (favorite.name !== operation.request.name || fingerprint(data.recipe) !== fingerprint(operation.request.recipe)) throw new Error('The host returned a different favorite save receipt. Refresh favorites before retrying.');
+      this.favorites = [...this.favorites.filter(item => item.id !== favorite.id), favorite].sort((a, b) => a.name.localeCompare(b.name));
+      this.status = `Saved favorite “${favorite.name}”`; this.error = false; return true;
+    } catch (error) { this.fail(error); return false; }
+  }
+  beginFavoriteLoad(id) {
+    if (!this.canFavorites) throw new Error('Favorites are unavailable while another request is running or without host tools.');
+    const favorite = this.favorites.find(item => item.id === id);
+    if (!favorite) throw new Error('Choose a saved favorite.');
+    this.hostPending = null; this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'favorite-load', request: { id }, name: favorite.name, source: { input: this.draft.input, mask_input: this.draft.mask_input } };
+    this.pending = operation; this.status = `Loading favorite “${favorite.name}”…`; this.error = false;
+    return clone(operation);
+  }
+  finishFavoriteLoad(operation, result) {
+    if (!this.current(operation)) return null;
+    this.pending = null;
+    if (operation.revision !== this.revision) { this.status = 'Settings changed while loading. Choose the favorite again to load it.'; return null; }
+    try {
+      if (result?.isError) throw new Error(toolError(result));
+      const data = result?.structuredContent; const favorite = favoriteIdentity(data);
+      if (favorite.id !== operation.request.id || favorite.name !== operation.name) throw new Error('The host returned a different favorite.');
+      const request = favoriteRequest(operation.source, data.recipe);
+      const preview = { id: ++this.sequence, revision: this.revision, kind: 'favorite-preview', request };
+      this.pending = preview; this.status = `Previewing favorite “${favorite.name}”…`; this.error = false;
+      return clone(preview);
+    } catch (error) { this.fail(error); return null; }
+  }
+  finishFavoritePreview(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) { this.status = 'Settings changed while loading. Choose the favorite again to load it.'; return false; }
+    try {
+      const preview = decodePreview(result);
+      if (!matchesFavorite(operation.request, preview)) throw new Error('The favorite preview returned different settings.');
+      this.accept(preview, true); return true;
+    } catch (error) { this.fail(error); return false; }
+  }
+  beginHistory(target) {
+    if (!this.canHistory) throw new Error('History is unavailable while another request is running or without host tools.');
+    const navigation = target === 'undo' || target === 'redo' ? target : 'pick';
+    const targetId = navigation === 'undo' ? this.undoIDs.at(-1) : navigation === 'redo' ? this.redoIDs.at(-1) : target;
+    const entry = this.history.find(item => item.id === targetId);
+    if (!entry) throw new Error('Choose a look from this studio session.');
+    this.hostPending = null; this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'history', navigation, targetId, request: clone(entry.request) };
+    this.pending = operation; this.status = `Restoring look ${entry.id}…`; this.error = false;
+    return clone(operation);
+  }
+  finishHistory(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while restoring. Choose the look again to restore it.';
+      return false;
+    }
+    try {
+      const preview = decodePreview(result);
+      if (fingerprint(operation.request) !== fingerprint(preview.request)) throw new Error('The restored preview returned different source settings.');
+      this.accept(preview, true, operation);
+      return true;
+    } catch (error) { this.fail(error); return false; }
+  }
+  remember(request, navigation) {
+    const previous = this.historyActive;
+    const signature = fingerprint(request);
+    let entry = navigation ? this.history.find(item => item.id === navigation.targetId) : this.history.find(item => fingerprint(item.request) === signature);
+    if (!entry) entry = { id: ++this.historySequence, request: clone(request) };
+    else entry = { id: entry.id, request: clone(request) };
+    if (previous !== null && previous !== entry.id) {
+      if (navigation?.navigation === 'undo') {
+        this.undoIDs.pop(); this.redoIDs.push(previous);
+      } else if (navigation?.navigation === 'redo') {
+        this.redoIDs.pop(); this.undoIDs.push(previous);
+      } else {
+        this.undoIDs.push(previous); this.redoIDs = [];
+      }
+    }
+    this.historyActive = entry.id;
+    this.history = [...this.history.filter(item => item.id !== entry.id), entry].slice(-20);
+    const available = new Set(this.history.map(item => item.id));
+    const prune = ids => {
+      const kept = [];
+      for (const id of ids) if (available.has(id) && kept.at(-1) !== id) kept.push(id);
+      while (kept.at(-1) === this.historyActive) kept.pop();
+      return kept.slice(-20);
+    };
+    this.undoIDs = prune(this.undoIDs); this.redoIDs = prune(this.redoIDs);
+  }
+  beginRandom(value = this.draft) {
+    if (!this.canRandom) throw new Error('Random styles are unavailable while saving or without host tools.');
+    const base = studioRequest(value);
+    this.hostPending = null;
+    this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'random', request: {}, base };
+    this.pending = operation;
+    this.status = 'Finding a new look…'; this.error = false;
+    return clone(operation);
+  }
+  finishRandom(operation, result) {
+    if (!this.current(operation)) return null;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while choosing a style. Click Random style again to try another.';
+      return null;
+    }
+    try {
+      const request = randomStyleRequest(operation.base, result, this.algorithms, this.palettes);
+      const preview = { id: ++this.sequence, revision: this.revision, kind: 'preview', request };
+      this.pending = preview;
+      this.status = 'Previewing your new style…'; this.error = false;
+      return clone(preview);
+    } catch (error) { this.fail(error); return null; }
+  }
+  beginExtraction(count = 8) {
+    if (!this.canPreview) throw new Error('Palette tools are unavailable or another request is running.');
+    if (!Number.isInteger(count) || count < 2 || count > 256) throw new Error('Choose a whole number from 2 to 256 colors.');
+    this.hostPending = null;
+    this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'extract', request: { input: this.draft.input, count } };
+    this.pending = operation;
+    this.status = 'Extracting colors from the source image…';
+    this.error = false;
+    return clone(operation);
+  }
+  finishExtraction(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while extracting. Extract colors again to use them.';
+      return false;
+    }
+    try {
+      if (result?.isError) throw new Error(toolError(result));
+      const values = result?.structuredContent?.colors;
+      if (!Array.isArray(values) || values.some((value) => typeof value !== 'string') || values.length > operation.request.count) throw new Error('The tool returned an invalid color palette. Your settings were kept.');
+      if (values.length < 2) throw new Error('The source has fewer than two visible colors. Choose a library palette or add custom colors.');
+      const colors = parseColors(values);
+      const draft = { ...clone(this.draft), colors };
+      delete draft.palette;
+      this.edit(draft);
+      this.status = `Extracted ${colors.length} colors. Apply preview before saving.`;
+      return true;
+    } catch (error) { this.fail(error); return false; }
+  }
   beginPreview() {
     if (!this.canPreview) throw new Error('Preview tools are unavailable or another request is running.');
     const request = studioRequest(this.draft);
@@ -166,7 +420,8 @@ export class StudioState {
       return true;
     } catch (error) { this.fail(error); return false; }
   }
-  accept(preview, replaceDraft) {
+  accept(preview, replaceDraft, navigation) {
+    this.remember(preview.request, navigation);
     this.rendered = preview;
     this.validPreview = true;
     if (replaceDraft) { this.draft = clone(preview.request); this.revision++; }
@@ -188,6 +443,36 @@ export class StudioState {
     this.error = false;
     return clone(operation);
   }
+  beginRecipeSave(output, imageOutput = '') {
+    if (!this.canSave) throw new Error('Apply the current preview before saving a recipe.');
+    if (typeof output !== 'string' || !output.trim()) throw new Error('Enter a new recipe path relative to the workspace.');
+    output = output.trim();
+    if (!/\.json$/i.test(output) || output.includes('\\') || output.includes('\0') || output.startsWith('/') || /^[a-z]+:/i.test(output) || output.split('/').some((part) => !part || part === '.' || part === '..')) throw new Error('Use a relative .json recipe path with no traversal or URL.');
+    if ([this.rendered.request.input, this.rendered.request.mask_input, imageOutput.trim()].includes(output)) throw new Error('Choose a recipe path different from the source, mask, and image output.');
+    const request = { output, recipe: clone(this.rendered.recipe) };
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'recipe', request };
+    this.pending = operation;
+    this.status = 'Saving the preview recipe…';
+    this.error = false;
+    return clone(operation);
+  }
+  finishRecipeSave(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while saving the recipe. Check the destination before retrying.';
+      return false;
+    }
+    if (result?.isError) { this.fail(new Error(toolError(result))); return false; }
+    const receipt = result?.structuredContent;
+    if (receipt?.path !== operation.request.output || receipt.format !== 'json' || !Number.isSafeInteger(receipt.bytes) || receipt.bytes <= 0 || typeof receipt.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(receipt.sha256) || fingerprint(receipt.recipe) !== fingerprint(operation.request.recipe)) {
+      this.fail(new Error('The host returned an incomplete or different recipe save receipt. Check the destination before retrying.'));
+      return false;
+    }
+    this.status = `Saved recipe ${receipt.path}`;
+    this.error = false;
+    return true;
+  }
   finishSave(operation, result) {
     if (!this.current(operation)) return false;
     this.pending = null;
@@ -208,6 +493,6 @@ export class StudioState {
   }
   current(operation) { return this.pending?.id === operation.id && this.pending?.kind === operation.kind; }
   reject(operation, error) { if (!this.current(operation)) return false; this.pending = null; this.fail(error); return true; }
-  cancel(reason = 'Preview cancelled. You can apply it again.') { this.pending = null; this.hostPending = null; this.validPreview = false; this.sequence++; this.status = reason; this.error = false; }
+  cancel(reason = 'Preview cancelled. You can apply it again.') { const metadata = this.pending?.kind === 'favorites-list'; this.pending = null; this.hostPending = null; if (!metadata) this.validPreview = false; this.sequence++; this.status = reason; this.error = false; }
   fail(error) { this.status = error instanceof Error ? error.message : String(error); this.error = true; }
 }
