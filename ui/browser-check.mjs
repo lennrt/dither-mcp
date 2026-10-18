@@ -116,6 +116,144 @@ try {
   await expect(studio.locator("#status")).toContainText(/exist|replace/i);
   assert.deepEqual(await readFile(`${workspace}/${destination}`), Buffer.from(preview.split(",")[1], "base64"));
   record("Zoom, byte-identical PNG save, and overwrite rejection");
+  await studio.locator('details.advanced > summary').click();
+  await studio.locator('.json-settings > summary').click();
+  const editedOptions = JSON.parse(await studio.locator('#options-json').inputValue());
+  editedOptions.effects = { noise: 0.1 };
+  const optionsJSON = JSON.stringify(editedOptions, null, 2);
+  await studio.locator('#options-json').fill(optionsJSON);
+  await studio.locator('#extract-count').fill('1');
+  await studio.locator('#extract').click();
+  await expect(studio.locator('#status')).toContainText('whole number');
+  await studio.locator('#extract-count').fill('6');
+  await studio.locator('#extract-count').press('Enter');
+  await expect(studio.locator('#status')).toHaveText('Extracted 6 colors. Apply preview before saving.');
+  await expect(studio.locator('[data-mode="custom"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(studio.locator('#options-json')).toHaveValue(optionsJSON);
+  const extractedColors = await studio.locator('#custom-colors').inputValue();
+  assert.equal(extractedColors.split(' ').length, 6);
+  await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
+  await expect(studio.locator('#save')).toBeDisabled();
+  assert.equal(await studio.locator('#preview').getAttribute('src'), preview);
+  const extractionCalls = await page.evaluate(() => window.ditherHarness.calls.filter(call => call.name === 'dither_palette_extract'));
+  assert.deepEqual(extractionCalls.map(call => call.arguments), [{ input: 'source.png', count: 6 }]);
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.deepEqual(await page.evaluate(() => window.ditherHarness.calls.at(-1).arguments.options.effects), { noise: 0.1 });
+  const extractedPreview = await studio.locator('#preview').getAttribute('src');
+  await studio.locator('#output').fill('extracted.png');
+  await studio.locator('#save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved extracted.png');
+  assert.deepEqual(await readFile(`${workspace}/extracted.png`), Buffer.from(extractedPreview.split(',')[1], 'base64'));
+  record('Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels');
+
+  const beforeMixed = JSON.parse(await studio.locator('#options-json').inputValue());
+  const mixed = { ...beforeMixed, brightness: -0.1, algorithm: 'atkinson', serpentine: true, contrast: 1.5, crop: { x: 2, y: 3, width: 120, height: 90 }, effects: { noise: 0.2, scanlines: 0.1 } };
+  await studio.locator('#options-json').fill(JSON.stringify(mixed));
+  await studio.locator('#brightness').fill('0.35');
+  await expect(studio.locator('#algorithm')).toHaveValue('atkinson');
+  await expect(studio.locator('#contrast')).toHaveValue('1.5');
+  await expect(studio.locator('[data-option="serpentine"]')).toBeChecked();
+  const afterSlider = JSON.parse(await studio.locator('#options-json').inputValue());
+  assert.deepEqual(afterSlider, { ...mixed, brightness: 0.35 });
+  await studio.locator('#options-json').fill(JSON.stringify({ ...afterSlider, gamma: 1.2 }));
+  await studio.locator('[data-option="serpentine"]').uncheck();
+  const afterCheckbox = JSON.parse(await studio.locator('#options-json').inputValue());
+  assert.equal(afterCheckbox.serpentine, false); assert.equal(afterCheckbox.gamma, 1.2);
+  await studio.locator('#options-json').fill(JSON.stringify({ ...afterCheckbox, saturation: 0.8 }));
+  await studio.locator('#algorithm').selectOption('bayer-8');
+  await expect(studio.locator('#save')).toBeDisabled();
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  const mergedCall = await page.evaluate(() => window.ditherHarness.calls.at(-1));
+  assert.equal(mergedCall.name, 'dither_studio');
+  assert.deepEqual(mergedCall.arguments.options, { ...mixed, brightness: 0.35, serpentine: false, gamma: 1.2, algorithm: 'bayer-8', saturation: 0.8 });
+  record('Advanced JSON merges later slider, checkbox, and select edits while preserving crop and effects in the real preview request');
+
+  const callsBeforeInvalidJSON = await page.evaluate(() => window.ditherHarness.calls.length);
+  for (const [text, control] of [['{', 'slider'], ['null', 'select'], ['[]', 'checkbox']]) {
+    await studio.locator('#options-json').fill(text);
+    if (control === 'slider') await studio.locator('#brightness').fill('0.55');
+    if (control === 'select') await studio.locator('#algorithm').selectOption('atkinson');
+    if (control === 'checkbox') await studio.locator('[data-option="serpentine"]').click();
+    await expect(studio.locator('#status')).toContainText('Correct the advanced options JSON');
+    await expect(studio.locator('#options-json')).toHaveValue(text);
+    await expect(studio.locator('#brightness')).toHaveValue('0.35');
+    await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
+    await expect(studio.locator('[data-option="serpentine"]')).not.toBeChecked();
+    await expect(studio.locator('#save')).toBeDisabled();
+  }
+  await studio.locator('#options-json').fill('null');
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Options must be a JSON object');
+  await expect(studio.locator('#options-json')).toHaveValue('null');
+  await expect(studio.locator('#brightness')).toHaveValue('0.35');
+  await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
+  await expect(studio.locator('#save')).toBeDisabled();
+  assert.equal(await page.evaluate(() => window.ditherHarness.calls.length), callsBeforeInvalidJSON);
+  await studio.locator('#options-json').fill(JSON.stringify(beforeMixed));
+  // The first numeric edit must merge JSON without resetting a cleared field.
+  await studio.locator('[data-option="seed"]').fill('');
+  await expect(studio.locator('[data-option="seed"]')).toHaveValue('');
+  await studio.locator('[data-option="seed"]').pressSequentially('-17');
+  await expect(studio.locator('[data-option="seed"]')).toHaveValue('-17');
+  assert.equal(JSON.parse(await studio.locator('#options-json').inputValue()).seed, -17);
+  // Select-and-type makes '-' itself the first input event while JSON is dirty.
+  await studio.locator('#options-json').fill(JSON.stringify(beforeMixed));
+  await studio.locator('[data-option="seed"]').focus();
+  await studio.locator('[data-option="seed"]').press('ControlOrMeta+A');
+  await studio.locator('[data-option="seed"]').pressSequentially('-17');
+  await expect(studio.locator('[data-option="seed"]')).toHaveValue('-17');
+  assert.equal(JSON.parse(await studio.locator('#options-json').inputValue()).seed, -17);
+  await studio.locator('[data-option="seed"]').fill(String(beforeMixed.seed ?? 0));
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal((await page.evaluate(() => window.ditherHarness.calls.at(-1).arguments.options)).crop, undefined);
+  record('Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction');
+
+
+  // Delay completed real tool results to exercise edits and cancellation races.
+  await page.evaluate(() => {
+    const harness = window.ditherHarness;
+    const original = harness.bridge.oncalltool;
+    harness.originalCallTool = original;
+    harness.bridge.oncalltool = async (params, extra) => {
+      const result = await original(params, extra);
+      if (params.name === 'dither_palette_extract') {
+        harness.delayedExtraction = { id: extra.mcpReq.id, result };
+        await new Promise(resolve => { harness.releaseExtraction = resolve; });
+      }
+      return result;
+    };
+  });
+  for (const change of ['tone', 'count', 'cancel']) {
+    await page.evaluate(() => { window.ditherHarness.releaseExtraction = null; });
+    await studio.locator('#extract').click();
+    await page.waitForFunction(() => !!window.ditherHarness.releaseExtraction);
+    await expect(studio.locator('#apply')).toBeDisabled();
+    await expect(studio.locator('#extract')).toBeDisabled();
+    await expect(studio.locator('#save')).toBeDisabled();
+    if (change === 'tone') await studio.locator('#brightness').fill('0.2');
+    if (change === 'count') await studio.locator('#extract-count').fill('7');
+    if (change === 'cancel') await studio.locator('#cancel').click();
+    await page.evaluate(() => window.ditherHarness.releaseExtraction());
+    if (change === 'cancel') {
+      // Reproduce a completed reply arriving after its local cancellation,
+      // independent of whether the host receives the cancellation first.
+      await page.evaluate(() => {
+        const { bridge, delayedExtraction } = window.ditherHarness;
+        return bridge.transport.send({ jsonrpc: '2.0', ...delayedExtraction });
+      });
+    }
+    await expect(studio.locator('#status')).toContainText(change === 'cancel' ? 'extraction cancelled' : 'Settings changed while extracting');
+    await expect(studio.locator('#custom-colors')).toHaveValue(extractedColors);
+    await expect(studio.locator('#save')).toBeDisabled();
+    await expect(studio.locator('#apply')).toBeEnabled();
+    await expect(studio.locator('#host-note')).toBeHidden();
+  }
+  await page.evaluate(() => { window.ditherHarness.bridge.oncalltool = window.ditherHarness.originalCallTool; });
+  record('Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection');
+
   await studio.getByRole("button", { name: "Custom colors", exact: true }).click();
   await studio.locator("#custom-colors").fill("#123 #123");
   await studio.locator("#apply").click();
@@ -205,6 +343,21 @@ try {
   await studio.locator('#save').click();
   await expect(studio.locator('#status')).toHaveText('Saved fresh.png');
   record('Changed source creates no artifact, invalidates save, and requires a fresh preview');
+  await studio.locator('#export-size').selectOption('custom');
+  await studio.locator('#export-width').fill('1');
+  await studio.locator('#export-height').fill('1');
+  await studio.locator('#output').fill('solid.png');
+  await studio.locator('#save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved solid.png');
+  await writeFile(`${workspace}/source.png`, await readFile(`${workspace}/solid.png`));
+  const beforeMono = await studio.locator('#custom-colors').inputValue();
+  await studio.locator('#extract').click();
+  await expect(studio.locator('#status')).toContainText('fewer than two visible colors');
+  await expect(studio.locator('#custom-colors')).toHaveValue(beforeMono);
+  await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#apply')).toBeEnabled();
+  record('Monochrome source extraction reports the tool error and keeps the current custom palette');
+
   const noTools = await context.newPage();
   await noTools.goto(baseURL + "/?no-tools");
   await expect(noTools.locator("#host-status")).toContainText("Connected through");
@@ -212,6 +365,7 @@ try {
   await expect(limited.locator("#preview")).toBeVisible();
   await expect(limited.locator("#host-note")).toContainText("does not support app tool calls");
   await expect(limited.locator("#apply")).toBeDisabled();
+  await expect(limited.locator("#extract")).toBeDisabled();
   await limited.locator("#output").fill("no-tools.png");
   await expect(limited.locator("#save")).toBeDisabled();
   await noTools.close();

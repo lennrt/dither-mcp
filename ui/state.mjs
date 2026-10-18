@@ -6,9 +6,23 @@ export function fingerprint(value) {
   return JSON.stringify(value);
 }
 
+// A control edit follows any pending JSON edit and wins for that one field.
+export function editOption(options, key, value, pendingJSON) {
+  let source = options;
+  if (pendingJSON !== undefined) {
+    try {
+      source = JSON.parse(pendingJSON);
+      if (!source || Array.isArray(source) || typeof source !== 'object') throw new Error('object required');
+    } catch {
+      throw new Error('Correct the advanced options JSON before changing controls. Use a valid JSON object.');
+    }
+  }
+  return { ...clone(source), [key]: value };
+}
+
 export function studioRequest(value) {
   if (!value || typeof value !== 'object' || typeof value.input !== 'string' || !value.input.trim()) throw new Error('The studio needs a source image from its tool call.');
-  const request = { input: value.input, options: clone(value.options ?? {}) };
+  const request = { input: value.input, options: clone(value.options === undefined ? {} : value.options) };
   if (value.palette) request.palette = value.palette;
   if (value.colors) request.colors = clone(value.colors);
   if (value.mask_input) request.mask_input = value.mask_input;
@@ -140,6 +154,37 @@ export class StudioState {
       this.accept(preview, true);
       return true;
     } catch (error) { this.hostPending = null; this.fail(error); return false; }
+  }
+  beginExtraction(count = 8) {
+    if (!this.canPreview) throw new Error('Palette tools are unavailable or another request is running.');
+    if (!Number.isInteger(count) || count < 2 || count > 256) throw new Error('Choose a whole number from 2 to 256 colors.');
+    this.hostPending = null;
+    this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'extract', request: { input: this.draft.input, count } };
+    this.pending = operation;
+    this.status = 'Extracting colors from the source image…';
+    this.error = false;
+    return clone(operation);
+  }
+  finishExtraction(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while extracting. Extract colors again to use them.';
+      return false;
+    }
+    try {
+      if (result?.isError) throw new Error(toolError(result));
+      const values = result?.structuredContent?.colors;
+      if (!Array.isArray(values) || values.some((value) => typeof value !== 'string') || values.length > operation.request.count) throw new Error('The tool returned an invalid color palette. Your settings were kept.');
+      if (values.length < 2) throw new Error('The source has fewer than two visible colors. Choose a library palette or add custom colors.');
+      const colors = parseColors(values);
+      const draft = { ...clone(this.draft), colors };
+      delete draft.palette;
+      this.edit(draft);
+      this.status = `Extracted ${colors.length} colors. Apply preview before saving.`;
+      return true;
+    } catch (error) { this.fail(error); return false; }
   }
   beginPreview() {
     if (!this.canPreview) throw new Error('Preview tools are unavailable or another request is running.');

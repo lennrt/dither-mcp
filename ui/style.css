@@ -5,3 +5,8 @@
 #export-settings { margin-bottom: 14px; }
 #export-note.invalid { color: var(--danger); }
 #custom-size { margin-bottom: 8px; }
+
+.extract-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 10px; }
+.extract-row label { flex: 1; min-width: 0; margin: 0; }
+.extract-row input { margin-top: 4px; }
+.extract-row button { min-height: 35px; }

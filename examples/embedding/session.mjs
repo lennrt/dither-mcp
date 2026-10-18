@@ -1,4 +1,4 @@
-// Node/desktop side: one source image, two tools, and one embedded UI resource.
+// Node/desktop side: one source image, three tools, and one embedded UI resource.
 import path from 'node:path';
 import { realpath, stat } from 'node:fs/promises';
 import { Client } from '@modelcontextprotocol/client';
@@ -12,9 +12,15 @@ export function relativeImagePath(value, label = 'path') {
 }
 
 export function validateStudioCall(params, { input, maskInput }) {
-  if (!params || !['dither_studio', 'dither_render'].includes(params.name)) throw new Error('Only dither_studio and dither_render are allowed.');
+  if (!params || !['dither_studio', 'dither_render', 'dither_palette_extract'].includes(params.name)) throw new Error('Only studio, render, and palette extraction tools are allowed.');
   if (Object.keys(params).some((key) => !['name', 'arguments', '_meta'].includes(key))) throw new Error('Unknown tool call field.');
   const args = params.arguments;
+  if (params.name === 'dither_palette_extract') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || args.input !== input) throw new Error('The source must match this embedding session.');
+    if (Object.keys(args).some((key) => !['input', 'count'].includes(key))) throw new Error('Unsupported palette extraction argument.');
+    if (!Number.isInteger(args.count) || args.count < 2 || args.count > 256) throw new Error('Palette extraction needs a whole number from 2 to 256 colors.');
+    return params;
+  }
   if (!args || Array.isArray(args) || typeof args !== 'object' || args.input !== input || (args.mask_input ?? '') !== (maskInput ?? '')) throw new Error('The source and mask must match this embedding session.');
   const fields = ['input', 'mask_input', 'palette', 'colors', 'options'];
   if (params.name === 'dither_render') fields.push('output', 'expected_source_sha256', 'expected_mask_sha256');
@@ -43,7 +49,8 @@ export async function createStudioSession({ binary, root, input, maskInput, init
     if (descriptor?._meta?.ui?.resourceUri !== 'ui://dither/studio.html') throw new Error('The server did not negotiate the studio MCP App. Rebuild the binary.');
     const resource = (await client.readResource({ uri: descriptor._meta.ui.resourceUri })).contents[0];
     if (resource?.mimeType !== 'text/html;profile=mcp-app' || typeof resource.text !== 'string') throw new Error('Invalid studio resource.');
-    const args = { palette: 'oat-and-ink', options: { width: 512, algorithm: 'atkinson' }, ...initial, input, ...(maskInput ? { mask_input: maskInput } : {}) };
+    const args = { options: { algorithm: 'atkinson' }, ...initial, input, ...(maskInput ? { mask_input: maskInput } : {}) };
+    if (args.palette === undefined && args.colors === undefined) args.palette = 'oat-and-ink';
     validateStudioCall({ name: 'dither_studio', arguments: args }, { input, maskInput });
     const result = await client.callTool({ name: 'dither_studio', arguments: args });
     if (result.isError) throw new Error(result.content.filter((item) => item.type === 'text').map((item) => item.text).join('\n'));

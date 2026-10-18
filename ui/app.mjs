@@ -1,5 +1,5 @@
 import { App, PostMessageTransport, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
-import { StudioState, clone, exportDimensions, parseColors, studioRequest } from './state.mjs';
+import { StudioState, clone, editOption, exportDimensions, parseColors, studioRequest } from './state.mjs';
 
 const app = new App({ name: 'Dither studio', version: '0.1.0' }, {}, { autoResize: true });
 const state = new StudioState();
@@ -72,9 +72,11 @@ function renderSwatches() {
   $('swatches').replaceChildren(...swatches);
   $('palette-info').textContent = paletteMode() === 'custom' ? `${colors.length || '2–256'} custom colors` : palette?.description ?? '';
 }
-function syncControls() {
+function syncControls(preserveInput) {
   const options = state.draft?.options ?? {};
   document.querySelectorAll('[data-option]').forEach((element) => {
+    // Number inputs retain intermediate typing such as '-' outside .value.
+    if (element === preserveInput) return;
     const value = options[element.dataset.option] ?? defaults[element.dataset.option];
     if (element.type === 'checkbox') element.checked = !!value;
     else element.value = value ?? '';
@@ -93,14 +95,15 @@ function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
   $('settings').disabled = !state.draft || state.pending?.kind === 'save';
   $('apply').disabled = !state.canPreview;
+  $('extract').disabled = !state.canPreview;
   const exportValid = renderExport();
   $('save').disabled = !state.canSave || jsonDirty || customDirty || !exportValid || !$('output').value.trim();
   $('output').disabled = state.pending?.kind === 'save';
-  $('cancel').hidden = state.pending?.kind !== 'preview';
+  $('cancel').hidden = !['preview', 'extract'].includes(state.pending?.kind);
   $('status').textContent = state.status;
   $('status-dot').className = `status-dot${state.busy ? ' busy' : ''}${state.error ? ' error' : ''}`;
   const dirty = state.dirty || jsonDirty || customDirty;
-  $('preview-badge').textContent = state.busy ? (state.pending.kind === 'save' ? 'SAVING' : 'RENDERING') : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
+  $('preview-badge').textContent = state.busy ? ({ save: 'SAVING', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
   $('preview-badge').classList.toggle('dirty', dirty && !!state.rendered);
   $('source').textContent = state.draft?.input?.split(/[\\/]/).pop() || 'Waiting for a source image';
   if (state.rendered) {
@@ -150,10 +153,22 @@ function updateDraft(update) {
   const draft = clone(state.draft); update(draft); state.edit(draft); render();
 }
 document.querySelectorAll('[data-option]').forEach((element) => element.addEventListener('input', () => {
-  updateDraft((draft) => { draft.options[element.dataset.option] = element.type === 'checkbox' ? element.checked : element.tagName === 'SELECT' ? element.value : element.value === '' ? 0 : Number(element.value); });
-  if (element.type === 'range') $(`${element.id}-value`).textContent = String(Number(element.value));
-  if (!jsonDirty) $('options-json').value = JSON.stringify(state.draft.options, null, 2);
-  if (element.dataset.option === 'algorithm') $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === element.value)?.description ?? '';
+  if (!state.draft) return;
+  try {
+    const mergeJSON = jsonDirty;
+    const value = element.type === 'checkbox' ? element.checked : element.tagName === 'SELECT' ? element.value : element.value === '' ? 0 : Number(element.value);
+    const draft = clone(state.draft);
+    draft.options = editOption(draft.options, element.dataset.option, value, jsonDirty ? $('options-json').value : undefined);
+    state.edit(draft);
+    jsonDirty = false;
+    if (mergeJSON) syncControls(element.type === 'number' ? element : undefined);
+    else {
+      if (element.type === 'range') $(`${element.id}-value`).textContent = String(Number(element.value));
+      $('options-json').value = JSON.stringify(state.draft.options, null, 2);
+      if (element.dataset.option === 'algorithm') $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === element.value)?.description ?? '';
+    }
+  } catch (error) { state.fail(error); syncControls(); }
+  render();
 }));
 $('palette-search').addEventListener('input', renderPalettes);
 $('palette').addEventListener('change', () => { updateDraft((draft) => { draft.palette = $('palette').value; delete draft.colors; }); renderSwatches(); });
@@ -184,7 +199,22 @@ $('apply').addEventListener('click', async (event) => {
     const accepted = state.finishPreview(operation, result); render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
-$('cancel').addEventListener('click', () => { abortController?.abort(); state.cancel(); render(); });
+$('extract-count').addEventListener('input', () => {
+  if (state.pending?.kind === 'extract') { state.edit(clone(state.draft)); render(); }
+});
+$('extract').addEventListener('click', async () => {
+  if (!state.canPreview) return;
+  let operation;
+  try {
+    operation = state.beginExtraction(Number($('extract-count').value));
+    abortController = new AbortController(); render();
+    const result = await app.callServerTool({ name: 'dither_palette_extract', arguments: operation.request }, { signal: abortController.signal });
+    const accepted = state.finishExtraction(operation, result);
+    if (accepted) customDirty = false;
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('cancel').addEventListener('click', () => { const extracting = state.pending?.kind === 'extract'; abortController?.abort(); state.cancel(extracting ? 'Color extraction cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
 for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
 $('save').addEventListener('click', async (event) => {
@@ -204,7 +234,7 @@ for (const [form, button] of [['controls', 'apply'], ['save-form', 'save']]) {
   $(form).addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
       event.preventDefault();
-      $(button).click();
+      $(event.target.id === 'extract-count' ? 'extract' : button).click();
     }
   });
 }
@@ -243,7 +273,17 @@ app.ontoolresult = (result) => { const accepted = state.hostResult(result); if (
 app.ontoolcancelled = () => { abortController?.abort(); state.cancel('The host cancelled the request. Apply preview to try again.'); render(); };
 app.onhostcontextchanged = applyContext;
 app.onteardown = async () => { abortController?.abort(); state.cancel('The studio has closed.'); state.canCallTools = false; render(); return {}; };
-app.onerror = () => { state.canCallTools = false; $('host-note').hidden = false; $('host-note').textContent = 'The host connection was interrupted. Open the studio again to continue.'; render(); };
+// Protocol.onerror also reports late replies after cancellation; it does not
+// establish transport closure. Ignore only those stale-response diagnostics.
+app.onerror = (error) => {
+  if (error?.message?.startsWith('Received a response for an unknown message ID:') || error?.message?.startsWith('Received a progress notification for an unknown token:')) return;
+  state.fail(new Error('The host reported a communication error. Try the operation again.')); render();
+};
+app.onclose = () => {
+  state.canCallTools = false;
+  state.cancel('The host connection closed. Open the studio again to continue.');
+  $('host-note').hidden = false; $('host-note').textContent = state.status; render();
+};
 
 render();
 if (window.parent === window) {

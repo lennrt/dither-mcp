@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { build } from 'esbuild';
+import { validateStudioCall } from '../examples/embedding/session.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.dirname(directory);
@@ -53,7 +54,7 @@ const server = http.createServer(async (request, response) => {
       if (Buffer.byteLength(body) > 1 << 20) return send(response, 413, 'text/plain', 'Request too large.');
     }
     const call = JSON.parse(body);
-    if (!['dither_studio', 'dither_render'].includes(call.name) || call.arguments?.input !== 'source.png' || call.arguments.mask_input || call.arguments.recipe) return send(response, 403, 'application/json', JSON.stringify({ error: 'This test host uses only its copied sample image.' }));
+    try { validateStudioCall(call, { input: 'source.png' }); } catch (error) { return send(response, 403, 'application/json', JSON.stringify({ error: error.message })); }
     if (pending) return send(response, 429, 'application/json', JSON.stringify({ error: 'A tool call is already running.' }));
     pending = true;
     const controller = new AbortController();

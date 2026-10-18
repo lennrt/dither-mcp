@@ -47,6 +47,27 @@ try {
   await expect.poll(() => studio.locator('#preview').evaluate((image) => image.complete && image.naturalWidth)).toBe(512);
   assert.deepEqual(await readdir(root), ['source.png']);
   checks.push('Opaque sandbox renders real Go preview through official AppBridge without writing');
+  await studio.locator('#extract-count').fill('5');
+  await studio.locator('#extract').click();
+  await expect(studio.locator('#status')).toHaveText('Extracted 5 colors. Apply preview before saving.');
+  await expect(studio.locator('#save')).toBeDisabled();
+  assert.equal((await studio.locator('#custom-colors').inputValue()).split(' ').length, 5);
+  assert.deepEqual(await readdir(root), ['source.png']);
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  checks.push('Current-source extraction crosses the restricted host bridge and requires a new preview');
+  const token = await page.locator('meta[name="studio-session"]').getAttribute('content');
+  const boundary = await Promise.all([
+    { name: 'dither_palette_extract', arguments: { input: 'other.png', count: 5 } },
+    { name: 'dither_palette_extract', arguments: { input: 'source.png', count: 257 } },
+    { name: 'dither_palette_extract', arguments: { input: 'source.png', count: 5, output: 'hidden.png' } },
+  ].map(async params => {
+    const response = await fetch(host.origin + '/call', { method: 'POST', headers: { origin: host.origin, 'content-type': 'application/json', 'x-studio-session': token }, body: JSON.stringify(params) });
+    return response.status;
+  }));
+  assert.deepEqual(boundary, [400, 400, 400]);
+  assert.deepEqual(await readdir(root), ['source.png']);
+  checks.push('Extraction rejects other sources, invalid counts, and extra fields at the HTTP boundary');
   await studio.locator('#output').fill('saved.png');
   const preview = await studio.locator('#preview').getAttribute('src');
   await studio.locator('#save').click();

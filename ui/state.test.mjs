@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { StudioState, clone, decodePreview, parseColors, studioRequest } from './state.mjs';
+import { StudioState, clone, decodePreview, editOption, parseColors, studioRequest } from './state.mjs';
 
 const request = { input: 'source.png', palette: 'oat-and-ink', mask_input: 'mask.png', options: { algorithm: 'atkinson', width: 320, height: 160, strength: .9, seed: 17, crop: { x: 2, y: 3, width: 90, height: 80 }, mask: { shape: 'image' }, effects: { noise: .1, pixel_sort: true, pixel_sort_threshold: 0 } } };
 function result(value = request) {
@@ -149,4 +149,98 @@ test('missing or malformed fingerprints and export metadata cannot authorize a s
     const invalid = result(); invalid.structuredContent[key] = value;
     assert.throws(() => decodePreview(invalid));
   }
+});
+
+test('source colors become a custom draft without altering options, mask, or displayed preview', () => {
+  const state = ready(); const displayed = clone(state.rendered);
+  const extract = state.beginExtraction();
+  assert.deepEqual(extract.request, { input: request.input, count: 8 });
+  assert.equal(state.canPreview, false); assert.equal(state.canSave, false);
+  assert.throws(() => state.beginExtraction(), /running/);
+  const colors = ['#123', '#abcdef'];
+  assert.equal(state.finishExtraction(extract, { structuredContent: { colors } }), true);
+  assert.deepEqual(state.draft, { input: request.input, mask_input: request.mask_input, options: request.options, colors: ['#112233', '#ABCDEF'] });
+  assert.deepEqual(state.rendered, displayed); assert.equal(state.canSave, false);
+  const preview = state.beginPreview();
+  assert.equal(state.finishPreview(preview, result(state.draft)), true);
+  assert.deepEqual(state.beginSave('extracted.png').request.colors, ['#112233', '#ABCDEF']);
+});
+test('even identical extracted colors need an explicit fresh preview', () => {
+  const state = ready(); const custom = clone(request); delete custom.palette; custom.colors = ['#000000', '#FFFFFF'];
+  state.setInput(custom); assert.equal(state.hostResult(result(custom)), true);
+  const extract = state.beginExtraction(2);
+  assert.equal(state.finishExtraction(extract, { structuredContent: { colors: custom.colors } }), true);
+  assert.equal(state.dirty, false); assert.equal(state.canSave, false);
+});
+test('invalid extraction counts never call a tool or invalidate a preview', () => {
+  for (const count of [0, 1, 257, 1.5, NaN, Infinity, '8', null]) {
+    const state = ready(); assert.throws(() => state.beginExtraction(count), /whole number/);
+    assert.equal(state.pending, null); assert.equal(state.canSave, true);
+  }
+  const state = ready(); state.canCallTools = false; assert.throws(() => state.beginExtraction(), /unavailable/);
+});
+test('cancelled, edited, or superseded extraction cannot replace current colors or a newer operation', () => {
+  const extracted = { structuredContent: { colors: ['#000000', '#FFFFFF'] } };
+  for (const change of ['cancel', 'edit', 'input', 'raw-controls']) {
+    const state = ready(); const extract = state.beginExtraction(2);
+    if (change === 'cancel') state.cancel();
+    if (change === 'edit') state.edit({ ...state.draft, palette: 'mono' });
+    if (change === 'input') state.setInput({ ...request, input: 'other.png' });
+    if (change === 'raw-controls') state.edit(clone(state.draft));
+    const draft = clone(state.draft);
+    assert.equal(state.finishExtraction(extract, extracted), false);
+    assert.deepEqual(state.draft, draft); assert.equal(state.canSave, false);
+  }
+  const state = ready(); const old = state.beginExtraction(); state.cancel(); const current = state.beginExtraction();
+  assert.equal(state.finishExtraction(old, extracted), false); assert.equal(state.pending.id, current.id);
+  assert.equal(state.finishExtraction(current, extracted), true);
+});
+test('monochrome, malformed, duplicate, oversized, and failed extraction preserve the existing settings', () => {
+  for (const extraction of [
+    {}, { colors: '#000000 #FFFFFF' }, { colors: [] }, { colors: ['#000000'] },
+    { colors: ['#000000', 'invalid'] }, { colors: ['#000000', '#000'] },
+    { colors: [123, 456] }, { colors: ['#000000', '#FFFFFF', '#FF0000'] },
+  ]) {
+    const state = ready(); const extract = state.beginExtraction(2);
+    assert.equal(state.finishExtraction(extract, { structuredContent: extraction }), false);
+    assert.deepEqual(state.draft, request); assert.deepEqual(state.rendered.request, request);
+    assert.equal(state.error, true); assert.equal(state.canSave, false); assert.equal(state.canPreview, true);
+  }
+  for (const transportError of [false, true]) {
+    const state = ready(); const extract = state.beginExtraction();
+    if (transportError) state.reject(extract, new Error('Disconnected'));
+    else state.finishExtraction(extract, { isError: true, content: [{ type: 'text', text: 'Source missing' }] });
+    assert.deepEqual(state.draft, request); assert.equal(state.error, true); assert.equal(state.canSave, false);
+  }
+});
+
+test('a later control edit merges pending advanced JSON and keeps hidden options', () => {
+  const previous = { brightness: 0, algorithm: 'atkinson', width: 320 };
+  const advanced = { ...previous, brightness: -0.1, algorithm: 'bayer-8', serpentine: true, crop: { x: 2, y: 3, width: 90, height: 80 }, mask: { shape: 'ellipse', invert: true }, effects: { noise: 0.2 } };
+  const text = JSON.stringify(advanced);
+  for (const [key, value] of [['brightness', 0.35], ['algorithm', 'bayer-4'], ['serpentine', false]]) {
+    const edited = editOption(previous, key, value, text);
+    assert.deepEqual(edited, { ...advanced, [key]: value });
+    edited.crop.x = 100;
+    assert.equal(advanced.crop.x, 2);
+    assert.deepEqual(previous, { brightness: 0, algorithm: 'atkinson', width: 320 });
+  }
+  const empty = editOption(previous, 'brightness', 0, '{}');
+  assert.deepEqual(empty, { brightness: 0 });
+  assert.deepEqual(editOption(advanced, 'serpentine', false), { ...advanced, serpentine: false });
+});
+test('malformed or nonobject pending options cannot silently replace a control edit', () => {
+  for (const text of ['{', '', '[1, 2]', 'null', 'true', '42', '"options"']) {
+    const previous = clone(request.options);
+    assert.throws(() => editOption(previous, 'brightness', 0.35, text), /Correct the advanced options JSON/);
+    assert.deepEqual(previous, request.options);
+  }
+});
+
+test('omitted options default to an object but explicit null cannot reset the draft', () => {
+  assert.deepEqual(studioRequest({ input: 'source.png' }), { input: 'source.png', options: {} });
+  for (const options of [null, [], 42, false, 'options']) assert.throws(() => studioRequest({ input: 'source.png', options }), /Options must be a JSON object/);
+  const state = ready(); const original = clone(state.draft);
+  assert.throws(() => studioRequest({ ...state.draft, options: JSON.parse('null') }), /Options must be a JSON object/);
+  assert.deepEqual(state.draft, original);
 });

@@ -46,7 +46,7 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   app.ontoolresult = (value) => { assert.equal(state.hostResult(value), true); ready(); };
   const calls = [];
   bridge.oncalltool = async (params) => {
-    assert.ok(['dither_studio', 'dither_render'].includes(params.name));
+    assert.ok(['dither_studio', 'dither_render', 'dither_palette_extract'].includes(params.name));
     calls.push(structuredClone(params));
     return client.callTool(params);
   };
@@ -62,6 +62,10 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.rendered.width, 96);
   assert.deepEqual(await readdir(workspace), ['source.png']);
 
+  const extraction = state.beginExtraction(6);
+  assert.equal(state.finishExtraction(extraction, await app.callServerTool({ name: 'dither_palette_extract', arguments: extraction.request })), true);
+  assert.equal(state.draft.colors.length, 6); assert.equal(state.draft.palette, undefined); assert.equal(state.canSave, false);
+  assert.deepEqual(await readdir(workspace), ['source.png']);
   const changed = structuredClone(state.draft);
   changed.options.algorithm = 'bayer-8';
   changed.options.strength = .7;
@@ -82,7 +86,7 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(existing.isError, true);
   assert.equal(state.finishSave(collision, existing), false);
   assert.deepEqual(await readFile(path.join(workspace, 'preview.png')), png);
-  assert.deepEqual(calls.map((call) => call.name), ['dither_studio', 'dither_render', 'dither_render']);
+  assert.deepEqual(calls.map((call) => call.name), ['dither_palette_extract', 'dither_studio', 'dither_render', 'dither_render']);
   const source = state.beginSave('source-size.png', { mode: 'source' });
   assert.equal(state.finishSave(source, await app.callServerTool({ name: 'dither_render', arguments: source.request })), true);
   const sourcePNG = await readFile(path.join(workspace, 'source-size.png'));
@@ -102,5 +106,13 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.equal(state.finishPreview(fresh, await app.callServerTool({ name: 'dither_studio', arguments: fresh.request })), true);
   assert.notEqual(state.rendered.sourceSHA256, initial.structuredContent.source_sha256);
   assert.equal(state.canSave, true);
+  const solid = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', output: 'solid.png', palette: 'mono', options: { width: 1, height: 1 } } });
+  assert.ok(!solid.isError);
+  state.setInput({ input: 'solid.png', palette: 'mono' });
+  const settings = structuredClone(state.draft);
+  const mono = state.beginExtraction();
+  assert.equal(state.finishExtraction(mono, await app.callServerTool({ name: 'dither_palette_extract', arguments: mono.request })), false);
+  assert.match(state.status, /fewer than two visible colors/); assert.deepEqual(state.draft, settings);
+  assert.equal(state.canSave, false);
 
 });
