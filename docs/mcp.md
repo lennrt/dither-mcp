@@ -20,7 +20,7 @@ The server provides **14 tools**, **3 resources**, and **3 prompts**. The read-o
 | `dither_studio` | `input`, optional `palette` or `colors`, `options`, and `mask_input` | In-memory dithered PNG preview, resolved recipe, and optional interactive studio |
 | `dither_palette_extract` | `input`, `count` (default 8) | Deterministic array of up to the requested 2–256 colors |
 | `dither_render` | Render request | Artifact and recipe |
-| `dither_compare` | Render request, `algorithms`, optional `columns` | Contact sheet plus indexed cell rectangles |
+| `dither_compare` | Render request, either `algorithms` or `palettes`, optional `columns` | Contact sheet plus indexed cell rectangles and candidate identities |
 | `dither_batch` | `items`: 1–32 render requests | Each item's artifact or error, in input order |
 | `dither_animate` | Render request, `effect`, `frames`, `fps`, `amplitude`, `columns` | GIF or PNG sprite sheet |
 | `dither_video` | Render request, `frames`, `fps`, `start` | MP4, WebM, GIF or PNG sprite sheet |
@@ -53,6 +53,29 @@ Render requests use `input`, `output`, either `palette` or `colors`, and nested
 The result records a relative path, actual dimensions, encoded byte count, and SHA256. It also records the still-image recipe, engine version, operation name, and complete submitted parameters. The result separates motion and comparison parameters from the reusable still recipe. Replay requires the same input files and engine version. A seed does not guarantee byte compatibility across future releases or FFmpeg versions.
 
 A comparison's `cells` supply labels and exact rectangles. The contact sheet contains no embedded typography. `dither_inspect` can hash source files when a caller needs to keep a complete input manifest.
+
+Compare 1–12 named palettes with one shared algorithm:
+
+```json
+{
+  "input": "photo.png",
+  "output": "studies/palettes.png",
+  "palettes": ["oat-and-ink", "gameboy", "sepia"],
+  "options": {"algorithm": "atkinson", "width": 240},
+  "columns": 3
+}
+```
+
+Palette mode rejects `algorithms`, a common `palette`, `colors`, and `recipe`.
+Each cell records its palette and effective algorithm in request order. The
+artifact retains submitted parameters and omits a single shared recipe, which
+cannot describe multiple palettes. To replay a cell, use its palette and
+algorithm, set `options.width` and `options.height` to the cell dimensions, and
+retain the other original options and mask. Comparison defaults to width 320
+when dimensions are omitted; a standalone render otherwise uses source size.
+Algorithm comparisons retain
+their existing shared palette and recipe behavior. Both modes enforce the
+same geometry, source guards, and output limits.
 
 Solid-color sources cannot produce two distinct extracted colors. Extraction returns an actionable error instead of an unusable one-color render palette.
 

@@ -7,6 +7,12 @@ Build with `make build`. Run `./bin/dither-mcp help`. Flags follow the command.
 All filesystem paths except `--root` are relative to that existing root. The CLI writes JSON results to stdout and diagnostics to stderr. Exit status is nonzero for a failed
 operation. A batch result includes per-item failures. Inspect `items`.
 
+The CLI rejects explicitly supplied flags that a command does not use, even
+when their value is zero or false. For example, `inspect --width 100` and
+`render --frames 0` fail before workspace access. Remove previously ignored
+flags from scripts. `--root` and `--allow-video` remain common startup flags.
+Pass tool arguments to `call` through its JSON argument, not image flags.
+
 ```sh
 ./bin/dither-mcp catalog
 ./bin/dither-mcp palettes --query 'game boy' --max-colors 4
@@ -18,6 +24,9 @@ operation. A batch result includes per-item failures. Inspect `items`.
 ./bin/dither-mcp compare --root . \
   --input docs/assets/source/moon-garden.png --output output/compare.png \
   --algorithms floyd-steinberg,atkinson,bayer-8 --palette sepia --width 240
+./bin/dither-mcp compare --root . \
+  --input docs/assets/source/moon-garden.png --output output/palettes.png \
+  --palettes oat-and-ink,gameboy,sepia --algorithm atkinson --width 240
 ./bin/dither-mcp animate --root . \
   --input docs/assets/source/moon-garden.png --output output/wave.gif \
   --algorithm atkinson --palette gameboy --width 320 \
@@ -29,6 +38,18 @@ operation. A batch result includes per-item failures. Inspect `items`.
 
 Use a new output path on every run. The tool creates output directories automatically.
 The tool never silently replaces existing files.
+
+Compare either algorithms or named palettes, with 1–12 candidates. `--palettes`
+uses one shared `--algorithm` and the other image options. Do not combine it
+with `--algorithms`, `--palette`, `--colors`, or `--recipe`. Palette sheets return
+each cell's palette, algorithm, and rectangle. Their artifact omits a single
+shared recipe. To reproduce a cell, use its palette and algorithm, set `--width`
+and `--height` to that cell's dimensions, and retain the other original options
+and mask. Explicit dimensions matter because comparison defaults differ from
+a standalone render.
+
+On `compare`, `--algorithm` requires `--palettes`. To choose algorithms for an
+algorithm comparison, use `--algorithms` instead.
 
 The `render`, `compare`, `animate`, `video` and `separate` commands accept the
 common flags documented by `help`. Advanced JSON options merge into the configuration built from flags. JSON fields override flags with the same name. For fully explicit

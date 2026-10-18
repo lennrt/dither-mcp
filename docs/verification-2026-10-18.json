@@ -1,0 +1,153 @@
+{
+  "status": "automated-checks-passed-with-documented-limitations",
+  "date": "2026-10-18",
+  "environment": {
+    "go": "go1.27.0",
+    "os": "darwin",
+    "arch": "arm64",
+    "node": "24.19.0",
+    "pnpm": "11.25.0",
+    "ffmpeg": "9.0.1",
+    "openspec": "1.14.0",
+    "quint": "0.33.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34"
+  },
+  "scope": "Palette comparison, source-color studio workflows, sparse extraction, cancellable encoders, explicit CLI flags, and mixed studio option edits. Local implementation checks and finite models; no hosted CI or external-client compatibility claim.",
+  "checks": [
+    {
+      "command": "make spec-install",
+      "result": "pass",
+      "note": "Frozen lockfile with ignored install scripts. No dependency changes."
+    },
+    {
+      "command": "make verify",
+      "result": "pass",
+      "includes": [
+        "Go formatting, vet, full tests and race tests",
+        "native build",
+        "documentation links, schemas and palette snapshot consistency",
+        "real stdio MCP subprocess",
+        "UI bundle freshness and JavaScript state/bridge tests",
+        "embedding stdio and source/path authority tests"
+      ],
+      "ui_tests": 36,
+      "embedding_tests": 5
+    },
+    {
+      "command": "make spec-check",
+      "result": "pass",
+      "openspec_items": 13,
+      "quint_models": 6,
+      "quint_run_tests": 96,
+      "simulation_traces": 65000,
+      "mutation_checks": 19,
+      "detail": "../spec/verification.json"
+    },
+    {
+      "command": "make fuzz",
+      "result": "pass",
+      "seconds_per_target": 5,
+      "parallel": 2,
+      "executions": {
+        "FuzzProcess": 64516,
+        "FuzzStrictJSON": 155060,
+        "FuzzMetadata": 439742,
+        "FuzzICCProfile": 359207
+      }
+    },
+    {
+      "command": "make video-test",
+      "result": "pass",
+      "coverage": [
+        "MP4, MOV, WebM, Matroska and AVI inputs",
+        "MP4 detected despite .bin extension",
+        "GIF, sprite PNG, H.264 MP4 and VP9 WebM outputs"
+      ]
+    },
+    {
+      "command": "make ui-browser embedding-browser",
+      "result": "pass",
+      "details": [
+        "mcp-apps-browser-verification.json",
+        "embedding-browser-verification.json"
+      ],
+      "studio_workflows": 15,
+      "embedding_checks": 7,
+      "visual_review": [
+        "desktop",
+        "mobile",
+        "dark mode"
+      ],
+      "browser_errors": 0,
+      "external_requests": 0,
+      "failed_requests": 0
+    }
+  ],
+  "regression_evidence": [
+    "Original fixed-stride extractor falsely rejected four sparse-source fixtures; the fallback passes them and preserves nonempty sampling results.",
+    "Replacing every comparison cell palette with the first candidate fails two exact-pixel reference checks.",
+    "Replacing application EncodeContext with legacy Encode fails five deterministic cancellation checks; background GIF palette training also fails its cancellation bound.",
+    "Six pre-change output hashes verify byte compatibility for PNG, JPEG, GIF, SVG, PBM and ASCII.",
+    "Original CLI silently accepted inspect render flags; unregistered-flag diagnostics also failed command-context checks before correction.",
+    "Original mixed-edit handler lost the latest control value. Removing active numeric-input preservation reproduces seed -17 becoming 17 in Chromium.",
+    "Direct Apply of explicit null previously coerced options to defaults; state and browser checks now retain invalid text and make no tool call.",
+    "A deterministic canceled reply exposed false disconnection in the original onerror handler. The final browser suite requires preserved connection and subsequent successful preview/save.",
+    "The documented palette-comparison CLI command reproduces the published contact sheet byte-for-byte."
+  ],
+  "limitations": [
+    "Only native macOS arm64 was exercised in this pass.",
+    "Standard codecs may work between writer calls; a blocked external writer cannot be interrupted by context checks.",
+    "Service-level cancellation admission test uses a pre-canceled request; deterministic mid-encoding tests cover the engine and bounded helper.",
+    "Fixed-stride extraction may retain sampling bias when its initial sample is nonempty.",
+    "Finite seeded simulations and mutations do not prove Go or UI refinement.",
+    "External MCP hosts, MCP Inspector, static showcase and terminal recordings were not rerun. Current studio screenshots and palette contact sheet were regenerated.",
+    "No vulnerability audit was rerun because dependencies did not change; earlier advisory results remain historical.",
+    "The repository has no hosted CI."
+  ],
+  "source_sha256": {
+    "engine/SOURCES.md": "792191188f1c54ec0abc6c3c496a5c56f4638e5fe9f289a2022b688041f0f687",
+    "engine/encode.go": "8f07aace687b593f8aeb996dbd9a2a2447df106cdc92271d22e7c2fa2d0d7db7",
+    "engine/encode_context_test.go": "d6d5260366c3a14b2aded5dfab97ba393cd192cb937be4fb982bed203a55b3f6",
+    "engine/palette.go": "2bc7e1622c675c1e7f536a891855644392fd9ef8f24a5d2cfdd15181279fc8a2",
+    "engine/palette_sampling_test.go": "ae6d6a4c03a6728b3dcc0ad498d01352ffe5aa71853543ea1ea0a5527b2a681a",
+    "engine/types.go": "c3a2388de0cf7f486c76501cb570b83b88896afe86900af95386af88455f053d",
+    "examples/embedding/browser-check.mjs": "5416269bdfe3e9a792cccb2a739eaea35016b9fed1b842170951a09c377de273",
+    "examples/embedding/session.mjs": "8c71374e520e3d42c1642d6591db13d71f29231b58d45b1f097a861167e2f4a9",
+    "examples/embedding/session.test.mjs": "c0c7f4c38eb3daea5114bf9c6657dc7d7c0ec791445a9e223de5aedc8323044e",
+    "examples/embedding/studio-host.mjs": "1939882effa5dce3859a81cb89e8b2c8b0043da7a052c901d0c0829c45be098a",
+    "internal/app/encode_context_test.go": "8451f3e5e335eca4524f0ec14e6128cae89e48b710a70e5c5c351f7fa4b124a7",
+    "internal/app/export.go": "09d7392ddbf6fc218f5497b9183d213397f9cd5d341ad393b408a98e5d4fb85c",
+    "internal/app/palette_compare_test.go": "2c0db430032ae695de7da24b227ee33a2da344b16adb8f886cf98f3d0bf91b3f",
+    "internal/app/preview.go": "e008bf27d711a6984c5e7b26b77691af82a4464ab76dfa82f27b5398dc204477",
+    "internal/app/service.go": "2d0676fc766863eedeb4fb278aca19a2f1f44c4270dc1495955cefbadd8d38a9",
+    "internal/app/studio.go": "cdbd4c84c1915dcb5873b1bd731c21f4e70e08fc9a48ff73812bb2ba492411df",
+    "internal/app/types.go": "d6f2b69f43b341eac4e1246a3b26ef8ab91b9e3805d76f408f8d14905cc9f743",
+    "internal/app/video.go": "80c0dbf0cf19463f7c7b08b2d7cad168192c4754bb659aafd0c2db6f265e47a6",
+    "internal/cli/cli.go": "5686700eaa90b4b50f649e296a63593007249a77d79ea2cf17e76b15f62081a0",
+    "internal/cli/cli_test.go": "73b417854d4b23571f776a3506671ef04b11125c104886acaae47d675bfae296",
+    "internal/cli/flag_admission_test.go": "5fda1c08ca87c3b0b1d3ac43feafe266b7544635b65b3a6286b79c766f60d38c",
+    "internal/mcpapp/studio.html": "0dae406ace56c05aa8db91720f4e63347c646f10e27203eadde7da4c5a79f5e8",
+    "internal/mcpserver/server.go": "40009c63bfce8b404f42a5cd97c489dfdfcc955927a56f4ee733c5cd361a6eba",
+    "internal/mcpserver/server_test.go": "09345b72594208d02c0372c4f66f5c0b5917cd23758eefa6318008a389208526",
+    "spec/README.md": "83d1ca4bf231d5eafe1604e8bd0506469e95540babada0f94090b747575958d6",
+    "spec/check.mjs": "471f6fa4a185c8009fe8337d029da182fa053bef4b1027edc8c9576c3d0687dc",
+    "spec/mcp_apps.qnt": "c26c25d9cf3f2e46fa419018420f9a66970974a7de80615ab19f443dc4163954",
+    "spec/publication.qnt": "71c86b97da500d36ac9f917f36198214716e75181b31a10488ce4c4f2c4d254e",
+    "spec/quantization.qnt": "757b43183ca7529fce96bb1af4dac5e2c680b4d7819ce10997e7796b3e033ae5",
+    "ui/app.mjs": "6f1ef5abca8d218a19ae8e710defe4a2f1c6ee43fe3388f1cd4103aa97e054fa",
+    "ui/browser-check.mjs": "21ca1072e8b84a6f5246ae9c892a3c51fb368653f37bacac846c7fb23994a1dd",
+    "ui/bundle-meta.json": "607d36f758511ac9600023ade5500741c9e96fe6a7f4b2572e16c5bafd20bc99",
+    "ui/harness-client.mjs": "767a82288226e9c44d110c97bfcbf24382c12413cc1448071879e26cf4b4aeb3",
+    "ui/harness.mjs": "9221a2f713975816762a40ab70098b828ff43dafd254cf239bcc89b4858b2059",
+    "ui/index.html": "4b9fd2c76bb1f29c531494d8cfa1269e110afb652e85e0d3d24984f405b5dc54",
+    "ui/server.test.mjs": "9e2f6e60900f1bc64377b4e58d9b969907abaef3ef8b632f278cce67998e2e31",
+    "ui/state.mjs": "2c4f18c710e4416356b86cb6b7c0ba4a52aa253be4cd8e2823a76888000224ef",
+    "ui/state.test.mjs": "65f303a0ab0a659c65788c8443ec36f1ce9b2fb62fb7b626bb1e1f2900749d4b",
+    "ui/style.css": "15145691c39a7c110eb23f69f5bdcbf5b0f5f9a5fe2dfe984cc44fa4d7533b61"
+  },
+  "asset_sha256": {
+    "assets/palette-comparison.png": "c46662798e0486fbc82fe46f9ad4dcd240751ad0708418d378df9bad1d956b15"
+  },
+  "independent_review": "Implementation, tests, OpenSpec/model changes, and final CLI/null/late-response corrections reviewed; substantiated findings fixed and affected checks passed."
+}

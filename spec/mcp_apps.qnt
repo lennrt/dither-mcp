@@ -1,6 +1,8 @@
 // Revisions abstract complete source, palette, options, and mask settings.
 // Requests may finish after cancellation or an edit. Only current results count.
 // Publication details belong to publication.qnt and concrete service tests.
+// Extraction success abstracts a valid palette with at least two unique colors.
+// It changes only the draft palette; it cannot accept a preview or publish.
 module mcp_apps {
   pure val Requests = 0.to(2)
   type Authorization = {
@@ -10,6 +12,7 @@ module mcp_apps {
   type State = {
     revision: int, connected: bool, tools: bool, output: bool,
     next: int, pending: int, inFlight: Set[int], requested: int -> int,
+    extractions: Set[int], palette: int,
     accepted: int, acceptedRevision: int, recipe: int,
     saving: bool, authorizations: List[Authorization], writes: int,
     discarded: int, cancellations: int, failures: int
@@ -18,6 +21,7 @@ module mcp_apps {
   action init = s' = {
     revision: 0, connected: false, tools: false, output: false,
     next: 0, pending: -1, inFlight: Set(),
+    extractions: Set(), palette: -1,
     requested: Map(0 -> -1, 1 -> -1, 2 -> -1),
     accepted: -1, acceptedRevision: -1, recipe: -1,
     saving: false, authorizations: List(), writes: 0,
@@ -46,7 +50,7 @@ module mcp_apps {
     val current = id == s.pending and s.requested.get(id) == s.revision
     val accept = current and success
     all {
-      s.inFlight.contains(id),
+      s.inFlight.contains(id), not(s.extractions.contains(id)),
       s' = {
         inFlight: s.inFlight.exclude(Set(id)),
         pending: if (id == s.pending) -1 else s.pending,
@@ -55,6 +59,33 @@ module mcp_apps {
         recipe: if (accept) s.requested.get(id) else s.recipe,
         discarded: s.discarded + (if (not(current)) 1 else 0),
         failures: s.failures + (if (current and not(success)) 1 else 0),
+        ...s
+      }
+    }
+  }
+  action extract = all {
+    s.connected, s.tools, s.pending == -1, not(s.saving), s.next < 3,
+    s.revision < 3,
+    s' = {
+      pending: s.next, next: s.next + 1,
+      inFlight: s.inFlight.union(Set(s.next)),
+      extractions: s.extractions.union(Set(s.next)),
+      requested: s.requested.set(s.next, s.revision),
+      accepted: -1, acceptedRevision: -1, recipe: -1, ...s
+    }
+  }
+  action receiveExtraction(id, success) = {
+    val extractionCurrent = id == s.pending and s.requested.get(id) == s.revision
+    val adopt = extractionCurrent and success
+    all {
+      s.inFlight.contains(id), s.extractions.contains(id),
+      s' = {
+        inFlight: s.inFlight.exclude(Set(id)),
+        pending: if (id == s.pending) -1 else s.pending,
+        revision: if (adopt) s.revision + 1 else s.revision,
+        palette: if (adopt) id else s.palette,
+        discarded: s.discarded + (if (not(extractionCurrent)) 1 else 0),
+        failures: s.failures + (if (extractionCurrent and not(success)) 1 else 0),
         ...s
       }
     }
@@ -89,6 +120,7 @@ module mcp_apps {
     nondet flag = Set(false, true).oneOf()
     any {
       connect(flag), edit, enterOutput(flag), preview, receive(id, flag),
+      extract, receiveExtraction(id, flag),
       cancel, save(flag), finishSave(flag), stutter
     }
   }
@@ -104,6 +136,7 @@ module mcp_apps {
 
   val requestProvenance = s.accepted >= 0 implies all {
     s.accepted < s.next,
+    not(s.extractions.contains(s.accepted)),
     s.acceptedRevision == s.requested.get(s.accepted),
     s.recipe == s.acceptedRevision
   }
@@ -126,6 +159,7 @@ module mcp_apps {
   val staleDiscarded = s.discarded > 0
   val canceledRequest = s.cancellations > 0
   val savedCurrent = s.writes > 0
+  val paletteExtracted = s.palette >= 0
 
   run previewDoesNotPublishTest = init.then(connect(true)).then(preview).then(receive(0, true))
     .expect(safety and previewAccepted and s.writes == 0 and s.authorizations.length() == 0)
@@ -156,4 +190,22 @@ module mcp_apps {
     .then(save(true)).then(save(true).fail())
   run failedSaveDoesNotPublishTest = initSave.then(preview).then(receive(0, true))
     .then(save(true)).then(finishSave(false)).expect(safety and s.writes == 0)
+  run extractionRequiresPreviewTest = initSave.then(extract).then(receiveExtraction(0, true))
+    .expect(safety and paletteExtracted and not(canSave) and s.writes == 0)
+    .then(preview).then(receive(1, true))
+    .then(save(true)).then(finishSave(true)).expect(safety and savedCurrent)
+  run cannotSaveExtractedPaletteWithoutPreviewTest = initSave.then(extract)
+    .then(receiveExtraction(0, true)).then(save(true).fail())
+  run pendingExtractionCannotSaveTest = initSave.then(preview).then(receive(0, true))
+    .then(extract).then(save(true).fail())
+  run failedExtractionKeepsPaletteTest = initSave.then(extract).then(receiveExtraction(0, false))
+    .expect(safety and s.palette == -1 and s.revision == 0 and not(canSave))
+  run editedExtractionCannotChangePaletteTest = initSave.then(extract).then(edit)
+    .then(receiveExtraction(0, true)).expect(safety and s.palette == -1 and s.revision == 1 and staleDiscarded)
+  run cancelledExtractionCannotChangePaletteTest = initSave.then(extract).then(cancel)
+    .then(receiveExtraction(0, true)).expect(safety and s.palette == -1 and s.revision == 0 and not(canSave))
+  run staleExtractionCannotReplaceNewPaletteTest = initSave.then(extract).then(cancel)
+    .then(extract).then(receiveExtraction(1, true)).then(receiveExtraction(0, true))
+    .expect(safety and s.palette == 1 and s.revision == 1 and not(canSave))
+  run cannotExtractWithoutHostToolsTest = init.then(connect(false)).then(extract.fail())
 }

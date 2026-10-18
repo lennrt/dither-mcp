@@ -3,10 +3,11 @@
 module publication {
   pure val Jobs = Set(0, 1)
   pure val Paths = Set(0, 1)
-  pure val Stages = Set("new", "admitted", "rendered", "staged", "complete", "cancelled", "failed")
+  pure val Stages = Set("new", "admitted", "rendered", "encoding", "staged", "complete", "cancelled", "failed")
   type State = {
     stage: int -> str, target: int -> int, safe: int -> bool,
     bounded: int -> bool,
+    encodedRows: int -> int, cancelledRows: int -> int,
     files: int -> int, completeBytes: Set[int], published: Set[int],
     cancelled: Set[int], unauthorizedWrites: int, unsafeWrites: int,
     partialWrites: int, networkRequests: int
@@ -17,6 +18,7 @@ module publication {
   action init = s' = {
     stage: Jobs.mapBy(_ => "new"), target: Jobs.mapBy(_ => 0),
     safe: Jobs.mapBy(_ => false), bounded: Jobs.mapBy(_ => false),
+    encodedRows: Jobs.mapBy(_ => 0), cancelledRows: Jobs.mapBy(_ => 0),
     files: Map(0 -> 9, 1 -> -1),
     completeBytes: Set(9), published: Set(), cancelled: Set(),
     unauthorizedWrites: 0, unsafeWrites: 0, partialWrites: 0, networkRequests: 0
@@ -36,19 +38,30 @@ module publication {
     s' = { stage: s.stage.set(j, "rendered"), ...s }
   }
 
-  action encode(j) = all {
+  // Two rows abstract cooperative handwritten encoding. Direct encode models
+  // a codec that completes between observable writer/cancellation boundaries.
+  action beginEncode(j) = all {
     s.stage.get(j) == "rendered",
+    s' = { stage: s.stage.set(j, "encoding"), ...s }
+  }
+  action encodeRow(j) = all {
+    s.stage.get(j) == "encoding", s.encodedRows.get(j) < 2,
+    s' = { encodedRows: s.encodedRows.set(j, s.encodedRows.get(j) + 1), ...s }
+  }
+  action encode(j) = all {
+    s.stage.get(j) == "rendered" or (s.stage.get(j) == "encoding" and s.encodedRows.get(j) == 2),
     s' = { stage: s.stage.set(j, "staged"), completeBytes: s.completeBytes.union(Set(j)), ...s }
   }
 
   action failJob(j) = all {
-    Set("admitted", "rendered", "staged").contains(s.stage.get(j)),
+    Set("admitted", "rendered", "encoding", "staged").contains(s.stage.get(j)),
     s' = { stage: s.stage.set(j, "failed"), ...s }
   }
 
   action cancel(j) = all {
-    Set("new", "admitted", "rendered", "staged").contains(s.stage.get(j)),
-    s' = { stage: s.stage.set(j, "cancelled"), cancelled: s.cancelled.union(Set(j)), ...s }
+    Set("new", "admitted", "rendered", "encoding", "staged").contains(s.stage.get(j)),
+    s' = { stage: s.stage.set(j, "cancelled"), cancelled: s.cancelled.union(Set(j)),
+      cancelledRows: s.cancelledRows.set(j, s.encodedRows.get(j)), ...s }
   }
 
   // The existence check and file publication are one abstract atomic action.
@@ -79,7 +92,7 @@ module publication {
     nondet p = Paths.oneOf()
     nondet safe = Set(true, false).oneOf()
     nondet bounded = Set(true, false).oneOf()
-    any { admit(j, p, safe, bounded), render(j), encode(j), failJob(j), cancel(j), publish(j), collide(j), stutter }
+    any { admit(j, p, safe, bounded), render(j), beginEncode(j), encodeRow(j), encode(j), failJob(j), cancel(j), publish(j), collide(j), stutter }
   }
 
   val typeOK = all {
@@ -92,8 +105,9 @@ module publication {
   val onlyValidatedWrites = s.unsafeWrites == 0
   val noPartialPublication = s.partialWrites == 0
   val cancellationStopsPublication = s.cancelled.intersect(s.published) == Set()
+  val cancellationStopsEncoding = s.cancelled.forall(j => s.encodedRows.get(j) == s.cancelledRows.get(j))
   val noNetwork = s.networkRequests == 0
-  val safety = all { typeOK, onlyCompleteVisible, noUnauthorizedOverwrite, onlyValidatedWrites, noPartialPublication, cancellationStopsPublication, noNetwork }
+  val safety = all { typeOK, onlyCompleteVisible, noUnauthorizedOverwrite, onlyValidatedWrites, noPartialPublication, cancellationStopsPublication, cancellationStopsEncoding, noNetwork }
   val completed = s.published.size() > 0
   val collision = Jobs.exists(j => s.stage.get(j) == "failed" and s.completeBytes.contains(j))
   val cancelledDuringWork = s.cancelled.size() > 0 and s.completeBytes.size() > 1
@@ -114,4 +128,15 @@ module publication {
   run failedBatchItemKeepsEarlierOutputTest = init
     .then(admit(0, 1, true, true)).then(render(0)).then(encode(0)).then(publish(0))
     .then(admit(1, 0, false, true)).expect(safety and s.published == Set(0) and s.stage.get(1) == "failed")
+  run cancelPartialEncodeTest = init.then(admit(0, 1, true, true)).then(render(0))
+    .then(beginEncode(0)).then(encodeRow(0)).then(cancel(0))
+    .expect(safety and s.encodedRows.get(0) == 1 and not(s.completeBytes.contains(0)))
+    .then(encodeRow(0).fail())
+  run cancelledEncodeCannotCompleteTest = init.then(admit(0, 1, true, true)).then(render(0))
+    .then(beginEncode(0)).then(encodeRow(0)).then(cancel(0)).then(encode(0).fail())
+  run incompleteRowsCannotCompleteTest = init.then(admit(0, 1, true, true)).then(render(0))
+    .then(beginEncode(0)).then(encodeRow(0)).then(encode(0).fail())
+  run completeRowEncodingTest = init.then(admit(0, 1, true, true)).then(render(0))
+    .then(beginEncode(0)).then(encodeRow(0)).then(encodeRow(0))
+    .then(encode(0)).then(publish(0)).expect(safety and s.files.get(1) == 0)
 }

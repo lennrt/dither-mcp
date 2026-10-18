@@ -75,7 +75,7 @@ A typical agent follows this workflow:
 6. Render the final artifact.
 7. Save its recipe.
 
-Candidate cell coordinates identify each comparison image without text embedded in the pixels. CLI operations call the same service as tools.
+Candidate cell coordinates identify each comparison image without text embedded in the pixels. Comparisons vary algorithms with one palette, or named palettes with one algorithm. Palette cells also identify their palette and algorithm. A palette sheet omits a single shared recipe and retains full operation parameters. CLI operations call the same service as tools.
 
 ## Embedded studio
 
@@ -85,7 +85,7 @@ When dimensions are omitted, the preview fits within 512 × 512 pixels without e
 
 The tool's `_meta.ui.resourceUri` points to `ui://dither/studio.html`. This third resource uses `text/html;profile=mcp-app`. It embeds HTML, CSS, and JavaScript built with the official `@modelcontextprotocol/ext-apps` SDK. Development tools create the bundle. The Go binary embeds and serves it with no runtime Node.js process or external asset request.
 
-A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, apply read-only previews, and inspect the image and swatches. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
+A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, extract source colors into a custom draft, apply read-only previews, and inspect the image and swatches. Extraction uses the complete normalized source and requires a new explicit preview before saving. Its response must match the current request and control revision. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
 
 Hosts must support both MCP Apps and local stdio servers to display this view. Other hosts receive the PNG and structured JSON from `dither_studio`. The original 13 tools retain their existing tool results. See the [MCP Apps guide](mcp-apps.md) for the detailed host and verification contracts.
 
@@ -123,7 +123,7 @@ There is no overwrite option. A concurrent collision has at most one winner. Thi
 
 An unclean process termination may leave a temporary file. It never leaves a partially published destination.
 
-Cancellation is cooperative. A cancellation **observed before publication** stops that publication. A cancellation that arrives after the final check may race with a successful atomic commit. The complete artifact may exist even if a client stops waiting. The service bounds standard-library codec calls, but does not interrupt them on every pixel.
+Cancellation is cooperative. A cancellation **observed before publication** stops that publication. A cancellation that arrives after the final check may race with a successful atomic commit. The complete artifact may exist even if a client stops waiting. Handwritten encoder loops check cancellation between rows, including GIF palette mapping and JPEG matting. Palette training receives the request context. Standard-library codecs check cancellation through their output writer and may continue work between writes. A blocked caller-provided writer cannot be interrupted by these checks.
 
 Batch items commit independently. Earlier successes remain when a later item fails or cancellation stops the sequence.
 

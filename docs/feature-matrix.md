@@ -23,7 +23,7 @@ The live `dither_catalog` and `dither_palettes` results are the authoritative li
 | Sampling | Crop after orientation, width/height resize, nearest or alpha-correct bilinear resampling, coarse pixel grid, and exact-size enlargement | Crop uses upright source coordinates. Imported DPI does not automatically change pixel dimensions |
 | Regional effects | Rectangle, circle, inverted selection, local image mask | No learned subject segmentation, click tracking, or camera UI |
 | Retro effects | Scanlines, CRT modulation, seeded noise/glitch bands, thresholded pixel sorting | A focused set, not Ditherer's 300+ filter library |
-| Inspection and iteration | Upright dimensions, normalization details, alpha/hash metadata, source preview, in-memory dithered studio preview, and algorithm comparison contact sheet | Studio previews fit within 1,024 pixels per axis and 2 MiB PNG. The studio provides image settings and zoom, without brush editing |
+| Inspection and iteration | Upright dimensions, normalization details, alpha/hash metadata, source preview, in-memory dithered studio preview, and algorithm or palette comparison contact sheets | Studio previews fit within 1,024 pixels per axis and 2 MiB PNG. The studio provides source-color extraction, image settings, and zoom, without brush editing |
 | Recipes and batch | Versioned JSON look recipes, per-item batch results, independent atomic destinations | No multi-output transaction or automatic rollback |
 | Still input | PNG, JPEG, GIF, WebP, BMP, TIFF | Animated GIF uses first frame in still render. No SVG/HEIC/RAW input |
 | Still output | PNG, JPEG, GIF, SVG, PBM, ASCII | WebP/TIFF/BMP encode not included. JPEG is lossy |

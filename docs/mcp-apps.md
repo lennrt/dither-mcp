@@ -28,6 +28,21 @@ Ask the agent to open an image with `dither_studio`, or call the tool directly:
 
 Choose an algorithm, search the palette library, or enter custom hex colors. Adjust tone, dimensions, and texture. Advanced JSON exposes the complete engine options, including crop, masks, and effects. The source and image-mask paths come from the tool call.
 
+If you edit advanced JSON and then change a control, the latest control value
+merges into those options. Hidden settings remain intact. Invalid JSON stays
+visible and must be corrected before a control can change those options or Apply
+can submit them. Options must be a JSON object; `null` does not reset defaults.
+
+Select **Extract colors** to build a custom palette from the source. Choose
+2–256 colors; the default is 8. Extraction reads the complete normalized source
+before crop, tone adjustments, and masking. It may return fewer colors than
+requested. A source with fewer than two distinct colors returns an error.
+
+Extraction preserves your other settings and creates no file. After it succeeds,
+select **Apply preview** to see the new colors. Changes or cancellation during
+extraction prevent a late result from replacing your draft. A late response after
+cancellation leaves the connected studio available for another preview.
+
 Select **Apply preview** to process changed settings. Editing controls marks the displayed image as stale. Save stays disabled until those settings have a successful preview. Pending, canceled, and late results cannot authorize a save of unpreviewed settings.
 
 Enter a new workspace-relative destination, then select **Save image**. Saving calls the existing `dither_render` tool. Choose **Preview**, **Source**, or **Custom dimensions** for the export. The filename extension selects the output format. The destination must not exist.
@@ -78,7 +93,7 @@ The public resource returns a complete HTML document through `resources/read`. E
 
 Scripts, styles, and the SDK are embedded in the Go binary. The running studio uses the host bridge and in-memory PNG data. It needs no CDN, HTTP listener, or external network access.
 
-The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable interactive preview and save. Without that capability, the UI can show its supplied result and explains the unavailable controls.
+The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable interactive preview, extraction, and save. Without that capability, the UI can show its supplied result and explains the unavailable controls.
 
 For supporting clients, result `_meta.dither` supplies the canonical request and the algorithm/palette catalogs. The normal result still contains structured metadata, serialized JSON text, and native PNG image content. The server omits UI linkage and presentation metadata when the client does not advertise the supported MIME type.
 
@@ -114,7 +129,7 @@ make ui-browser
 The check uses the actual embedded HTML with external connections and native
 form submission blocked. It covers initial rendering, palette search, changed
 previews, exact PNG saving, overwrite rejection, custom-color validation,
-keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
+source-color extraction, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
 `serverTools`. Screenshots and a JSON report go to `work/browser-check/`.
 
 To include the separate showcase, serve its directory locally and set
@@ -126,5 +141,5 @@ DITHER_SITE_TEST_URL=http://localhost:8080 make ui-browser
 
 The browser check verifies navigation to the studio section, visible image
 loading, and desktop/mobile overflow. It fails on browser script errors,
-unexpected request failures, or external requests. On October 8, 2026, it passed
-with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.
+unexpected request failures, or external requests. On October 18, 2026, the studio and embedding checks passed
+with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate showcase was not rerun in this pass. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.

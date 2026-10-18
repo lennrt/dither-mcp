@@ -57,7 +57,7 @@ const modelWitnesses = {
   quantization: ['bothComplete', 'hasMaskedRegion'],
   palette_discovery: ['filteredNonempty', 'emptyMatch', 'completeTraversal', 'beyondEnd'],
   normalization: ['normalizedComplete', 'swappedAxes', 'rejectedMetadata', 'canceledDuringNormalization'],
-  mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent'],
+  mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent', 'paletteExtracted'],
   studio_export: ['sourceSizedExport', 'customSizedExport', 'changedInputRejected', 'capturedBeforeDiskChange'],
 };
 for (const [model, witnesses] of Object.entries(modelWitnesses)) {
@@ -81,10 +81,15 @@ const temp = mkdtempSync(path.join(os.tmpdir(), 'dither-spec-mutation-'));
 try {
   for (const mutation of [
     { model: 'publication', before: 's.files.get(p) == -1,', after: 's.files.get(p) >= -1,' },
+    { model: 'publication', before: 's.stage.get(j) == "encoding", s.encodedRows.get(j) < 2,', after: 's.encodedRows.get(j) < 2,' },
+    { model: 'quantization', before: 'else blockSample(visible, 0).union(blockSample(visible, 2))', after: 'else Set()' },
+    { model: 'quantization', before: 'palette: ids.nth(i), algorithm: algorithm', after: 'palette: ids.nth(0), algorithm: algorithm' },
+    { model: 'quantization', before: 'algorithms.length() == 0 and not(sharedPaletteOrRecipe)', after: 'not(sharedPaletteOrRecipe)' },
     { model: 'palette_discovery', before: 'else offset + count', after: 'else offset + count - 1' },
     { model: 'normalization', before: 's.phase == "active", s.orientationRuns == 1, s.colorRuns == 1,', after: 's.phase == "active", s.colorRuns == 1,' },
     { model: 'mcp_apps', before: 's.accepted >= 0, s.acceptedRevision == s.revision', after: 's.accepted >= 0' },
     { model: 'mcp_apps', before: 'val current = id == s.pending and s.requested.get(id) == s.revision', after: 'val current = true' },
+    { model: 'mcp_apps', before: 'val extractionCurrent = id == s.pending and s.requested.get(id) == s.revision', after: 'val extractionCurrent = true' },
     { model: 'mcp_apps', before: 'recipe: if (accept) s.requested.get(id) else s.recipe,', after: 'recipe: if (accept) s.requested.get(id) else s.recipe, writes: s.writes + 1,' },
     { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readMask == s.request.mask' },
     { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readSource == s.request.source' },

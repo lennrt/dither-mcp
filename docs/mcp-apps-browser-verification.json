@@ -1,36 +1,35 @@
 {
-  "date": "2026-10-09",
+  "date": "2026-10-18",
   "browser": "151.0.7922.34",
   "checks": [
     "Initial preview, complete catalogs, and explicit save gating",
     "Dirty settings reject late initial results; filtered palette library and real preview call",
     "Zoom, byte-identical PNG save, and overwrite rejection",
+    "Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels",
+    "Advanced JSON merges later slider, checkbox, and select edits while preserving crop and effects in the real preview request",
+    "Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction",
+    "Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection",
     "Custom-color validation and real custom-palette preview",
     "Host theme changes, 370px host and 390px viewport without horizontal overflow",
     "Host cancellation invalidates saving and a fresh preview recovers",
     "Keyboard save works without sandbox form permission",
     "Source-size and custom exports, pixel-budget validation, and unchanged preview size",
     "Changed source creates no artifact, invalidates save, and requires a fresh preview",
-    "Host without serverTools displays result and disables mutations",
-    "Showcase studio navigation, all visible images loaded, desktop/mobile layout without overflow"
+    "Monochrome source extraction reports the tool error and keeps the current custom palette",
+    "Host without serverTools displays result and disables mutations"
   ],
   "errors": [],
   "externalRequests": [],
   "failedRequests": [],
   "screenshots": [
-    "work/browser-check/studio-desktop.png",
-    "work/browser-check/studio-dark.png",
-    "work/browser-check/studio-narrow-dark.png",
-    "work/browser-check/studio-mobile.png",
-    "work/browser-check/studio-export-mobile.png",
-    "work/browser-check/site-studio-desktop.png",
-    "work/browser-check/site-studio-mobile.png",
-    "work/browser-check/site-mobile.png"
+    "studio-desktop.png",
+    "studio-dark.png",
+    "studio-narrow-dark.png",
+    "studio-mobile.png",
+    "studio-export-mobile.png"
   ],
-  "scope": "Chromium through the official SDK test host and real local Go server; external-client checks are recorded separately in hosts.md.",
-  "playwright": "1.62.1",
-  "published_screenshots": {
-    "mcp-app-studio.png": "aae94293b09bda354437d6929fbefe9b2cfff60bff0c12766bebc23e066c5318",
-    "mcp-app-studio-mobile.png": "5c97ece6fca391590e9f66cfb146143f8c24068dd9fb1cf78aaaefa118acf4da"
+  "published_screenshot_sha256": {
+    "assets/mcp-app-studio.png": "912bc44062ad5bcd8135cd88c9b5f0d2f31ca8080c5895b9846a636658b3e86c",
+    "assets/mcp-app-studio-mobile.png": "0110106781ae5ba74df54d610e65d720d5997093abbb98bfcee943a457b5a082"
   }
 }

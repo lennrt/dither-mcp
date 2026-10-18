@@ -24,6 +24,7 @@ The toolkit provides **14 tools with typed inputs**, **3 resources**, and **3 pr
 | “Find four warm colors for a botanical print.” | Filter `dither_palettes` by name, category, and color count → `dither_render` |
 | “Build a palette from this image’s own colors.” | `dither_inspect` → `dither_palette_extract` → `dither_render` |
 | “Show me Atkinson, Floyd–Steinberg, and Bayer side by side.” | `dither_catalog` → `dither_compare` |
+| “Compare Oat and Ink, Game Boy, and Sepia with the same texture.” | `dither_palettes` → `dither_compare` with `palettes` |
 | “Apply the same settings to this folder of images.” | `dither_recipe_load` → `dither_batch` |
 | “Dither the subject. Keep the background. Add CRT texture.” | `dither_render` with a geometric or local image mask and effects |
 | “Create a short looping animation from this image.” | `dither_animate` → GIF or sprite sheet |
@@ -42,6 +43,8 @@ Image processing stays in your configured workspace, with source files and artif
 Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
 
 Choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
+
+To build a palette from your image, choose a color count and select **Extract colors**. The studio uses the complete normalized source before crop, tone, and mask settings. It puts the colors into your custom palette. Select **Apply preview** to see them, then save the accepted result.
 
 Previews run in memory and create no file. Omitted dimensions fit within 512 × 512 pixels without enlarging the source. Every preview stays within 1,024 pixels per axis and 2 MiB PNG. Choose **Preview**, **Source**, or **Custom dimensions** for export, then enter a new relative output path. Preview size reproduces the accepted settings. Source size uses the upright image dimensions after cropping. Custom size requires both dimensions. A different resolution can change the dither pattern. The studio preserves all other settings and checks source and mask fingerprints before saving. The filename extension selects the output format.
 
@@ -191,6 +194,23 @@ Start with an inspection and a comparison sheet:
   --algorithms atkinson,floyd-steinberg,bayer-8 \
   --palette sepia --width 320
 ```
+
+To compare colors with the same texture, use a palette shortlist:
+
+```sh
+./bin/dither-mcp compare --root . \
+  --input docs/assets/source/moon-garden.png \
+  --output palette-studies.png \
+  --palettes oat-and-ink,gameboy,sepia --algorithm atkinson --width 320
+```
+
+![Moon Garden in Oat and Ink, Game Boy, and Sepia, rendered with the same Atkinson settings](docs/assets/palette-comparison.png)
+
+*Left to right: Oat and Ink · Game Boy · Sepia. Each cell reports its palette, algorithm, and exact rectangle.*
+
+Compare either palettes or algorithms, with at most 12 candidates. Palette mode
+uses shared inline options and excludes a common palette, custom colors, and
+saved recipes. Each candidate can then be rendered separately.
 
 Save the settings in a versioned recipe. Use that recipe to render the image:
 

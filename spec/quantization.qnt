@@ -9,6 +9,28 @@ module quantization {
   pure def noise(pixel, seed) = ((pixel * 5 + seed * 2) % 3) - 1
   pure def nearest(v) = if (v <= 1) 0 else if (v <= 5) 3 else 7
   pure def quantize(v, pixel, seed) = nearest(clamp(v + noise(pixel, seed)))
+
+  // Four positions and a two-sample budget model empty fixed-stride recovery.
+  // Color reduction and alpha weights remain independent implementation checks.
+  pure def strideSamples(visible) = visible.intersect(Set(0, 2))
+  pure def blockSample(visible, start) =
+    if (visible.contains(start)) Set(start)
+    else if (visible.contains(start + 1)) Set(start + 1) else Set()
+  pure def extractionSamples(visible) =
+    if (strideSamples(visible).size() > 0) strideSamples(visible)
+    else blockSample(visible, 0).union(blockSample(visible, 2))
+
+  // Three candidates abstract the implementation's twelve-cell bound.
+  pure val PaletteIDs = Set(0, 1, 2)
+  pure val AlgorithmIDs = Set(0, 1)
+  pure def candidatesValid(ids, allowed) = ids.length() >= 1 and ids.length() <= 3 and
+    ids.indices().forall(i => allowed.contains(ids.nth(i)))
+  pure def comparisonValid(algorithms, palettes, sharedPaletteOrRecipe) =
+    if (palettes.length() > 0)
+      algorithms.length() == 0 and not(sharedPaletteOrRecipe) and candidatesValid(palettes, PaletteIDs)
+    else candidatesValid(algorithms, AlgorithmIDs)
+  pure def paletteCells(ids, algorithm) = ids.indices().mapBy(i =>
+    { palette: ids.nth(i), algorithm: algorithm, x: i % 2, y: i / 2 })
   type State = {
     source: int -> int, alpha: int -> int, selected: Set[int], seed: int,
     left: int -> int, right: int -> int, leftDone: Set[int], rightDone: Set[int],
@@ -71,4 +93,32 @@ module quantization {
   run seedChangesNoiseTest = initCase(Pixels, 0)
     .expect(noise(0, 0) != noise(0, 1))
   run cannotProcessAfterCancelTest = initCase(Pixels, 0).then(processLeft(0)).then(cancel).then(processLeft(1).fail())
+
+  run sparseExtractionFindsVisibleTest = initCase(Pixels, 0)
+    .expect(extractionSamples(Set(1, 3)) == Set(1, 3))
+  run transparentExtractionTest = initCase(Pixels, 0)
+    .expect(extractionSamples(Set()) == Set())
+  run extractionBoundAndCompletenessTest = initCase(Pixels, 0)
+    .expect(Pixels.powerset().forall(visible => all {
+      extractionSamples(visible).subseteq(visible),
+      extractionSamples(visible).size() <= 2,
+      (extractionSamples(visible).size() == 0) == (visible.size() == 0)
+    }))
+  run existingExtractionUnchangedTest = initCase(Pixels, 0)
+    .expect(extractionSamples(Set(0, 1, 3)) == Set(0))
+  run paletteComparisonOrderTest = initCase(Pixels, 0)
+    .expect(comparisonValid(List(), List(2, 0, 1), false) and
+      paletteCells(List(2, 0, 1), 1) == Map(
+        0 -> { palette: 2, algorithm: 1, x: 0, y: 0 },
+        1 -> { palette: 0, algorithm: 1, x: 1, y: 0 },
+        2 -> { palette: 1, algorithm: 1, x: 0, y: 1 }))
+  run algorithmComparisonCompatibilityTest = initCase(Pixels, 0)
+    .expect(comparisonValid(List(1, 0), List(), true))
+  run ambiguousComparisonRejectedTest = initCase(Pixels, 0)
+    .expect(not(comparisonValid(List(0), List(1), false)) and
+      not(comparisonValid(List(), List(1), true)))
+  run invalidComparisonRejectedTest = initCase(Pixels, 0)
+    .expect(not(comparisonValid(List(), List(), false)) and
+      not(comparisonValid(List(), List(3), false)) and
+      not(comparisonValid(List(), List(0, 1, 2, 0), false)))
 }

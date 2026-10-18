@@ -16,7 +16,7 @@ pnpm embedding:serve --root /absolute/path/to/images --input source.png
 
 Open **http://localhost:8788**. `--root` must be an existing absolute directory, and `--input` is a file relative to that directory. The backend restricts the session to this one source. Save destinations are also relative to the workspace. Files already present are protected by the Go server's overwrite policy.
 
-Optional flags are `--mask masks/subject.png`, `--binary /absolute/path/to/dither-mcp`, and `--port 8788`. If a mask is selected, the session restricts all calls to that mask too. The example uses Atkinson, the `oat-and-ink` palette, and a 512px preview initially; use the programmatic `initial` option for other initial settings.
+Optional flags are `--mask masks/subject.png`, `--binary /absolute/path/to/dither-mcp`, and `--port 8788`. If a mask is selected, preview and save calls use that mask. Extraction reads only the selected source. The example starts with Atkinson and `oat-and-ink`. Omitted dimensions fit within 512 × 512 pixels without enlargement. Use the programmatic `initial` option for other settings. Supplying custom colors omits the default palette.
 
 ## Reuse the two modules
 
@@ -29,7 +29,7 @@ const session = await createStudioSession({
   binary: '/absolute/path/to/dither-mcp',
   root: '/absolute/path/to/images',
   input: 'source.png',
-  initial: { palette: 'oat-and-ink', options: { algorithm: 'atkinson', width: 512 } },
+  initial: { palette: 'oat-and-ink', options: { algorithm: 'atkinson' } },
 });
 
 // Deliver session.bootstrap to your trusted application UI.
@@ -63,7 +63,7 @@ The iframe must already be attached to the DOM. The sandbox proxy must run on a 
 
 ## Local boundaries
 
-The supplied HTTP example listens only on `127.0.0.1`. Its host UI is addressed as `localhost`; its sandbox proxy is addressed as `127.0.0.1`, creating separate origins. It checks exact Host and Origin values, rejects cross-site browser requests, and requires a fresh per-process session token for data and tool calls. It exposes only `dither_studio`, `dither_render`, and the selected studio resource. It has no arbitrary server, tool, filesystem, upload, or static-directory proxy.
+The supplied HTTP example listens only on `127.0.0.1`. Its host UI is addressed as `localhost`; its sandbox proxy is addressed as `127.0.0.1`, creating separate origins. It checks exact Host and Origin values, rejects cross-site browser requests, and requires a fresh per-process session token for data and tool calls. It exposes only `dither_studio`, `dither_render`, `dither_palette_extract`, and the selected studio resource. Extraction accepts only the selected `input` and a color `count` from 2 through 256. It has no arbitrary server, tool, filesystem, upload, or static-directory proxy.
 
 The inner app has an opaque sandbox origin and a CSP that permits its embedded JavaScript/CSS and PNG data images. Network connections, nested frames, forms, popups, and native file URLs are blocked. The sandbox proxy validates both adjacent windows and the host's origin. No CORS access is provided. The source image reaches the UI as a tool-result PNG; the browser never receives a native file URL.
 

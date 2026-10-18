@@ -17,12 +17,12 @@ The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the Type
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and five changes.
+1. Strict validation of six baseline OpenSpec capabilities and seven changes.
 2. Typechecking of all six Quint modules.
-3. Seventy-six executable run tests, including negative precondition scenarios.
+3. Ninety-six executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
 5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, normalization, studio saves, and guarded exports. Each schedule requires a completion witness.
-6. Fourteen negative mutation checks, each in an independent temporary model copy. Six remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. Eight bypass source/mask checks, reread source/mask paths after checking, retain an invalid preview, alter an accepted option, use the wrong source-size width, or ignore the export pixel limit. The harness confirms that the respective regression tests fail.
+6. Nineteen negative mutation checks, each in an independent temporary model copy. Six remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. Eight bypass source/mask checks, reread source/mask paths after checking, retain an invalid preview, alter an accepted option, use the wrong source-size width, or ignore the export pixel limit. Five further mutations bypass encoding cancellation, empty-sample recovery, comparison mode separation, palette-cell identity, or extraction request identity. The harness confirms that the respective regression tests fail.
 
 The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
@@ -30,7 +30,7 @@ The harness writes a machine-readable report to `.spec-results/latest.json`. It 
 
 [`publication.qnt`](publication.qnt) has two jobs and two destination slots. One destination begins occupied. The model may admit each job with safe/unsafe and within/over-budget inputs. Each job may then render, encode, cancel, fail, or publish atomically. Both jobs can target the same slot.
 
-The model checks that visible files have complete bytes and that unsafe or oversized work never publishes. It checks that existing files are immutable. It also checks that a job canceled before the abstract commit cannot later publish. Concrete runs demonstrate rejection, a collision with exactly one winner, and cancellation after encoding. They also demonstrate a failed batch item that preserves an earlier success.
+The model checks that visible files have complete bytes and that unsafe or oversized work never publishes. It checks that existing files are immutable. It also checks that a job canceled before the abstract commit cannot later publish. Concrete runs demonstrate rejection, a collision with exactly one winner, and cancellation after encoding. Two abstract encoding rows also exercise cancellation during handwritten work. A canceled job cannot process another row or complete that encode. Standard codec internals and latency remain outside the model. They also demonstrate a failed batch item that preserves an earlier success.
 
 `safe` and `bounded` are abstract admission predicates, not implementations of path checking or resource estimation. `publish` is one atomic action. Its implementation refinement is a no-clobber filesystem link after complete encoding. A `Stat` followed by an ordinary replacing rename would not refine it.
 
@@ -43,6 +43,8 @@ The `noNetwork` property is true by construction because the model has no networ
 The model checks palette membership for selected visible pixels, unchanged unselected source values, and transparent black. It checks equal results at equal seeds. It also checks that workers process no more pixels after observed cancellation. Explicit runs cover each contract and verify that changing the seed changes the modeled noise.
 
 This order-independence applies only to the coordinate-local quantizer in the abstraction. Real error-diffusion algorithms depend on traversal order. The implementation promises equal output for equal complete configurations, including serpentine settings. The model does not encode RGB floating point, diffusion weights, resize arithmetic, blue-noise quality, or effects. It models quantization after adjustments and before post-effects. Masks and effects intentionally limit final palette-membership guarantees.
+
+The quantization module also checks palette-comparison admission and request-order cell identities using a three-candidate bound. Four positions and a two-sample budget model recovery when fixed-stride samples are empty. These tests do not implement median cut, alpha weighting, or image geometry. Independent Go fixtures check those boundaries and detect deliberate palette-switch regressions.
 
 ## Palette discovery model
 
@@ -74,7 +76,9 @@ The [image-normalization change](../openspec/changes/image-normalization/proposa
 
 The model separates preview requests from explicit save authorization and publication outcomes. Save requires host tool support, a destination, a current successful preview, and no pending operation. An authorization records the current revision, accepted preview, and replay recipe. Invariants check that these agree. Run tests cover edits during requests, cancellation, late results, failed replacements, missing destinations, and busy-state guards.
 
-Three mutations challenge the studio tests. They permit dirty saves, accept stale responses, or increment the publication count while receiving a preview. A completion-focused schedule must witness a successful save. This supplies coverage evidence rather than a liveness proof.
+Extraction actions share request identity and revision guards. Successful extraction updates a palette draft but cannot authorize saving until another preview succeeds. The model abstracts returned-color validity; controller and browser tests check malformed values and pending JSON.
+
+Four mutations challenge the studio tests. They permit dirty saves, accept stale preview or extraction responses, or increment the publication count while receiving a preview. A completion-focused schedule must witness a successful save. This supplies coverage evidence rather than a liveness proof.
 
 Revision numbers abstract complete settings. The model does not parse tool data, render controls, implement the host bridge, validate filesystem paths, or compare image pixels. Preview actions have no publication transition by design. Go tests must independently check that the actual preview service writes no files. Controller and browser tests must check that real events enforce the modeled guards. The model alone establishes no UI behavior or machine-checked refinement.
 
