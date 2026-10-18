@@ -139,16 +139,30 @@ RGB therefore cannot bias visible colors. GIF makes alpha below 128 transparent.
 It makes alpha at or above 128 opaque. Palette order and mapping remain
 deterministic. `Palettize` exposes the same mapping for animations.
 
-Palette extraction uses alpha-weighted median cut over at most 262,144 samples
-at a fixed stride. It excludes fully transparent pixels. If that sample is
-empty, extraction finds the first visible pixel in each stride-sized block.
-This fallback can read every source pixel, but keeps the same sample bound.
-Existing nonempty samples keep their behavior, including possible periodic
-sampling bias. Sorting before
-partitioning makes map iteration irrelevant. A single-color image produces one
-extracted color even when the request specifies more. A fully transparent image
-produces an error. All preset colors use portable opaque sRGB values, regardless
-of their historical origin.
+Palette extraction scans every source pixel and uses alpha-weighted median cut.
+Fully transparent pixels contribute nothing. The histogram retains exact RGB
+counts through 262,144 distinct visible colors. If another distinct color would
+exceed that bound, it folds once into 262,144 bins using six bits per RGB channel.
+Each bin retains its alpha weight and original weighted RGB sums. Bin centroids
+guide median-cut partitioning; the final palette colors use the original sums,
+without averaging already rounded centroids. Weights and sums use 64-bit integers.
+
+Every visible pixel contributes, including singleton accents and stripes that
+fixed-stride sampling could miss. When the source has no more distinct visible
+colors than requested, extraction returns all of them exactly. Larger color sets
+are reduced; a rare color is not guaranteed its own output entry. Images of at
+most 262,144 pixels retain their previous extraction results. Larger-image
+extraction and GIF overflow palettes can change because their full distribution
+now contributes. GIF images whose colors already fit still retain exact colors.
+
+Sorting exact colors and enumerating bins in RGB order make map iteration and
+pixel order irrelevant. Cancellation is checked per source row and every 1,024
+entries while folding. A full scan can read up to the engine's 16,777,216-pixel
+limit; histogram storage is bounded independently of image size. During folding,
+the bounded exact map temporarily coexists with the fixed 8 MiB bin table.
+A single-color image produces one extracted color even when the request
+specifies more. A fully transparent image produces an error. All preset colors
+use portable opaque sRGB values, regardless of their historical origin.
 
 ## Built-in color library
 
@@ -237,6 +251,8 @@ emulate hardware indices, tile attributes, or transparency.
 - Resizing preserves alpha correctly.
 - Cancellation, recipe validation, extraction, and writer errors follow their contracts.
 - GIF output retains exact colors when they fit.
+- Extraction retains off-stride rare colors, alpha weights and raw color sums,
+  respects its histogram bound, and remains stable under pixel permutations.
 
 Every built-in palette renders with ordered and diffusion algorithms in both
 sRGB and linear RGB. Tests check determinism, alpha, and exact palette membership.
@@ -252,7 +268,7 @@ The engine has no nonstandard dependencies. Run these commands to reproduce the
 benchmarks:
 
 ```sh
-go test ./engine -run '^$' -bench 'Benchmark(FloydSteinberg|Bayer8)$' -benchtime=1x -benchmem
+go test ./engine -run '^$' -bench 'Benchmark(FloydSteinberg|Bayer8|ExtractPalette)$' -benchtime=1x -benchmem
 ```
 
 Local measurements used an Apple M3 Pro with Go 1.27 on darwin/arm64. Each
@@ -261,6 +277,12 @@ Floyd–Steinberg took 124 ms with 3.20 MB and 18 allocations.
 Bayer 8 took 90 ms with 3.15 MB and 9 allocations.
 These single-iteration measurements provide orientation, not throughput
 guarantees.
+
+`BenchmarkExtractPalette` requests sixteen colors from 1024×1024 and 4096×4096
+images, using both sixteen-color patterns and distinct-RGB fixtures. It excludes
+source-image construction from the timed operation. Full scans trade additional
+reads on large low-color images for complete color coverage; colorful images can
+offset that cost by reducing the median-cut input to color-space bins.
 
 Common Go image types use direct pixel readers to avoid per-pixel interface
 allocations. Diffusion storage uses rolling rows instead of a full floating-point

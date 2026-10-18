@@ -83,12 +83,24 @@ func ResolvePalette(name string, hex []string) ([]color.NRGBA, error) {
 }
 
 type histogramColor struct {
-	c      color.NRGBA
-	weight int
+	c color.NRGBA
+	colorTotals
 }
+type colorTotals struct {
+	weight int64
+	sums   [3]int64
+}
+
+func (total *colorTotals) add(c color.NRGBA, weight int64) {
+	total.weight += weight
+	total.sums[0] += int64(c.R) * weight
+	total.sums[1] += int64(c.G) * weight
+	total.sums[2] += int64(c.B) * weight
+}
+
 type colorBox struct {
 	colors []histogramColor
-	weight int
+	weight int64
 	ranges [3]int
 }
 
@@ -110,11 +122,109 @@ func newBox(cs []histogramColor) colorBox {
 	return b
 }
 
-// ExtractPalette uses deterministic, alpha-weighted median cut. It samples at
-// most 262,144 pixels on a fixed stride. If those samples are all transparent,
-// it searches each stride block for its first visible pixel instead. This
-// fallback may read the full image, but retains the same sample bound.
-// Fully transparent pixels never contribute to the palette.
+const maxPaletteHistogram = 262144
+
+func paletteBin(c color.NRGBA) int {
+	return int(c.R>>2)<<12 | int(c.G>>2)<<6 | int(c.B>>2)
+}
+
+// paletteHistogram visits every pixel, retaining exact RGB counts until the
+// histogram limit. On overflow it folds once into 64^3 bins, carrying original
+// weighted RGB sums through both the fold and the final median-cut centroids.
+func paletteHistogram(ctx context.Context, img image.Image) ([]histogramColor, error) {
+	bounds := img.Bounds()
+	read := pixelReader(img)
+	exact := make(map[uint32]int64)
+	var bins []colorTotals
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := read(x, y)
+			if c.A == 0 {
+				continue
+			}
+			if bins == nil {
+				key := uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
+				if weight, exists := exact[key]; exists || len(exact) < maxPaletteHistogram {
+					exact[key] = weight + int64(c.A)
+					continue
+				}
+				// The dense bins need 8 MiB only after exact colors overflow;
+				// ordinary low-color images keep the small exact map.
+				bins = make([]colorTotals, maxPaletteHistogram)
+				i := 0
+				for rgb, weight := range exact {
+					if i%1024 == 0 {
+						if err := ctx.Err(); err != nil {
+							return nil, err
+						}
+					}
+					i++
+					c := color.NRGBA{uint8(rgb >> 16), uint8(rgb >> 8), uint8(rgb), 255}
+					bins[paletteBin(c)].add(c, weight)
+				}
+				exact = nil
+			}
+			bins[paletteBin(c)].add(c, int64(c.A))
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if bins == nil {
+		keys := make([]uint32, 0, len(exact))
+		for k := range exact {
+			keys = append(keys, k)
+		}
+		sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+		colors := make([]histogramColor, 0, len(keys))
+		for i, k := range keys {
+			if i%1024 == 0 {
+				if err := ctx.Err(); err != nil {
+					return nil, err
+				}
+			}
+			c := color.NRGBA{uint8(k >> 16), uint8(k >> 8), uint8(k), 255}
+			var total colorTotals
+			total.add(c, exact[k])
+			colors = append(colors, histogramColor{c, total})
+		}
+		return colors, nil
+	}
+	count := 0
+	for _, total := range bins {
+		if total.weight != 0 {
+			count++
+		}
+	}
+	colors := make([]histogramColor, 0, count)
+	for i, total := range bins {
+		if i%1024 == 0 {
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+		}
+		if total.weight == 0 {
+			continue
+		}
+		c := color.NRGBA{
+			uint8((total.sums[0] + total.weight/2) / total.weight),
+			uint8((total.sums[1] + total.weight/2) / total.weight),
+			uint8((total.sums[2] + total.weight/2) / total.weight),
+			255,
+		}
+		colors = append(colors, histogramColor{c, total})
+	}
+	return colors, nil
+}
+
+// ExtractPalette uses deterministic, alpha-weighted median cut. Every visible
+// pixel contributes. It retains at most 262,144 histogram entries, merging into
+// six-bit RGB bins only if the image exceeds that many distinct visible colors.
+// Fully transparent pixels never contribute to the palette. Extraction checks
+// cancellation per row and while folding a full histogram.
 // It returns up to count distinct opaque colors, sorted by luminance and then RGB.
 func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NRGBA, error) {
 	if count < 2 || count > 256 {
@@ -129,66 +239,12 @@ func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NR
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	bounds := img.Bounds()
-	read := pixelReader(img)
-	width, height := bounds.Dx(), bounds.Dy()
-	step := max(1, (width*height+262143)/262144)
-	histogram := make(map[uint32]int)
-	for y := 0; y < height; y++ {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		first := (step - (y*width)%step) % step
-		for x := first; x < width; x += step {
-			c := read(bounds.Min.X+x, bounds.Min.Y+y)
-			if c.A == 0 {
-				continue
-			}
-			key := uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
-			histogram[key] += int(c.A)
-		}
-	}
-	if len(histogram) == 0 && step > 1 {
-		// A regular stride can miss sparse artwork entirely. Search only when
-		// needed so successful extractions retain their existing colors. Each
-		// block contributes at most one visible sample, weighted by its alpha.
-		sampled := false
-		for y := 0; y < height; y++ {
-			if err := ctx.Err(); err != nil {
-				return nil, err
-			}
-			for x := 0; x < width; x++ {
-				if (y*width+x)%step == 0 {
-					sampled = false
-					continue // The regular sample already found this pixel transparent.
-				}
-				if sampled {
-					continue
-				}
-				c := read(bounds.Min.X+x, bounds.Min.Y+y)
-				if c.A == 0 {
-					continue
-				}
-				key := uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
-				histogram[key] += int(c.A)
-				sampled = true
-			}
-		}
-	}
-	if err := ctx.Err(); err != nil {
+	colors, err := paletteHistogram(ctx, img)
+	if err != nil {
 		return nil, err
 	}
-	if len(histogram) == 0 {
+	if len(colors) == 0 {
 		return nil, fmt.Errorf("cannot extract a palette from a fully transparent image")
-	}
-	keys := make([]uint32, 0, len(histogram))
-	for k := range histogram {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	colors := make([]histogramColor, 0, len(keys))
-	for _, k := range keys {
-		colors = append(colors, histogramColor{color.NRGBA{uint8(k >> 16), uint8(k >> 8), uint8(k), 255}, histogram[k]})
 	}
 	boxes := []colorBox{newBox(colors)}
 	for len(boxes) < count {
@@ -202,7 +258,7 @@ func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NR
 				continue
 			}
 			r := max(b.ranges[0], b.ranges[1], b.ranges[2])
-			s := int64(r) * int64(b.weight)
+			s := int64(r) * b.weight
 			if s > score {
 				best = i
 				score = s
@@ -228,7 +284,7 @@ func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NR
 			return c.B
 		}
 		sort.SliceStable(b.colors, func(i, j int) bool { return component(b.colors[i].c) < component(b.colors[j].c) })
-		total := 0
+		var total int64
 		split := 1
 		for i, p := range b.colors[:len(b.colors)-1] {
 			total += p.weight
@@ -245,12 +301,11 @@ func ExtractPalette(ctx context.Context, img image.Image, count int) ([]color.NR
 	for _, b := range boxes {
 		var sums [3]int64
 		for _, p := range b.colors {
-			w := int64(p.weight)
-			sums[0] += int64(p.c.R) * w
-			sums[1] += int64(p.c.G) * w
-			sums[2] += int64(p.c.B) * w
+			for channel := range sums {
+				sums[channel] += p.sums[channel]
+			}
 		}
-		weight := int64(b.weight)
+		weight := b.weight
 		c := color.NRGBA{uint8((sums[0] + weight/2) / weight), uint8((sums[1] + weight/2) / weight), uint8((sums[2] + weight/2) / weight), 255}
 		if !seen[c] {
 			out = append(out, c)
