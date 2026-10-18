@@ -4,6 +4,8 @@
     "Exact Host and Origin checks, sandbox denied access to bootstrap, per-session token required",
     "Opaque sandbox renders real Go preview through official AppBridge without writing",
     "Six repeated random clicks supersede in-flight Go/HTTP style and preview calls; late results cannot restore old settings or recipe authority",
+    "Undo, Redo and gallery branch restore send exact saved settings through the real host; restored masked PNG and recipe bytes match, and old recipe authority is rejected",
+    "Random supersedes an in-flight history restore; delayed old completion cannot replace pixels, history or fresh host recipe-save authority",
     "Current-source extraction crosses the restricted host bridge and requires a new preview",
     "Extraction rejects other sources, invalid counts, and extra fields at the HTTP boundary",
     "App-initiated guarded save writes the selected relative output byte-identically",

@@ -78,6 +78,13 @@ preview. It cannot interrupt image or recipe writes. The host tracks operation
 identity so an old completion cannot clear a newer request or authorize an old
 recipe. The UI additionally checks settings revisions before adopting a result.
 
+History restoration uses the existing `dither_studio` call with exact stored
+settings. It requires idle state, rereads the selected files, and renews recipe
+authority only on success. No tool or permission is added. The app holds a
+20-look in-memory history; the host retains no image history. Undo does not undo
+published files. Random style can supersede a pending restoration, with the
+same current-operation guards.
+
 The inner app has an opaque sandbox origin and a CSP that permits its embedded JavaScript/CSS and PNG data images. Network connections, nested frames, forms, popups, and native file URLs are blocked. The sandbox proxy validates both adjacent windows and the host's origin. No CORS access is provided. The source image reaches the UI as a tool-result PNG; the browser never receives a native file URL.
 
 If you adapt the example for a multi-user server, implement user/session authorization and isolated workspaces in your own backend before exposing it. This example is a local integration with one selected source, not a hosted service.
@@ -89,4 +96,4 @@ make embedding-test
 make embedding-browser
 ```
 
-The stdio tests negotiate Apps with the real binary, preserve metadata, save a byte-identical PNG, save/load/replay accepted recipes, verify guarded render errors, and reject different sources and path escapes. The browser check exercises the official AppBridge handshake and teardown, an opaque sandbox, real image and recipe saves, recipe authority checks, rapid random clicks with deliberately delayed replies, theme updates, mobile layout, Host/Origin/token restrictions, and absence of console errors, failed requests, or external requests. It writes local screenshots and a report under `work/embedding-browser-check/`. The [recorded browser results](embedding-browser-verification.json) list the checks. These checks verify this integration example; [host compatibility](hosts.md) distinguishes independent client tests from documented support.
+The stdio tests negotiate Apps with the real binary, preserve metadata, save a byte-identical PNG, save/load/replay accepted recipes, verify guarded render errors, and reject different sources and path escapes. The browser check exercises the official AppBridge handshake and teardown, an opaque sandbox, real image and recipe saves, recipe authority checks, rapid random clicks and history restores with deliberately delayed replies, exact restored PNG/recipe bytes, theme updates, mobile layout, Host/Origin/token restrictions, and absence of console errors, failed requests, or external requests. It writes local screenshots and a report under `work/embedding-browser-check/`. The [recorded browser results](embedding-browser-verification.json) list the checks. These checks verify this integration example; [host compatibility](hosts.md) distinguishes independent client tests from documented support.

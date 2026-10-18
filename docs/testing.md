@@ -27,7 +27,7 @@ the current repository scope.
 - Workflow tests cover algorithm and palette comparison cell pixels and metadata, partial batch success, versioned recipe replay, print plates, and PNG DPI CRCs. They check animation determinism, sheet frames, source-GIF background/disposal/timing/loop, and 12 fps timing quantization. They also check rendering with extracted palettes and bounded previews.
 - MCP and CLI tests cover initialization, discovery, input/output schemas, native image results, and recoverable tool errors. They check protocol-only stdout, message framing limits, JSON CLI output, unsupported flags including explicit zero/false, an actual subprocess demo, and overwrite rejection.
 - Studio tests check memory-only previews, default and inferred dimensions, crop, EXIF/color normalization, exact recipe replay, image masks, safe integer seeds, the 2 MiB PNG budget, and cancellation. Guard tests replace files with equal-size, equal-timestamp content; remove inputs; and replace paths during decoding. They verify the exact captured bytes and inherited render workflows. MCP tests check negotiated UI linkage, fallback JSON/PNG, resource MIME/CSP, and unchanged shared descriptors.
-- JavaScript tests cover the delivered bundle syntax, concrete controller cases, and two official SDK bridge cases. A third bridge test connects to the real Go stdio server, changes a preview, saves identical PNG bytes, verifies overwrite rejection, checks source/custom export dimensions, and rejects changed source bytes. The optional Playwright suite renders the actual embedded app in Chromium. It checks random generation/preview, exact recipe saves, extraction races, mixed advanced JSON/control edits, negative-number typing, invalid JSON preservation, export-size limits, source-change recovery, keyboard saving without sandbox form permission, validation, cancellation, host capabilities, theme changes, and narrow layouts. These checks do not establish compatibility with every host.
+- JavaScript tests cover the delivered bundle syntax, concrete controller cases, and two official SDK bridge cases. A third bridge test connects to the real Go stdio server, changes a preview, saves identical PNG bytes, verifies overwrite rejection, checks source/custom export dimensions, and rejects changed source bytes. The optional Playwright suite renders the actual embedded app in Chromium. It checks random generation/preview, Undo/Redo and restored PNG/recipe replay, exact recipe saves, extraction races, mixed advanced JSON/control edits, negative-number typing, invalid JSON preservation, export-size limits, source-change recovery, keyboard saving without sandbox form permission, validation, cancellation, host capabilities, theme changes, and narrow layouts. These checks do not establish compatibility with every host.
 - Palette tests render every catalog entry and check legacy ID/color compatibility, unique color sets, and combined category/term/color-count filters. They check stable pagination through every result, empty and out-of-range pages, argument bounds, and MCP/CLI parity.
 - Normalization tests cover all eight EXIF orientations, both byte orders, source alpha precision, and crop ordering. They check metadata across JPEG, PNG, WebP, TIFF, and supported BMP containers. They also check split JPEG profiles, metadata between scans, PNG precedence, malformed directories, external-profile rejection, and decompression limits. Application tests exercise the shared loader through inspection, preview, rendering, extraction, comparison, animation, separations, and masks.
 - Color tests compare 45 independent LittleCMS reference vectors across sRGB, Display P3, and Adobe RGB profiles. Original binary fixtures and recorded vectors keep these tests independent of native libraries. Published CSS Color 4 vectors provide another numerical check. Tests also cover malformed profiles, alpha precision, cancellation, and concurrent transforms. The runtime and normal test suite gain no native color-management dependency.
@@ -39,19 +39,19 @@ Tests use finite timeouts and small synthetic inputs. They do not demonstrate
 large-scale throughput, every malformed decoder input, power-loss persistence,
 all operating systems, or byte compatibility across future codec versions.
 
-The embedding example has separate tests for its five-tool allowlist, selected source, rooted paths, real stdio results, byte-identical PNG saves, and recipe save/load/replay. Its optional browser suite checks the loopback HTTP boundary, session token, cross-origin sandbox, six out-of-order random clicks, recipe authority, theme changes, and mobile layout. [Host compatibility](hosts.md) records external-client checks separately.
+The embedding example has separate tests for its five-tool allowlist, selected source, rooted paths, real stdio results, byte-identical PNG saves, and recipe save/load/replay. Its optional browser suite checks the loopback HTTP boundary, session token, cross-origin sandbox, six out-of-order random clicks, recipe authority, restored-look navigation and supersession, theme changes, and mobile layout. [Host compatibility](hosts.md) records external-client checks separately.
 
 ## Formal checks
 
-There are 55 OpenSpec requirements across six capability specifications and nine
-implementation changes. Strict validation checks all fifteen items for structure
-and scenario coverage. Six Quint models cover artifact publication, quantization,
-palette discovery, normalization, MCP Apps interactions, and guarded exports:
+There are 57 OpenSpec requirements across six capability specifications and ten
+implementation changes. Strict validation checks all sixteen items for structure
+and scenario coverage. Seven Quint models cover artifact publication, quantization,
+palette discovery, normalization, MCP Apps interactions, guarded exports, and look history:
 
-- Six typechecks and 119 concrete model tests.
-- 60,000 seeded safety traces, each with at most 30 transitions.
-- Six completion schedules add 1,000 traces each, for 66,000 traces overall. Each requires a completion witness.
-- 27 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, and guarded export behavior. The tests must detect every mutation.
+- Seven typechecks and 133 concrete model tests.
+- 70,000 seeded safety traces, each with at most 30 transitions.
+- Seven completion schedules add 1,000 traces each, for 77,000 traces overall. Each requires a completion witness.
+- 34 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, and bounded fresh-preview history navigation. The tests must detect every mutation.
 
 The seed is 20261003. Exact command results, source hashes, durations, and limits
 are in [spec/verification.json](../spec/verification.json). The finite models do
@@ -59,6 +59,7 @@ not implement every diffusion kernel or system call, and the simulations are not
 exhaustive model checking. The palette model uses six abstract records to exercise combined filters and pagination. The Go tests check the actual 256-entry catalog.
 The normalization model checks six pixel identities and exact alpha transport through all eight orientations. Its abstract color transform does not establish numerical ICC accuracy. Independent implementation vectors check that separate claim.
 The export model uses abstract byte identities and fixed geometry. It checks accepted-buffer use despite independent disk changes; it does not establish SHA-256 collision resistance, actual codec behavior, host compatibility, or browser enforcement.
+The history model bounds canonical look IDs and independent navigation stacks. It checks fresh-preview authority, MRU promotion, eviction, branching and stale-result rejection. Concrete tests additionally check exact request equality and refreshed source fingerprints.
 Read [the model guide](../spec/README.md) for mappings between model requirements
 and Go regression tests.
 

@@ -21,7 +21,7 @@ The toolkit provides **15 tools with typed inputs**, **3 resources**, and **3 pr
 | Ask your agent | Workflow |
 |---|---|
 | “Surprise me with a new dither style.” | `dither_random_style` → `dither_studio` or `dither_render` |
-| “Open a studio so I can try a few looks.” | `dither_studio` → **Random style** → click again → Save image or Save recipe |
+| “Open a studio so I can try a few looks.” | `dither_studio` → **Random style** → Undo or Recent looks → Save image or Save recipe |
 | “Find four warm colors for a botanical print.” | Filter `dither_palettes` by name, category, and color count → `dither_render` |
 | “Build a palette from this image’s own colors.” | `dither_inspect` → `dither_palette_extract` → `dither_render` |
 | “Show me Atkinson, Floyd–Steinberg, and Bayer side by side.” | `dither_catalog` → `dither_compare` |
@@ -39,6 +39,18 @@ Image processing stays in your configured workspace, with source files and artif
 
 Ask your agent: **“Open this image in the studio. I want to try random looks.”**
 Select **Random style** above the preview, then keep clicking until something catches your eye.
+Went past a favorite? Use **Undo** or **Redo**, or select it under **Recent looks**
+and choose **Restore look**. The studio keeps 20 recently used looks, including
+your starting preview and manual refinements. New experiments keep other recent
+looks available.
+
+For example: try three random looks, select Undo to return to the second, then
+save its image or recipe. To compare an older favorite, choose its algorithm,
+palette, and seed label in Recent looks and select Restore look.
+
+History lasts for this studio session. Restoring re-previews the complete
+settings against the current source and mask. Save a recipe to keep a favorite
+after closing the studio.
 
 For API-driven iteration, call `dither_random_style` with `{}` for a fresh look or
 `{"seed":42}` for a repeatable one. It returns `{seed, recipe}` without reading an
@@ -76,13 +88,13 @@ Save the full recipe to retain its settings for later reuse.
 
 ## An image studio inside your chat
 
-![Actual MCP Apps studio showing Moon Garden with algorithm and palette controls, adjustments, preview zoom, and an explicit Save image action](docs/assets/mcp-app-studio.png)
+![Actual MCP Apps studio showing Random style, Recent looks, Undo and Redo, plus Moon Garden and image controls](docs/assets/mcp-app-studio.png)
 
 *Actual studio connected to the local Go server through the official MCP Apps bridge. Atkinson / Oat and Ink.*
 
 Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
 
-Start with the **Random style** button above the image. Each click generates and previews a new palette, algorithm, and treatment. Click again to explore another look; the newest click wins. Your crop, mask, dimensions, and pixel size stay in place. Nothing is saved until you choose **Save image** or **Save recipe**.
+Start with the **Random style** button above the image. Each click generates and previews a new palette, algorithm, and treatment. Click again to explore another look; the newest click wins. Your crop, mask, dimensions, and pixel size stay in place. Use Undo, Redo, or Recent looks to revisit a successful preview. Nothing is saved until you choose **Save image** or **Save recipe**.
 
 To refine a look manually, choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
 

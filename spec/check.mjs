@@ -42,7 +42,7 @@ function run(name, args, expected = 0) {
   if (args[0] === 'run') {
     record.witnesses = [...output.matchAll(/(\w+) was witnessed in (\d+) trace\(s\) out of (\d+) explored/g)]
       .map(([, name, count, samples]) => ({ name, count: Number(count), samples: Number(samples) }));
-    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : args.includes('--step=recipeSaveStep') ? 'recipeSaved' : args.includes('--step=exportStep') ? 'capturedBeforeDiskChange' : null;
+    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : args.includes('--step=recipeSaveStep') ? 'recipeSaved' : args.includes('--step=exportStep') ? 'capturedBeforeDiskChange' : args.includes('--step=historyStep') ? 'historySaved' : null;
     if (requiredWitness && !record.witnesses.some(w => w.name === requiredWitness && w.count > 0)) {
       process.stderr.write(output);
       throw new Error(`Coverage schedule never reached ${requiredWitness}`);
@@ -59,6 +59,7 @@ const modelWitnesses = {
   normalization: ['normalizedComplete', 'swappedAxes', 'rejectedMetadata', 'canceledDuringNormalization'],
   mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent', 'paletteExtracted', 'recipeSaved', 'randomAccepted'],
   studio_export: ['sourceSizedExport', 'customSizedExport', 'changedInputRejected', 'capturedBeforeDiskChange'],
+  style_history: ['hasHistory', 'historyRestored', 'staleIgnored', 'historySaved'],
 };
 for (const [model, witnesses] of Object.entries(modelWitnesses)) {
   run('quint', ['typecheck', `spec/${model}.qnt`]);
@@ -71,6 +72,7 @@ run('quint', ['run', 'spec/normalization.qnt', '--backend=typescript', '--seed=2
 run('quint', ['run', 'spec/mcp_apps.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initSave', '--step=saveStep', '--verbosity=1', '--witnesses', 'savedCurrent']);
 run('quint', ['run', 'spec/mcp_apps.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initRecipeSave', '--step=recipeSaveStep', '--verbosity=1', '--witnesses', 'recipeSaved']);
 run('quint', ['run', 'spec/studio_export.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=20', '--invariant=safety', '--init=initExport', '--step=exportStep', '--verbosity=1', '--witnesses', 'sourceSizedExport', 'capturedBeforeDiskChange']);
+run('quint', ['run', 'spec/style_history.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initNavigation', '--step=historyStep', '--verbosity=1', '--witnesses', 'historySaved']);
 // Remove the no-clobber guard in an isolated temporary copy. The negative test
 // must fail because this regression permits replacement of existing outputs.
 // A second mutation overlaps pages to challenge ordered complete enumeration.
@@ -81,6 +83,13 @@ run('quint', ['run', 'spec/studio_export.qnt', '--backend=typescript', '--seed=2
 const temp = mkdtempSync(path.join(os.tmpdir(), 'dither-spec-mutation-'));
 try {
   for (const mutation of [
+    { model: 'style_history', before: 'val current = id == s.pending and request.revision == s.revision and request.epoch == s.epoch', after: 'val current = true' },
+    { model: 'style_history', before: 'pure def bounded(items) = items.slice(0, if (items.length() < 3) items.length() else 3)', after: 'pure def bounded(items) = items' },
+    { model: 'style_history', before: 'retained(undo, history, request.look)', after: 'bounded(undo)' },
+    { model: 'style_history', before: 's.tools, not(s.saving), s.next < 6, Looks.contains(look),', after: 's.tools, s.next < 6, Looks.contains(look),' },
+    { model: 'style_history', before: 'accepted: if (adopt) request.look else s.accepted,', after: 'accepted: if (adopt) s.active else s.accepted,' },
+    { model: 'style_history', before: 'val history = bounded(List(request.look).concat(s.history.select(look => look != request.look)))', after: 'val history = if (member(s.history, request.look)) s.history else bounded(List(request.look).concat(s.history))' },
+    { model: 'style_history', before: 'pending: s.next, next: s.next + 1, fresh: false,', after: 'pending: s.next, next: s.next + 1, fresh: true,' },
     { model: 'publication', before: 's.files.get(p) == -1,', after: 's.files.get(p) >= -1,' },
     { model: 'publication', before: 's.stage.get(j) == "encoding", s.encodedRows.get(j) < 2,', after: 's.encodedRows.get(j) < 2,' },
     { model: 'quantization', before: 'tones.indices().filter(i => weights.nth(i) > 0)', after: 'tones.indices().filter(i => weights.nth(i) > 0).intersect(Set(0, 2))' },

@@ -10,6 +10,8 @@
     "Advanced JSON merges later slider, checkbox, and select edits while preserving crop and effects in the real preview request",
     "Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction",
     "Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection",
+    "Undo and Redo rerender exact saved settings; branching retains the random look in the gallery; explicit restore recovers unfinished JSON and palette text without regeneration",
+    "History controls pause during restores; cancellation and a forced late reply preserve unfinished text, displayed pixels, gallery entries and save gating",
     "Prominent random action preserves geometry, replaces unfinished custom colors and all style effects, validates pending JSON, and discards edited or cancelled generation before auto-preview",
     "Custom-color validation and real custom-palette preview",
     "Host theme changes, 370px host and 390px viewport without horizontal overflow",
@@ -31,8 +33,8 @@
     "studio-export-mobile.png"
   ],
   "published_screenshot_sha256": {
-    "assets/mcp-app-studio.png": "a86944e16ee3a709e537232daca03a8fa588f746c6a1867910dc5b1962471a66",
-    "assets/mcp-app-studio-mobile.png": "ff006f3b4b904359c7d44544d402b73cefe78031aa369291ce5f14fcfeb19fd3",
-    "assets/mcp-app-studio-dark.png": "b32c38be288c3495de11a909ab782920e29df67e27a80a9205f19d23030dc7dc"
+    "assets/mcp-app-studio.png": "4422212a4ede95a8e977a838cd41465f9103c5a6cdd0e5c20ce08fd78be477e8",
+    "assets/mcp-app-studio-mobile.png": "1124028f8ddce9b082a7aaa43699cde51a99738feae0563256771d4825b245a9",
+    "assets/mcp-app-studio-dark.png": "8d9faf78e0dd6b4b29e0fda88d840d50c23489d17d0c7a5c8329a3f93aacb89e"
   }
 }

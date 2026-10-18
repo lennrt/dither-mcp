@@ -1,5 +1,16 @@
 # Changes
 
+## Studio history and undo
+
+- Keep the 20 most recently used accepted preview settings, including the
+  starting look, random styles and manual refinements.
+- Add Undo, Redo and Recent looks beside Random style. Preserve discoveries
+  after branching, deduplicate settings, and bound navigation memory.
+- Restore exact settings through a fresh preview before enabling saves.
+  Reject stale, canceled, edited or mismatched responses without losing edits.
+- Keep history session-local and reset it on new host input. Save recipes
+  for durable reuse; Undo does not remove published files.
+
 ## Random style iteration
 
 - Add `dither_random_style`, the fifteenth MCP tool. Generate a valid style

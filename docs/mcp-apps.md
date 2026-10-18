@@ -65,6 +65,35 @@ read-only operations, but image and recipe writes must finish first. The seed
 can reproduce the selection through `dither_random_style`; save the recipe to
 keep the accepted treatment. See [API examples](mcp.md#random-style-iteration).
 
+## Revisit a look
+
+Use **Undo** to return to the previous accepted look and **Redo** to move forward.
+Choose an entry in **Recent looks**, then select **Restore look** to jump directly
+to it. Labels show the look number, algorithm, palette or custom-color count,
+and seed. The starting preview and successful manual refinements are included.
+
+The studio keeps 20 recently used looks in memory. Restoring a look moves it to
+the top of the list. A new preview clears Redo navigation but keeps other recent
+looks in the picker. Reapplying the current settings creates no duplicate and
+preserves Redo. Least recently used entries are removed when the list fills.
+
+Restoration sends the complete stored settings to `dither_studio`, including
+custom colors, crop, masks, pixel scale, dimensions, and effects. It reads the
+current source and mask again. On unchanged files, the preview reproduces the
+look. Changed files can produce a different image or an error. Saving becomes
+available only after the new preview succeeds.
+
+History controls wait while any operation is running. Random style can replace
+a pending restoration; canceled or stale results cannot move history or enable
+saving. Restoration can recover from invalid JSON or unfinished custom colors,
+but replaces that text only on success. Failure keeps your edits and previous
+image. Use Cancel to stop restoration.
+
+History contains settings, not cached PNGs or source files. Closing the studio
+or receiving new host input clears it. Use **Save recipe** for lasting reuse.
+Undo affects preview settings; it does not remove saved files or change export
+paths and export-size choices.
+
 ## Save a reusable recipe
 
 After accepting a preview, enter a new workspace-relative `.json` destination
@@ -164,7 +193,7 @@ make ui-browser
 The check uses the actual embedded HTML with external connections and native
 form submission blocked. It covers initial rendering, palette search, changed
 previews, exact PNG saving, overwrite rejection, custom-color validation,
-random-style generation and cancellation, source-color extraction, exact recipe saving and receipt validation, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
+random-style generation and cancellation, history Undo/Redo and exact restored pixels, source-color extraction, exact recipe saving and receipt validation, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
 `serverTools`. Screenshots and a JSON report go to `work/browser-check/`.
 
 To include the separate showcase, serve its directory locally and set

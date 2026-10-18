@@ -128,6 +128,9 @@ to `dither_render`, with an input and new output path. Its `recipe` argument is
 a saved JSON path, not an inline object. To preserve an existing composition in a studio, retain its width, height,
 pixel scale, resize filter, crop and mask when replacing style options. The
 built-in Random style button does this automatically and previews the result.
+Its Recent looks picker and Undo/Redo controls can restore the last 20 accepted
+looks through a fresh `dither_studio` preview. This history is session-local;
+no new MCP tool or persistent storage is required.
 
 A repeated seed returns the same selection within the current engine and catalog
 version. Save the complete recipe for later reuse. The engine's existing JSON
