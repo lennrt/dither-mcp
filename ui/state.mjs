@@ -128,16 +128,25 @@ export class StudioState {
     this.validPreview = false;
     this.hostPending = null;
     this.canCallTools = false;
+    this.history = [];
+    this.historyActive = null;
+    this.historySequence = 0;
+    this.undoIDs = [];
+    this.redoIDs = [];
     this.status = 'Connecting to your host…';
     this.error = false;
   }
   get dirty() { return !this.rendered || !this.draft || fingerprint(this.draft) !== fingerprint(this.rendered.request); }
   get busy() { return !!this.pending; }
   get saving() { return ['save', 'recipe'].includes(this.pending?.kind); }
+  get canHistory() { return this.canCallTools && !!this.draft && !!this.history.length && !this.busy; }
+  get canUndo() { return this.canHistory && !!this.undoIDs.length; }
+  get canRedo() { return this.canHistory && !!this.redoIDs.length; }
   get canRandom() { return this.canCallTools && !!this.draft && !this.saving; }
   get canPreview() { return this.canCallTools && !!this.draft && !this.busy; }
   get canSave() { return this.canCallTools && this.validPreview && !!this.rendered && !this.dirty && !this.busy; }
   setInput(value) {
+    this.history = []; this.historyActive = null; this.historySequence = 0; this.undoIDs = []; this.redoIDs = [];
     this.pending = null;
     this.validPreview = false;
     this.hostPending = null;
@@ -170,6 +179,57 @@ export class StudioState {
       this.accept(preview, true);
       return true;
     } catch (error) { this.hostPending = null; this.fail(error); return false; }
+  }
+  beginHistory(target) {
+    if (!this.canHistory) throw new Error('History is unavailable while another request is running or without host tools.');
+    const navigation = target === 'undo' || target === 'redo' ? target : 'pick';
+    const targetId = navigation === 'undo' ? this.undoIDs.at(-1) : navigation === 'redo' ? this.redoIDs.at(-1) : target;
+    const entry = this.history.find(item => item.id === targetId);
+    if (!entry) throw new Error('Choose a look from this studio session.');
+    this.hostPending = null; this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'history', navigation, targetId, request: clone(entry.request) };
+    this.pending = operation; this.status = `Restoring look ${entry.id}…`; this.error = false;
+    return clone(operation);
+  }
+  finishHistory(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while restoring. Choose the look again to restore it.';
+      return false;
+    }
+    try {
+      const preview = decodePreview(result);
+      if (fingerprint(operation.request) !== fingerprint(preview.request)) throw new Error('The restored preview returned different source settings.');
+      this.accept(preview, true, operation);
+      return true;
+    } catch (error) { this.fail(error); return false; }
+  }
+  remember(request, navigation) {
+    const previous = this.historyActive;
+    const signature = fingerprint(request);
+    let entry = navigation ? this.history.find(item => item.id === navigation.targetId) : this.history.find(item => fingerprint(item.request) === signature);
+    if (!entry) entry = { id: ++this.historySequence, request: clone(request) };
+    else entry = { id: entry.id, request: clone(request) };
+    if (previous !== null && previous !== entry.id) {
+      if (navigation?.navigation === 'undo') {
+        this.undoIDs.pop(); this.redoIDs.push(previous);
+      } else if (navigation?.navigation === 'redo') {
+        this.redoIDs.pop(); this.undoIDs.push(previous);
+      } else {
+        this.undoIDs.push(previous); this.redoIDs = [];
+      }
+    }
+    this.historyActive = entry.id;
+    this.history = [...this.history.filter(item => item.id !== entry.id), entry].slice(-20);
+    const available = new Set(this.history.map(item => item.id));
+    const prune = ids => {
+      const kept = [];
+      for (const id of ids) if (available.has(id) && kept.at(-1) !== id) kept.push(id);
+      while (kept.at(-1) === this.historyActive) kept.pop();
+      return kept.slice(-20);
+    };
+    this.undoIDs = prune(this.undoIDs); this.redoIDs = prune(this.redoIDs);
   }
   beginRandom(value = this.draft) {
     if (!this.canRandom) throw new Error('Random styles are unavailable while saving or without host tools.');
@@ -252,7 +312,8 @@ export class StudioState {
       return true;
     } catch (error) { this.fail(error); return false; }
   }
-  accept(preview, replaceDraft) {
+  accept(preview, replaceDraft, navigation) {
+    this.remember(preview.request, navigation);
     this.rendered = preview;
     this.validPreview = true;
     if (replaceDraft) { this.draft = clone(preview.request); this.revision++; }

@@ -3111,12 +3111,12 @@
       "format": "esm"
     },
     "ui/state.mjs": {
-      "bytes": 19818,
+      "bytes": 23078,
       "imports": [],
       "format": "esm"
     },
     "ui/app.mjs": {
-      "bytes": 21874,
+      "bytes": 25144,
       "imports": [
         {
           "path": "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js",
@@ -3175,7 +3175,7 @@
           "bytesInOutput": 33
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/schemas.js": {
-          "bytesInOutput": 37209
+          "bytesInOutput": 37220
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/memoizer.js": {
           "bytesInOutput": 3322
@@ -3376,7 +3376,7 @@
           "bytesInOutput": 749
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/compile.js": {
-          "bytesInOutput": 29253
+          "bytesInOutput": 29259
         },
         "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/api.js": {
           "bytesInOutput": 10557
@@ -3433,7 +3433,7 @@
           "bytesInOutput": 16548
         },
         "node_modules/.pnpm/@modelcontextprotocol+client@2.3.1/node_modules/@modelcontextprotocol/client/dist/src-WCy6ifGf.mjs": {
-          "bytesInOutput": 89462
+          "bytesInOutput": 89478
         },
         "node_modules/.pnpm/@modelcontextprotocol+client@2.3.1/node_modules/@modelcontextprotocol/client/dist/cfWorkerProvider-BylNJ1R5.mjs": {
           "bytesInOutput": 6145
@@ -3448,13 +3448,13 @@
           "bytesInOutput": 30587
         },
         "ui/state.mjs": {
-          "bytesInOutput": 13279
+          "bytesInOutput": 15347
         },
         "ui/app.mjs": {
-          "bytesInOutput": 14135
+          "bytesInOutput": 16103
         }
       },
-      "bytes": 558034
+      "bytes": 562103
     }
   }
 }

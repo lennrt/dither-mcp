@@ -9,6 +9,8 @@ let zoom = 'fit';
 let jsonDirty = false;
 let customDirty = false;
 let lastCatalog = '';
+let historyChoice = '';
+let lastHistoryActive = null;
 
 const ranges = [
   ['strength', 'Dither', 0, 2, .05, 1], ['brightness', 'Brightness', -1, 1, .05, 0],
@@ -91,8 +93,28 @@ function syncControls(preserveInput) {
   $('algorithm-info').textContent = state.algorithms.find((algorithm) => algorithm.id === options.algorithm)?.description || 'Choose the texture that suits your image.';
   renderSwatches();
 }
+function renderHistory() {
+  if (state.historyActive !== lastHistoryActive || !state.history.some(entry => String(entry.id) === historyChoice)) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+  lastHistoryActive = state.historyActive;
+  const entries = [...state.history].reverse().map(entry => {
+    const request = entry.request;
+    const algorithm = state.algorithms.find(item => item.id === request.options.algorithm)?.name || request.options.algorithm;
+    const palette = request.colors ? `${request.colors.length} custom colors` : state.palettes.find(item => item.id === request.palette)?.name || request.palette;
+    const option = document.createElement('option'); option.value = String(entry.id);
+    option.textContent = `Look ${entry.id} · ${algorithm} · ${palette} · seed ${request.options.seed ?? 0}`;
+    return option;
+  });
+  if (!entries.length) { const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'Your accepted previews appear here'; entries.push(empty); }
+  $('history-look').replaceChildren(...entries); $('history-look').value = historyChoice;
+  $('history-count').textContent = `${state.history.length} / 20`;
+  $('history-look').disabled = !state.canHistory;
+  $('history-restore').disabled = !state.canHistory || !historyChoice;
+  $('history-undo').disabled = !state.canUndo;
+  $('history-redo').disabled = !state.canRedo;
+}
 function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
+  renderHistory();
   $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
   $('extract').disabled = !state.canPreview;
@@ -105,11 +127,11 @@ function render(sync = false) {
   $('recipe-note').textContent = state.rendered?.request.mask_input
     ? `Keeps the preview dimensions and settings. Image and mask paths stay separate. Reuse with mask_input: ${state.rendered.request.mask_input}`
     : 'Keeps the preview dimensions and settings, including custom colors. Source paths and export size choices stay separate.';
-  $('cancel').hidden = !['preview', 'extract', 'random'].includes(state.pending?.kind);
+  $('cancel').hidden = !['preview', 'extract', 'random', 'history'].includes(state.pending?.kind);
   $('status').textContent = state.status;
   $('status-dot').className = `status-dot${state.busy ? ' busy' : ''}${state.error ? ' error' : ''}`;
   const dirty = state.dirty || jsonDirty || customDirty;
-  $('preview-badge').textContent = state.busy ? ({ random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
+  $('preview-badge').textContent = state.busy ? ({ history: 'RESTORING', random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
   $('preview-badge').classList.toggle('dirty', dirty && !!state.rendered);
   $('source').textContent = state.draft?.input?.split(/[\\/]/).pop() || 'Waiting for a source image';
   if (state.rendered) {
@@ -205,6 +227,30 @@ $('apply').addEventListener('click', async (event) => {
     const accepted = state.finishPreview(operation, result); render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+$('history-look').addEventListener('change', () => { historyChoice = $('history-look').value; });
+async function restoreHistory(target) {
+  if (!state.canHistory) return;
+  let operation;
+  try {
+    operation = state.beginHistory(target);
+    historyChoice = String(operation.targetId);
+    const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const current = state.current(operation);
+    const accepted = state.finishHistory(operation, result);
+    if (current) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) {
+    if (operation) {
+      if (state.reject(operation, error)) historyChoice = state.historyActive === null ? '' : String(state.historyActive);
+    } else state.fail(error);
+    render();
+  }
+}
+$('history-restore').addEventListener('click', () => { void restoreHistory(Number(historyChoice)); });
+$('history-undo').addEventListener('click', () => { void restoreHistory('undo'); });
+$('history-redo').addEventListener('click', () => { void restoreHistory('redo'); });
 $('random-style').addEventListener('click', async () => {
   if (!state.canRandom) return;
   let operation;
@@ -216,6 +262,7 @@ $('random-style').addEventListener('click', async () => {
     }
     // Validate geometry before canceling work or replacing any pending text.
     const base = studioRequest(draft);
+    historyChoice = state.historyActive === null ? '' : String(state.historyActive);
     abortController?.abort();
     operation = state.beginRandom(base);
     const controller = new AbortController(); abortController = controller; render();
@@ -244,7 +291,7 @@ $('extract').addEventListener('click', async () => {
     render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
-$('cancel').addEventListener('click', () => { const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
+$('cancel').addEventListener('click', () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
 $('recipe-output').addEventListener('input', () => render());
 for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
@@ -304,15 +351,15 @@ function applyContext(context) {
 
 // Lifecycle handlers are registered before connecting so initial data cannot race them.
 app.ontoolinput = ({ arguments: arguments_ }) => {
-  abortController?.abort(); jsonDirty = false; customDirty = false;
+  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null;
   $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = '';
   try { state.setInput(arguments_); } catch (error) { state.fail(error); }
   render(true);
 };
 app.ontoolresult = (result) => { const accepted = state.hostResult(result); if (accepted) { jsonDirty = false; customDirty = false; } render(accepted); };
-app.ontoolcancelled = () => { abortController?.abort(); state.cancel('The host cancelled the request. Apply preview to try again.'); render(); };
+app.ontoolcancelled = () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); abortController?.abort(); state.cancel('The host cancelled the request. Apply preview to try again.'); render(); };
 app.onhostcontextchanged = applyContext;
-app.onteardown = async () => { abortController?.abort(); state.cancel('The studio has closed.'); state.canCallTools = false; render(); return {}; };
+app.onteardown = async () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); abortController?.abort(); state.cancel('The studio has closed.'); state.canCallTools = false; render(); return {}; };
 // Protocol.onerror also reports late replies after cancellation; it does not
 // establish transport closure. Ignore only those stale-response diagnostics.
 app.onerror = (error) => {
@@ -320,6 +367,7 @@ app.onerror = (error) => {
   state.fail(new Error('The host reported a communication error. Try the operation again.')); render();
 };
 app.onclose = () => {
+  historyChoice = state.historyActive === null ? '' : String(state.historyActive);
   state.canCallTools = false;
   state.cancel('The host connection closed. Open the studio again to continue.');
   $('host-note').hidden = false; $('host-note').textContent = state.status; render();

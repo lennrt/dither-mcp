@@ -16,3 +16,10 @@
 .random-row { margin-bottom: 18px; }
 .random-row .primary { width: 100%; font-size: 16px; padding: 14px 16px; }
 .random-row p { color: var(--muted); font-size: 11px; margin: 7px 0 0; }
+
+.history-panel { margin: -4px 0 18px; }
+.history-panel .small-label { display: flex; justify-content: space-between; gap: 8px; }
+#history-count { color: var(--muted); font-weight: normal; }
+#history-look { font-size: 11px; text-overflow: ellipsis; }
+.history-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+#history-restore { margin-left: auto; }

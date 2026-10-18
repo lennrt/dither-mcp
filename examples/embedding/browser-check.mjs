@@ -47,6 +47,14 @@ try {
   assert(studio);
   await expect(studio.locator('#status')).toContainText('Preview ready');
   await expect.poll(() => studio.locator('#preview').evaluate((image) => image.complete && image.naturalWidth)).toBe(512);
+  const initialPNG = await studio.locator('#preview').getAttribute('src');
+  const initialOptions = JSON.parse(await studio.locator('#options-json').inputValue());
+  const initialHistoryID = await studio.locator('#history-look').inputValue();
+  const token = await page.locator('meta[name="studio-session"]').getAttribute('content');
+  const recipeStatus = async (output, recipe) => (await fetch(host.origin + '/call', {
+    method: 'POST', headers: { origin: host.origin, 'content-type': 'application/json', 'x-studio-session': token },
+    body: JSON.stringify({ name: 'dither_recipe_save', arguments: { output, recipe } }),
+  })).status;
   assert.deepEqual(await readdir(root), ['source.png']);
   checks.push('Opaque sandbox renders real Go preview through official AppBridge without writing');
   // Hold real Go results inside the Node host while their HTTP calls remain in flight.
@@ -90,10 +98,88 @@ try {
   delayRandom = false; Client.prototype.callTool = originalCallTool;
   await studio.locator('#save-recipe').click();
   await expect(studio.locator('#status')).toHaveText('Saved recipe random.json');
-  const randomRecipe = JSON.parse(await readFile(path.join(root, 'random.json'), 'utf8'));
+  const randomRecipeBytes = await readFile(path.join(root, 'random.json'));
+  const randomRecipe = JSON.parse(randomRecipeBytes);
   assert.equal(randomRecipe.options.seed, 106); assert.equal(randomRecipe.options.mask.shape, 'image');
+  const randomPNG = await studio.locator('#preview').getAttribute('src');
+  const randomHistoryID = await studio.locator('#history-look').inputValue();
   await rm(path.join(root, 'random.json'));
   checks.push('Six repeated random clicks supersede in-flight Go/HTTP style and preview calls; late results cannot restore old settings or recipe authority');
+
+  const historyCalls = [];
+  Client.prototype.callTool = async function(params, options) {
+    historyCalls.push(structuredClone(params));
+    return originalCallTool.call(this, params, options);
+  };
+  await studio.locator('#history-undo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal(await studio.locator('#preview').getAttribute('src'), initialPNG);
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), initialOptions);
+  await expect(studio.locator('#history-look')).toHaveValue(initialHistoryID);
+  // The host accepts only the newly rendered recipe, even though the old one is in the gallery.
+  assert.equal(await recipeStatus('old-random.json', randomRecipe), 400);
+  await studio.locator('#history-redo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomPNG);
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), randomRecipe.options);
+  assert.deepEqual(historyCalls.map(call => call.name), ['dither_studio', 'dither_studio']);
+  assert.deepEqual(historyCalls[1].arguments, { input: 'source.png', mask_input: 'source.png', palette: randomRecipe.palette, options: randomRecipe.options });
+  await studio.locator('#recipe-output').fill('restored.json');
+  await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#status')).toHaveText('Saved recipe restored.json');
+  assert.deepEqual(await readFile(path.join(root, 'restored.json')), randomRecipeBytes);
+  await studio.locator('#output').fill('restored.png');
+  await studio.locator('#save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved restored.png');
+  assert.deepEqual(await readFile(path.join(root, 'restored.png')), Buffer.from(randomPNG.split(',')[1], 'base64'));
+  await rm(path.join(root, 'restored.json')); await rm(path.join(root, 'restored.png'));
+  await studio.locator('#history-undo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await studio.locator('#algorithm').selectOption('threshold');
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect(studio.locator('#history-redo')).toBeDisabled();
+  await studio.locator('#history-look').selectOption(randomHistoryID);
+  await studio.locator('#history-restore').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomPNG);
+  assert.deepEqual(await readdir(root), ['source.png']);
+  checks.push('Undo, Redo and gallery branch restore send exact saved settings through the real host; restored masked PNG and recipe bytes match, and old recipe authority is rejected');
+
+  let delayedRestore, holdRestore = true;
+  Client.prototype.callTool = async function(params, options) {
+    if (params.name === 'dither_random_style') params = { ...params, arguments: { seed: 107 } };
+    const hold = params.name === 'dither_studio' && holdRestore;
+    if (hold) holdRestore = false;
+    const result = await originalCallTool.call(this, params, options);
+    if (hold) await new Promise(resolve => { delayedRestore = { resolve, signal: options.signal }; });
+    return result;
+  };
+  await studio.locator('#history-look').selectOption(initialHistoryID);
+  await studio.locator('#history-restore').click();
+  await expect.poll(() => !!delayedRestore).toBe(true);
+  for (const id of ['history-look', 'history-restore', 'history-undo', 'history-redo', 'save', 'save-recipe']) await expect(studio.locator(`#${id}`)).toBeDisabled();
+  await expect(studio.locator('#random-style')).toBeEnabled();
+  assert.equal(await recipeStatus('pending-restore.json', randomRecipe), 400);
+  await studio.locator('#random-style').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal(delayedRestore.signal.aborted, true);
+  assert.equal(JSON.parse(await studio.locator('#options-json').inputValue()).seed, 107);
+  const latestPNG = await studio.locator('#preview').getAttribute('src');
+  const latestHistory = await studio.locator('#history-look option').evaluateAll(options => options.map(option => option.value));
+  delayedRestore.resolve();
+  // A subsequent round trip proves the delayed prior operation cannot clear the latest authority.
+  await studio.locator('#recipe-output').fill('latest.json');
+  await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#status')).toHaveText('Saved recipe latest.json');
+  assert.equal(JSON.parse(await readFile(path.join(root, 'latest.json'), 'utf8')).options.seed, 107);
+  assert.equal(await studio.locator('#preview').getAttribute('src'), latestPNG);
+  assert.deepEqual(await studio.locator('#history-look option').evaluateAll(options => options.map(option => option.value)), latestHistory);
+  assert.equal(await recipeStatus('stale-restore.json', randomRecipe), 400);
+  await rm(path.join(root, 'latest.json'));
+  assert.deepEqual(await readdir(root), ['source.png']);
+  Client.prototype.callTool = originalCallTool;
+  checks.push('Random supersedes an in-flight history restore; delayed old completion cannot replace pixels, history or fresh host recipe-save authority');
   await studio.locator('#extract-count').fill('5');
   await studio.locator('#extract').click();
   await expect(studio.locator('#status')).toHaveText('Extracted 5 colors. Apply preview before saving.');
@@ -103,7 +189,6 @@ try {
   await studio.locator('#apply').click();
   await expect(studio.locator('#status')).toContainText('Preview ready');
   checks.push('Current-source extraction crosses the restricted host bridge and requires a new preview');
-  const token = await page.locator('meta[name="studio-session"]').getAttribute('content');
   const boundary = await Promise.all([
     { name: 'dither_palette_extract', arguments: { input: 'other.png', count: 5 } },
     { name: 'dither_palette_extract', arguments: { input: 'source.png', count: 257 } },
@@ -145,6 +230,12 @@ try {
   await page.screenshot({ path: path.join(out, 'embedding-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   assert(await studio.locator('html').evaluate((html) => html.scrollWidth <= html.clientWidth + 1));
+  // Wait for the asynchronous size notification before capturing the full mobile app.
+  await expect.poll(async () => {
+    const contentHeight = await studio.locator('.studio').evaluate(element => Math.ceil(element.getBoundingClientRect().height));
+    const frameHeight = await page.locator('#studio').evaluate(element => element.clientHeight);
+    return frameHeight >= Math.min(contentHeight, 3000);
+  }).toBe(true);
   await page.screenshot({ path: path.join(out, 'embedding-mobile.png'), fullPage: true });
   checks.push('Host theme update and 390px responsive layout');
   await page.locator('#close').click();

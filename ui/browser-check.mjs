@@ -186,6 +186,7 @@ try {
   await studio.locator('#save-recipe').click();
   await expect(studio.locator('#preview-badge')).toHaveText('SAVING RECIPE');
   await expect(studio.locator('#random-style')).toBeDisabled();
+  for (const id of ['history-look', 'history-restore', 'history-undo', 'history-redo']) await expect(studio.locator(`#${id}`)).toBeDisabled();
   await expect(studio.locator('#algorithm')).toBeDisabled();
   await expect(studio.locator('#recipe-output')).toBeDisabled();
   await expect(studio.locator('#output')).toBeDisabled();
@@ -266,7 +267,9 @@ try {
   await expect(studio.locator('#status')).toContainText('Preview ready');
   assert.equal((await page.evaluate(() => window.ditherHarness.calls.at(-1).arguments.options)).crop, undefined);
   record('Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction');
-
+  const historyBaseID = await studio.locator('#history-look').inputValue();
+  const historyBasePNG = await studio.locator('#preview').getAttribute('src');
+  const historyBaseOptions = JSON.parse(await studio.locator('#options-json').inputValue());
 
   // Delay completed real tool results to exercise edits and cancellation races.
   await page.evaluate(() => {
@@ -345,6 +348,83 @@ try {
   await expect(studio.locator('[data-mode="builtin"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(studio.locator('#save-recipe')).toBeEnabled();
   assert.deepEqual((await readdir(workspace)).sort(), filesBeforeRandom);
+  const randomHistoryID = await studio.locator('#history-look').inputValue();
+  const randomHistoryPNG = await studio.locator('#preview').getAttribute('src');
+  const historyCount = await studio.locator('#history-look option').count();
+  const callsBeforeHistory = await page.evaluate(() => window.ditherHarness.calls.length);
+  await studio.locator('#history-undo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect(studio.locator('#history-look')).toHaveValue(historyBaseID);
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), historyBaseOptions);
+  assert.equal(await studio.locator('#preview').getAttribute('src'), historyBasePNG);
+  await studio.locator('#history-redo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect(studio.locator('#history-look')).toHaveValue(randomHistoryID);
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), randomOptions);
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomHistoryPNG);
+  assert.equal(await studio.locator('#history-look option').count(), historyCount);
+  assert.deepEqual(await page.evaluate(start => window.ditherHarness.calls.slice(start).map(call => call.name), callsBeforeHistory), ['dither_studio', 'dither_studio']);
+  // Creating a branch clears Redo, but the previous random look stays in the gallery.
+  await studio.locator('#history-undo').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await studio.locator('#algorithm').selectOption('threshold');
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect(studio.locator('#history-redo')).toBeDisabled();
+  assert(await studio.locator('#history-look option').evaluateAll((options, id) => options.some(option => option.value === id), randomHistoryID));
+  await studio.locator('#history-look').selectOption(randomHistoryID);
+  await studio.locator('#history-restore').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomHistoryPNG);
+  // An explicit restore replaces incomplete text only after its fresh preview succeeds.
+  await studio.getByRole('button', { name: 'Custom colors', exact: true }).click();
+  await studio.locator('#custom-colors').fill('unfinished palette');
+  await studio.locator('#options-json').fill('{');
+  await studio.locator('#history-restore').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  await expect(studio.locator('[data-mode="builtin"]')).toHaveAttribute('aria-pressed', 'true');
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), randomOptions);
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomHistoryPNG);
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  assert.deepEqual((await readdir(workspace)).sort(), filesBeforeRandom);
+  record('Undo and Redo rerender exact saved settings; branching retains the random look in the gallery; explicit restore recovers unfinished JSON and palette text without regeneration');
+
+  await page.evaluate(() => {
+    const host = window.ditherHarness; const original = host.bridge.oncalltool;
+    host.historyOriginal = original;
+    host.bridge.oncalltool = async (params, extra) => {
+      const result = await original(params, extra);
+      if (params.name === 'dither_studio') {
+        host.delayedHistory = { id: extra.mcpReq.id, result };
+        await new Promise(resolve => { host.releaseHistory = resolve; });
+      }
+      return result;
+    };
+  });
+  await studio.locator('#history-look').selectOption(historyBaseID);
+  const historyBeforeCancel = await studio.locator('#history-look option').evaluateAll(options => options.map(option => option.value));
+  await studio.locator('#history-restore').click();
+  await page.waitForFunction(() => !!window.ditherHarness.releaseHistory);
+  for (const id of ['history-look', 'history-restore', 'history-undo', 'history-redo', 'save', 'save-recipe']) await expect(studio.locator(`#${id}`)).toBeDisabled();
+  await expect(studio.locator('#random-style')).toBeEnabled();
+  await studio.locator('#options-json').fill('{');
+  await studio.locator('#cancel').click();
+  await page.evaluate(async () => {
+    const host = window.ditherHarness;
+    host.releaseHistory(); host.bridge.oncalltool = host.historyOriginal;
+    await host.bridge.transport.send({ jsonrpc: '2.0', ...host.delayedHistory });
+  });
+  await expect(studio.locator('#status')).toContainText(/cancelled/i);
+  await expect(studio.locator('#options-json')).toHaveValue('{');
+  assert.equal(await studio.locator('#preview').getAttribute('src'), randomHistoryPNG);
+  assert.deepEqual(await studio.locator('#history-look option').evaluateAll(options => options.map(option => option.value)), historyBeforeCancel);
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
+  await expect(studio.locator('#host-note')).toBeHidden();
+  await studio.locator('#history-look').selectOption(randomHistoryID);
+  await studio.locator('#history-restore').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  assert.deepEqual(JSON.parse(await studio.locator('#options-json').inputValue()), randomOptions);
+  record('History controls pause during restores; cancellation and a forced late reply preserve unfinished text, displayed pixels, gallery entries and save gating');
   // Editing or canceling a delayed style cannot start its automatic preview.
   await page.evaluate(() => {
     const host = window.ditherHarness;
@@ -361,6 +441,7 @@ try {
     await page.waitForFunction(() => !!window.ditherHarness.releaseRandom);
     await expect(studio.locator('#random-style')).toBeEnabled();
     await expect(studio.locator('#cancel')).toBeVisible();
+    for (const id of ['history-look', 'history-restore', 'history-undo', 'history-redo']) await expect(studio.locator(`#${id}`)).toBeDisabled();
     if (change === 'edit') await studio.locator('#brightness').fill('0.45');
     else await studio.locator('#cancel').click();
     await page.evaluate(() => window.ditherHarness.releaseRandom());
@@ -491,6 +572,7 @@ try {
   await expect(limited.locator("#apply")).toBeDisabled();
   await expect(limited.locator("#extract")).toBeDisabled();
   await expect(limited.locator("#random-style")).toBeDisabled();
+  for (const id of ['history-look', 'history-restore', 'history-undo', 'history-redo']) await expect(limited.locator(`#${id}`)).toBeDisabled();
   await limited.locator("#output").fill("no-tools.png");
   await expect(limited.locator("#save")).toBeDisabled();
   await limited.locator("#recipe-output").fill("no-tools.json");

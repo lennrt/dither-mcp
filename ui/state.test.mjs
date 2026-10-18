@@ -336,3 +336,88 @@ test('zero-seeded random style allows canonical omitted engine seed', () => {
   const state = ready(); const random = state.beginRandom(); const value = randomResult(0); delete value.structuredContent.recipe.options.seed;
   const preview = state.finishRandom(random, value); assert.equal(preview.kind, 'preview'); assert.equal(preview.request.options.seed, undefined);
 });
+
+function acceptSeed(state, seed) {
+  const draft = clone(state.draft); draft.options.seed = seed; state.edit(draft);
+  const operation = state.beginPreview(); assert.equal(state.finishPreview(operation, result(draft)), true);
+  return state.historyActive;
+}
+function restoreLook(state, target) {
+  const operation = state.beginHistory(target);
+  assert.equal(state.finishHistory(operation, result(operation.request)), true);
+  return state.historyActive;
+}
+test('history remembers canonical initial, manual, and random requests without previews or receipts', () => {
+  const state = ready(); const initial = state.historyActive;
+  assert.deepEqual(state.history, [{ id: initial, request }]); assert.equal(state.canUndo, false); assert.equal(state.canRedo, false);
+  const manual = acceptSeed(state, 11); assert.notEqual(manual, initial);
+  const random = state.beginRandom(); const preview = state.finishRandom(random, randomResult(22));
+  assert.equal(state.finishPreview(preview, result(preview.request)), true);
+  assert.equal(state.history.length, 3); assert.deepEqual(state.undoIDs, [initial, manual]);
+  for (const entry of state.history) assert.deepEqual(Object.keys(entry).sort(), ['id', 'request']);
+  const requestCopy = clone(state.history.at(-1).request);
+  state.draft.options.seed = 99; assert.deepEqual(state.history.at(-1).request, requestCopy);
+  state.rendered.request.options.seed = 101; assert.deepEqual(state.history.at(-1).request, requestCopy);
+});
+test('history undo, redo and picks commit only on successful exact fresh previews', () => {
+  const state = ready(); const first = state.historyActive; const second = acceptSeed(state, 1); const third = acceptSeed(state, 2);
+  const operation = state.beginHistory('undo');
+  assert.equal(operation.targetId, second); assert.equal(state.historyActive, third); assert.deepEqual(state.undoIDs, [first, second]); assert.deepEqual(state.redoIDs, []);
+  assert.equal(state.canHistory, false); assert.equal(state.canRandom, true); assert.equal(state.canSave, false);
+  assert.equal(state.finishHistory(operation, result(operation.request)), true);
+  assert.equal(state.historyActive, second); assert.deepEqual(state.undoIDs, [first]); assert.deepEqual(state.redoIDs, [third]);
+  const repeat = state.beginPreview(); assert.equal(state.finishPreview(repeat, result(state.draft)), true);
+  assert.deepEqual(state.redoIDs, [third]); assert.equal(state.history.length, 3);
+  assert.equal(restoreLook(state, 'redo'), third); assert.deepEqual(state.undoIDs, [first, second]);
+  assert.equal(restoreLook(state, first), first); assert.deepEqual(state.undoIDs, [first, second, third]);
+  const fourth = acceptSeed(state, 3); assert.equal(state.redoIDs.length, 0);
+  assert.deepEqual(new Set(state.history.map(entry => entry.id)), new Set([first, second, third, fourth]));
+  assert.equal(restoreLook(state, 'undo'), first); assert.equal(restoreLook(state, 'redo'), fourth);
+});
+test('restoring current look recovers a dirty draft without loops or clearing redo', () => {
+  const state = ready(); const first = state.historyActive; const second = acceptSeed(state, 1);
+  restoreLook(state, 'undo'); const undo = clone(state.undoIDs), redo = clone(state.redoIDs);
+  state.edit({ ...request, palette: 'mono' });
+  assert.equal(restoreLook(state, first), first); assert.deepEqual(state.draft, request);
+  assert.deepEqual(state.undoIDs, undo); assert.deepEqual(state.redoIDs, redo); assert.equal(state.history.length, 2);
+  assert.equal(restoreLook(state, 'redo'), second);
+});
+test('failed, canceled, edited and superseded restoration cannot change history or draft', () => {
+  for (const mode of ['error', 'changed', 'extra', 'cancel', 'edit', 'random']) {
+    const state = ready(); const first = state.historyActive; acceptSeed(state, 1);
+    const before = clone({ history: state.history, active: state.historyActive, undo: state.undoIDs, redo: state.redoIDs });
+    const operation = state.beginHistory(first); const response = result(operation.request);
+    if (mode === 'changed') { response._meta.dither.request.options.seed = 99; response.structuredContent.recipe.options.seed = 99; }
+    if (mode === 'extra') { response._meta.dither.request.options.brightness = .3; response.structuredContent.recipe.options.brightness = .3; }
+    if (mode === 'cancel') state.cancel();
+    if (mode === 'edit') state.edit({ ...state.draft, palette: 'mono' });
+    let replacement; if (mode === 'random') replacement = state.beginRandom();
+    const draft = clone(state.draft);
+    assert.equal(state.finishHistory(operation, mode === 'error' ? { isError: true, content: [{ type: 'text', text: 'Source unavailable.' }] } : response), false);
+    assert.deepEqual({ history: state.history, active: state.historyActive, undo: state.undoIDs, redo: state.redoIDs }, before);
+    assert.deepEqual(state.draft, draft); assert.equal(state.canSave, false);
+    if (replacement) assert.equal(state.pending.id, replacement.id);
+  }
+});
+test('history caps snapshots and navigation, touches restored old entries, and prunes no-op navigation', () => {
+  const state = ready(); const oldest = state.historyActive;
+  for (let seed = 1; seed < 20; seed++) acceptSeed(state, 1000 + seed);
+  assert.equal(state.history.length, 20); restoreLook(state, oldest);
+  acceptSeed(state, 20); assert.equal(state.history.length, 20);
+  assert.ok(state.history.some(entry => entry.id === oldest)); assert.equal(restoreLook(state, 'undo'), oldest);
+  for (let i = 0; i < 80; i++) {
+    if (i % 3 === 0) restoreLook(state, state.history[0].id);
+    else acceptSeed(state, 100 + i);
+    assert.ok(state.history.length <= 20 && state.undoIDs.length <= 20 && state.redoIDs.length <= 20);
+    assert.notEqual(state.undoIDs.at(-1), state.historyActive); assert.notEqual(state.redoIDs.at(-1), state.historyActive);
+    for (const id of [...state.undoIDs, ...state.redoIDs]) assert.ok(state.history.some(entry => entry.id === id));
+  }
+});
+test('new host input resets history and stale restoration cannot cross sources', () => {
+  const state = ready(); acceptSeed(state, 1); const old = state.beginHistory('undo');
+  const other = { ...request, input: 'other.png' }; state.setInput(other);
+  assert.deepEqual(state.history, []); assert.deepEqual(state.undoIDs, []); assert.deepEqual(state.redoIDs, []); assert.equal(state.historyActive, null);
+  assert.equal(state.finishHistory(old, result(old.request)), false); assert.equal(state.canHistory, false);
+  assert.equal(state.hostResult(result(other)), true); assert.equal(state.history.length, 1); assert.equal(state.history[0].request.input, 'other.png');
+  state.canCallTools = false; assert.throws(() => state.beginHistory(state.historyActive), /unavailable/);
+});

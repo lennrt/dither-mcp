@@ -147,6 +147,23 @@ test('official Apps bridge previews and saves through the real Go stdio server',
   assert.deepEqual(randomLoaded.structuredContent, state.rendered.recipe);
   const randomReplay = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', mask_input: 'source.png', output: 'random.png', recipe: 'recipes/random.json' } });
   assert.ok(!randomReplay.isError); assert.deepEqual(await readFile(path.join(workspace, 'random.png')), Buffer.from(state.rendered.src.split(',')[1], 'base64'));
+  const beforeHistoryFiles = (await readdir(workspace)).sort();
+  const randomPixels = state.rendered.src;
+  const undo = state.beginHistory('undo');
+  assert.equal(state.finishHistory(undo, await app.callServerTool({ name: 'dither_studio', arguments: undo.request })), true);
+  assert.deepEqual(Buffer.from(state.rendered.src.split(',')[1], 'base64'), await readFile(path.join(workspace, 'masked-true.png')));
+  const restoredRecipe = state.beginRecipeSave('recipes/restored.json');
+  assert.equal(state.finishRecipeSave(restoredRecipe, await app.callServerTool({ name: 'dither_recipe_save', arguments: restoredRecipe.request })), true);
+  assert.deepEqual(JSON.parse(await readFile(path.join(workspace, 'recipes/restored.json'), 'utf8')), JSON.parse(await readFile(path.join(workspace, 'recipes/masked-true.json'), 'utf8')));
+  const redo = state.beginHistory('redo');
+  assert.equal(state.finishHistory(redo, await app.callServerTool({ name: 'dither_studio', arguments: redo.request })), true);
+  assert.equal(state.rendered.src, randomPixels);
+  assert.deepEqual((await readdir(workspace)).sort(), beforeHistoryFiles);
+  // Restoring an old look rereads changed source bytes and renews the save guard.
+  const originalLook = state.beginHistory(state.history.find(entry => entry.request.palette === 'oat-and-ink').id);
+  assert.equal(state.finishHistory(originalLook, await app.callServerTool({ name: 'dither_studio', arguments: originalLook.request })), true);
+  assert.notEqual(state.rendered.sourceSHA256, initial.structuredContent.source_sha256);
+  assert.equal(state.canSave, true);
   const solid = await client.callTool({ name: 'dither_render', arguments: { input: 'source.png', output: 'solid.png', palette: 'mono', options: { width: 1, height: 1 } } });
   assert.ok(!solid.isError);
   state.setInput({ input: 'solid.png', palette: 'mono' });
