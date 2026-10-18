@@ -43,7 +43,7 @@ try {
   page.on('request', (request) => { if (/^https?:/.test(request.url()) && !['localhost', '127.0.0.1'].includes(new URL(request.url()).hostname)) external.push(request.url()); });
   await page.goto(host.origin);
   await expect(page.locator('#status')).toHaveText('Connected to the local Go server.');
-  const studio = page.frames().find((frame) => frame.url() === 'about:srcdoc');
+  let studio = page.frames().find((frame) => frame.url() === 'about:srcdoc');
   assert(studio);
   await expect(studio.locator('#status')).toContainText('Preview ready');
   await expect.poll(() => studio.locator('#preview').evaluate((image) => image.complete && image.naturalWidth)).toBe(512);
@@ -225,6 +225,59 @@ try {
   await expect(studio.locator('#save-recipe')).toBeDisabled();
   assert.deepEqual((await readdir(root)).sort(), ['recipes', 'saved.png', 'source.png']);
   checks.push('Masked custom recipe saves exactly; mask reuse reminder, dirty palette gating, and host rejects forged recipes and paths');
+  // Save accepted settings, then completely replace the host and its Go stdio process.
+  await expect(studio.locator('#favorite-save')).toBeDisabled();
+  await studio.locator('#history-restore').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  const favoritePixels = await studio.locator('#preview').getAttribute('src');
+  const favoriteOptions = JSON.parse(await studio.locator('#options-json').inputValue());
+  await studio.locator('#favorite-name').fill('Night garden');
+  await studio.locator('#favorite-save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved favorite “Night garden”');
+  const favoriteID = await studio.locator('#favorite-list').inputValue();
+  await studio.locator('#favorite-save').click();
+  await expect(studio.locator('#status')).toContainText(/exist|replace/i);
+  const favoriteBoundary = await Promise.all([
+    { name: 'dither_favorite_save', arguments: { name: 'Forged', recipe: { ...savedRecipe, options: { ...savedRecipe.options, seed: 999 } } } },
+    { name: 'dither_favorite_load', arguments: { id: favoriteID, input: 'private.json' } },
+    { name: 'dither_favorites_list', arguments: { path: '../' } },
+  ].map(async call => (await fetch(host.origin + '/call', { method: 'POST', headers: { origin: host.origin, 'content-type': 'application/json', 'x-studio-session': token }, body: JSON.stringify(call) })).status));
+  assert.deepEqual(favoriteBoundary, [400, 400, 400]);
+  await copyFile(path.join(root, 'source.png'), path.join(root, 'other.png'));
+  await copyFile(path.join(root, 'source.png'), path.join(root, 'other-mask.png'));
+  await host.close();
+  host = await startStudioHost({ root, input: 'other.png', maskInput: 'other-mask.png', port, initial: { options: { width: 64 } } });
+  await page.goto(host.origin);
+  await expect(page.locator('#status')).toHaveText('Connected to the local Go server.');
+  studio = page.frames().find(frame => frame.url() === 'about:srcdoc'); assert(studio);
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  // Discovery must happen automatically in this genuinely new app/server session.
+  await expect(studio.locator('#favorite-list option')).toHaveText('Night garden');
+  await expect(studio.locator('#favorite-load')).toBeEnabled();
+  assert.equal(await studio.locator('#history-look option').count(), 1);
+  const callsOnLoad = [];
+  Client.prototype.callTool = async function(params, options) { callsOnLoad.push(structuredClone(params)); return originalCallTool.call(this, params, options); };
+  await studio.locator('details.advanced > summary').click();
+  await studio.locator('.json-settings > summary').click();
+  await studio.locator('#options-json').fill('null');
+  await studio.locator('#favorite-load').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  Client.prototype.callTool = originalCallTool;
+  assert.deepEqual(callsOnLoad.map(call => call.name), ['dither_favorite_load', 'dither_studio']);
+  assert.equal(callsOnLoad[1].arguments.input, 'other.png'); assert.equal(callsOnLoad[1].arguments.mask_input, 'other-mask.png');
+  assert.deepEqual(callsOnLoad[1].arguments.options, favoriteOptions);
+  assert.equal(await studio.locator('#preview').getAttribute('src'), favoritePixels);
+  await studio.locator('#output').fill('favorite-export.png'); await studio.locator('#save').click();
+  await expect(studio.locator('#status')).toHaveText('Saved favorite-export.png');
+  assert.deepEqual(await readFile(path.join(root, 'favorite-export.png')), Buffer.from(favoritePixels.split(',')[1], 'base64'));
+  await studio.locator('#recipe-output').fill('recipes/favorite-replay.json'); await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#status')).toHaveText('Saved recipe recipes/favorite-replay.json');
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, 'recipes/favorite-replay.json'), 'utf8')), savedRecipe);
+  await writeFile(path.join(root, '.dither/favorites', 'b'.repeat(64) + '.json'), '{');
+  await studio.locator('#favorite-refresh').click();
+  await expect(studio.locator('#favorite-note')).toContainText('1 unavailable');
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  checks.push('Named favorite persists across new app and Go server sessions, auto-discovers, uses current source/mask, and reproduces exact image/recipe; corrupt listing entries are reported');
   await page.locator('#theme').click();
   await expect(studio.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.screenshot({ path: path.join(out, 'embedding-desktop.png'), fullPage: true });

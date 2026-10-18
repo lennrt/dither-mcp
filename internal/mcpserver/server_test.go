@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -56,7 +57,7 @@ func TestProtocolWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(listed.Tools) != 15 {
+	if len(listed.Tools) != 18 {
 		t.Fatalf("tools=%d", len(listed.Tools))
 	}
 	seen := map[string]bool{}
@@ -91,6 +92,41 @@ func TestProtocolWorkflow(t *testing.T) {
 			t.Fatal(err)
 		}
 		validators[tool.Name] = compiled
+		if strings.HasPrefix(tool.Name, "dither_favorite") {
+			readOnly := tool.Name != "dither_favorite_save"
+			if tool.Annotations.ReadOnlyHint == nil || *tool.Annotations.ReadOnlyHint != readOnly || tool.Annotations.IdempotentHint == nil || *tool.Annotations.IdempotentHint != readOnly || tool.Annotations.DestructiveHint == nil || *tool.Annotations.DestructiveHint || tool.Annotations.OpenWorldHint == nil || *tool.Annotations.OpenWorldHint {
+				t.Fatalf("favorite tool annotations misrepresent persistence: %s %+v", tool.Name, tool.Annotations)
+			}
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var valid any
+			var invalid []any
+			switch tool.Name {
+			case "dither_favorites_list":
+				valid = map[string]any{}
+				invalid = []any{nil, map[string]any{"input": "arbitrary"}}
+			case "dither_favorite_save":
+				valid = map[string]any{"name": "Café moon", "recipe": map[string]any{"version": 1, "options": map[string]any{}}}
+				invalid = []any{map[string]any{"name": nil, "recipe": map[string]any{"version": 1, "options": map[string]any{}}}, map[string]any{"name": "test", "recipe": nil}, map[string]any{"name": "test", "recipe": map[string]any{"version": 1, "options": nil}}}
+			case "dither_favorite_load":
+				valid = map[string]any{"id": strings.Repeat("a", 64)}
+				invalid = []any{map[string]any{"id": nil}, map[string]any{"id": "../escape"}, map[string]any{"id": strings.Repeat("A", 64)}, map[string]any{"id": strings.Repeat("a", 64), "output": "unexpected"}}
+			}
+			if err := inputSchema.Validate(valid); err != nil {
+				t.Fatalf("valid favorite input rejected: %s %v", tool.Name, err)
+			}
+			for _, value := range invalid {
+				if err := inputSchema.Validate(value); err == nil {
+					t.Fatalf("invalid favorite input admitted: %s %+v", tool.Name, value)
+				}
+			}
+		}
 		if tool.Name == "dither_compare" {
 			inputURI := uri + ":input"
 			if err := compiler.AddResource(inputURI, schema); err != nil {
@@ -183,6 +219,35 @@ func TestProtocolWorkflow(t *testing.T) {
 		if result := call("dither_random_style", args); !result.IsError {
 			t.Fatalf("random style accepted invalid arguments: %+v", args)
 		}
+	}
+	if empty := call("dither_favorites_list", map[string]any{}); empty.IsError {
+		t.Fatalf("list empty favorites: %+v", empty.Content)
+	}
+	favoriteResult := call("dither_favorite_save", app.FavoriteSaveRequest{Name: "  Café moon  ", Recipe: style.Recipe})
+	if favoriteResult.IsError {
+		t.Fatalf("favorite save: %+v", favoriteResult.Content)
+	}
+	favoriteWire, _ := json.Marshal(favoriteResult.StructuredContent)
+	var favorite app.Favorite
+	if err := json.Unmarshal(favoriteWire, &favorite); err != nil || favorite.Name != "Café moon" || len(favorite.ID) != 64 || !reflect.DeepEqual(favorite.Recipe, style.Recipe) {
+		t.Fatalf("favorite result mismatch: %+v %v", favorite, err)
+	}
+	if duplicate := call("dither_favorite_save", app.FavoriteSaveRequest{Name: favorite.Name, Recipe: style.Recipe}); !duplicate.IsError {
+		t.Fatal("favorite overwrite accepted")
+	}
+	loadedResult := call("dither_favorite_load", app.FavoriteLoadRequest{ID: favorite.ID})
+	loadedWire, _ := json.Marshal(loadedResult.StructuredContent)
+	if loadedResult.IsError || string(loadedWire) != string(favoriteWire) {
+		t.Fatalf("favorite load mismatch: %+v", loadedResult.Content)
+	}
+	listedResult := call("dither_favorites_list", map[string]any{})
+	listedWire, _ := json.Marshal(listedResult.StructuredContent)
+	var favorites app.FavoriteList
+	if err := json.Unmarshal(listedWire, &favorites); err != nil || len(favorites.Favorites) != 1 || favorites.Favorites[0].ID != favorite.ID || favorites.Unavailable != 0 {
+		t.Fatalf("favorite discovery mismatch: %+v %v", favorites, err)
+	}
+	if preview := call("dither_studio", map[string]any{"input": "source.png", "palette": favorite.Recipe.Palette, "options": favorite.Recipe.Options}); preview.IsError {
+		t.Fatalf("favorite failed to preview: %+v", preview.Content)
 	}
 	result := call("dither_render", map[string]any{"input": "source.png", "output": "out.png", "palette": "gameboy", "options": map[string]any{"algorithm": "atkinson", "width": 48}})
 	if result.IsError {

@@ -34,6 +34,9 @@ var Tools = []ToolInfo{
 	{"dither_recipe_load", "Read and validate a saved version-1 JSON recipe.", true},
 	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. Metadata includes source and mask byte fingerprints, upright source dimensions after cropping, and export limits. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
 	{"dither_random_style", "Generate a portable version-1 dither recipe for creative exploration without reading or writing files. Chooses a current algorithm and palette, moderate tone adjustments, and occasional subtle texture. Omit seed for a fresh style; supply a JavaScript-safe signed integer to repeat the selection within this engine and catalog version. The result includes the seed and recipe, without source paths, dimensions, pixel scale, resize filter, crop, or mask. Preview with dither_studio before saving.", true},
+	{"dither_favorites_list", "Discover named recipes saved in this workspace's .dither/favorites library, sorted by case-sensitive name. Missing libraries return an empty list without creating files. Unreadable or invalid recognized entries are counted as unavailable. Scans at most 512 directory entries, including unrelated and temporary files; an oversized library returns an error, while loading a known ID remains available.", true},
+	{"dither_favorite_save", "Persist an exact version-1 recipe under a human-readable name in the workspace's .dither/favorites library. Trims surrounding name whitespace; names remain case-sensitive and Unicode spelling is preserved. Never replaces an existing name. Returns the favorite ID, name and recipe rather than an image artifact receipt. The library survives server restarts and contains no source or mask paths. Serial saves stop at the 512-entry listing limit; concurrent processes can exceed that advisory capacity.", false},
+	{"dither_favorite_load", "Load and validate a named favorite by its opaque ID, including when the library exceeds its listing limit. Returns the exact saved recipe without reading an image or creating files. Pass its palette or colors and options to dither_studio with the current input to preview; supply mask_input separately when its recipe requires an image mask.", true},
 }
 
 func New(svc *app.Service) *server.MCPServer {
@@ -53,6 +56,9 @@ func New(svc *app.Service) *server.MCPServer {
 	add[app.InputRequest, app.Recipe](s, svc, Tools[12])
 	add[app.StudioRequest, app.StudioMetadata](s, svc, Tools[13])
 	add[app.RandomStyleRequest, app.RandomStyleResult](s, svc, Tools[14])
+	add[app.Empty, app.FavoriteList](s, svc, Tools[15])
+	add[app.FavoriteSaveRequest, app.Favorite](s, svc, Tools[16])
+	add[app.FavoriteLoadRequest, app.Favorite](s, svc, Tools[17])
 	addStudioResource(s)
 	s.AddResource(mcp.NewResource("dither://capabilities", "Dither capabilities", mcp.WithMIMEType("application/json")), func(ctx context.Context, r mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		b, err := json.Marshal(svc.Catalog())
@@ -82,6 +88,9 @@ func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
 		// The optional pointer distinguishes omission from zero in Go; the wire
 		// contract permits only integers within the JavaScript-safe range.
 		tool.RawInputSchema = json.RawMessage(fmt.Sprintf(`{"type":"object","properties":{"seed":{"type":"integer","minimum":%d,"maximum":%d,"description":"Omit for a fresh random style. Supply a signed JavaScript-safe integer, including zero, to repeat a style within the current engine and catalog version."}},"additionalProperties":false}`, -app.MaxStyleSeed, app.MaxStyleSeed))
+	}
+	if info.Name == "dither_favorite_load" {
+		tool.RawInputSchema = json.RawMessage(`{"type":"object","properties":{"id":{"type":"string","pattern":"^[0-9a-f]{64}$","description":"Opaque ID returned by favorites list or favorite save."}},"required":["id"],"additionalProperties":false}`)
 	}
 	if info.Name == "dither_studio" {
 		tool.Meta = studioToolMeta()

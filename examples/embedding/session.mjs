@@ -1,7 +1,8 @@
-// Node/desktop side: one source image, five tools, and one embedded UI resource.
+// Node/desktop side: one source image, eight tools, and one embedded UI resource.
 import path from 'node:path';
 import { realpath, stat } from 'node:fs/promises';
 import { isDeepStrictEqual } from 'node:util';
+import { favoriteName } from '../../ui/state.mjs';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
@@ -13,9 +14,23 @@ export function relativeImagePath(value, label = 'path') {
 }
 
 export function validateStudioCall(params, { input, maskInput, acceptedRecipe }) {
-  if (!params || !['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style'].includes(params.name)) throw new Error('Only studio, render, palette extraction, recipe save, and random style tools are allowed.');
+  if (!params || !['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load', 'dither_favorite_save'].includes(params.name)) throw new Error('Only studio, render, palette extraction, recipe save, random style, and favorite tools are allowed.');
   if (Object.keys(params).some((key) => !['name', 'arguments', '_meta'].includes(key))) throw new Error('Unknown tool call field.');
   const args = params.arguments;
+  if (params.name === 'dither_favorites_list') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).length) throw new Error('Favorites listing accepts an empty argument object.');
+    return params;
+  }
+  if (params.name === 'dither_favorite_load') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).some(key => key !== 'id') || typeof args.id !== 'string' || !/^[a-f0-9]{64}$/.test(args.id)) throw new Error('Favorite loading accepts only a valid favorite ID.');
+    return params;
+  }
+  if (params.name === 'dither_favorite_save') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).some(key => !['name', 'recipe'].includes(key))) throw new Error('Favorite saving accepts only name and recipe.');
+    favoriteName(args.name);
+    if (!acceptedRecipe || !isDeepStrictEqual(args.recipe, acceptedRecipe)) throw new Error('Apply a successful preview before saving its exact favorite recipe.');
+    return params;
+  }
   if (params.name === 'dither_random_style') {
     if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).some(key => key !== 'seed') || ('seed' in args && !Number.isSafeInteger(args.seed))) throw new Error('Random style accepts only an optional safe integer seed.');
     return params;
@@ -74,13 +89,13 @@ export async function createStudioSession({ binary, root, input, maskInput, init
       async callTool(params, options) {
         if (options?.signal?.aborted) throw new DOMException('The studio request was aborted.', 'AbortError');
         validateStudioCall(params, { input, maskInput, acceptedRecipe });
-        const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style'].includes(name);
+        const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load'].includes(name);
         if (pending && (params.name !== 'dither_random_style' || !readOnly(pending.name))) throw new Error('A studio operation is already running.');
         pending?.controller.abort();
         const operation = { name: params.name, controller: new AbortController() };
         const signal = options?.signal ? AbortSignal.any([options.signal, operation.controller.signal]) : operation.controller.signal;
         pending = operation;
-        if (readOnly(params.name)) acceptedRecipe = undefined;
+        if (readOnly(params.name) && params.name !== 'dither_favorites_list') acceptedRecipe = undefined;
         try {
           const result = await client.callTool(params, { ...options, signal });
           if (pending === operation && params.name === 'dither_studio' && !result.isError && !signal.aborted) acceptedRecipe = structuredClone(result.structuredContent?.recipe);

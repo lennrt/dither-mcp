@@ -8,7 +8,7 @@ export async function mountDitherStudio({ iframe, sandboxUrl, bootstrap, callToo
   if (!iframe?.contentWindow || typeof callTool !== 'function') throw new Error('An attached iframe and callTool handler are required.');
   const bridge = new AppBridge(null, { name: 'Dither embedding example', version: '1' }, { serverTools: {} }, { hostContext: { theme: 'light', displayMode: 'inline', ...hostContext } });
   bridge.oncalltool = (params, extra) => {
-    if (!['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style'].includes(params.name)) throw new Error('Unsupported studio tool.');
+    if (!['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load', 'dither_favorite_save'].includes(params.name)) throw new Error('Unsupported studio tool.');
     return callTool(params, { signal: extra.mcpReq.signal });
   };
   bridge.onsandboxready = () => bridge.sendSandboxResourceReady({ html: bootstrap.resource.text, sandbox: 'allow-scripts', csp: bootstrap.resource._meta?.ui?.csp, permissions: bootstrap.resource._meta?.ui?.permissions });

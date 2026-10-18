@@ -11,6 +11,8 @@ let customDirty = false;
 let lastCatalog = '';
 let historyChoice = '';
 let lastHistoryActive = null;
+let favoritesAutoPending = true;
+let favoriteChoice = '';
 
 const ranges = [
   ['strength', 'Dither', 0, 2, .05, 1], ['brightness', 'Brightness', -1, 1, .05, 0],
@@ -112,9 +114,21 @@ function renderHistory() {
   $('history-undo').disabled = !state.canUndo;
   $('history-redo').disabled = !state.canRedo;
 }
+function renderFavorites() {
+  if (!state.favorites.some(item => item.id === favoriteChoice)) favoriteChoice = state.favorites[0]?.id || '';
+  const options = state.favorites.map(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.name; return option; });
+  if (!options.length) { const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'No saved favorites'; options.push(empty); }
+  $('favorite-list').replaceChildren(...options); $('favorite-list').value = favoriteChoice;
+  $('favorite-list').disabled = !state.canFavorites || !state.favorites.length;
+  $('favorite-refresh').disabled = !state.canFavorites;
+  $('favorite-load').disabled = !state.canFavorites || !favoriteChoice;
+  $('favorite-name').disabled = state.saving;
+  $('favorite-save').disabled = !state.canSave || jsonDirty || customDirty || !$('favorite-name').value;
+  $('favorite-note').textContent = `${state.favoritesUnavailable ? `${state.favoritesUnavailable} unavailable favorites were skipped. ` : ''}Favorites keep the complete preview settings across sessions. Loading uses the current source and mask. Names are unique.`;
+}
 function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
-  renderHistory();
+  renderHistory(); renderFavorites();
   $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
   $('extract').disabled = !state.canPreview;
@@ -127,11 +141,11 @@ function render(sync = false) {
   $('recipe-note').textContent = state.rendered?.request.mask_input
     ? `Keeps the preview dimensions and settings. Image and mask paths stay separate. Reuse with mask_input: ${state.rendered.request.mask_input}`
     : 'Keeps the preview dimensions and settings, including custom colors. Source paths and export size choices stay separate.';
-  $('cancel').hidden = !['preview', 'extract', 'random', 'history'].includes(state.pending?.kind);
+  $('cancel').hidden = !['preview', 'extract', 'random', 'history', 'favorites-list', 'favorite-load', 'favorite-preview'].includes(state.pending?.kind);
   $('status').textContent = state.status;
   $('status-dot').className = `status-dot${state.busy ? ' busy' : ''}${state.error ? ' error' : ''}`;
   const dirty = state.dirty || jsonDirty || customDirty;
-  $('preview-badge').textContent = state.busy ? ({ history: 'RESTORING', random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
+  $('preview-badge').textContent = state.busy ? ({ 'favorites-list': 'FAVORITES', 'favorite-load': 'LOADING FAVORITE', 'favorite-preview': 'LOADING FAVORITE', 'favorite-save': 'SAVING FAVORITE', history: 'RESTORING', random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
   $('preview-badge').classList.toggle('dirty', dirty && !!state.rendered);
   $('source').textContent = state.draft?.input?.split(/[\\/]/).pop() || 'Waiting for a source image';
   if (state.rendered) {
@@ -143,6 +157,7 @@ function render(sync = false) {
     $('preview-hint').textContent = dirty ? 'The image shows the last applied settings. Apply preview to see your changes.' : 'Choose an export size below. Save checks that the source and mask still match this preview.';
     setZoom(zoom);
   }
+  if (favoritesAutoPending && state.canFavorites && state.validPreview) { favoritesAutoPending = false; queueMicrotask(() => { void refreshFavorites(true); }); }
 }
 function exportSelection() {
   return { mode: $('export-size').value, width: Number($('export-width').value), height: Number($('export-height').value) };
@@ -227,6 +242,43 @@ $('apply').addEventListener('click', async (event) => {
     const accepted = state.finishPreview(operation, result); render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+async function refreshFavorites(automatic = false) {
+  if (!state.canFavorites) { if (automatic) favoritesAutoPending = true; return; }
+  let operation;
+  try {
+    operation = state.beginFavoritesList(); const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_favorites_list', arguments: {} }, { signal: controller.signal });
+    state.finishFavoritesList(operation, result); render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+}
+$('favorite-refresh').addEventListener('click', () => { void refreshFavorites(); });
+$('favorite-list').addEventListener('change', () => { favoriteChoice = $('favorite-list').value; });
+$('favorite-name').addEventListener('input', () => render());
+$('favorite-save').addEventListener('click', async () => {
+  if (!state.canSave || jsonDirty || customDirty) return;
+  let operation;
+  try {
+    operation = state.beginFavoriteSave($('favorite-name').value); render();
+    const result = await app.callServerTool({ name: 'dither_favorite_save', arguments: operation.request });
+    if (state.finishFavoriteSave(operation, result)) favoriteChoice = result.structuredContent.id;
+    render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
+$('favorite-load').addEventListener('click', async () => {
+  if (!state.canFavorites) return;
+  let operation;
+  try {
+    operation = state.beginFavoriteLoad(favoriteChoice); const controller = new AbortController(); abortController = controller; render();
+    const result = await app.callServerTool({ name: 'dither_favorite_load', arguments: operation.request }, { signal: controller.signal });
+    const preview = state.finishFavoriteLoad(operation, result);
+    if (!preview) { render(); return; }
+    operation = preview; render();
+    const rendered = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const accepted = state.finishFavoritePreview(operation, rendered);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
 $('history-look').addEventListener('change', () => { historyChoice = $('history-look').value; });
 async function restoreHistory(target) {
   if (!state.canHistory) return;
@@ -291,7 +343,7 @@ $('extract').addEventListener('click', async () => {
     render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
-$('cancel').addEventListener('click', () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
+$('cancel').addEventListener('click', () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'favorites-list' ? 'Favorite refresh cancelled.' : kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
 $('recipe-output').addEventListener('input', () => render());
 for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
@@ -316,7 +368,7 @@ $('save-recipe').addEventListener('click', async () => {
 });
 
 // MCP Apps hosts can omit allow-forms. Route explicit actions through buttons.
-for (const [form, button] of [['controls', 'apply'], ['save-form', 'save'], ['recipe-form', 'save-recipe']]) {
+for (const [form, button] of [['controls', 'apply'], ['save-form', 'save'], ['recipe-form', 'save-recipe'], ['favorite-form', 'favorite-save']]) {
   $(form).addEventListener('submit', (event) => event.preventDefault());
   $(form).addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
@@ -351,7 +403,7 @@ function applyContext(context) {
 
 // Lifecycle handlers are registered before connecting so initial data cannot race them.
 app.ontoolinput = ({ arguments: arguments_ }) => {
-  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null;
+  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null; favoriteChoice = ''; favoritesAutoPending = true;
   $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = '';
   try { state.setInput(arguments_); } catch (error) { state.fail(error); }
   render(true);

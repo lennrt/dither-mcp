@@ -56,13 +56,13 @@ const server = http.createServer(async (request, response) => {
     if (request.aborted || response.destroyed) return;
     const call = JSON.parse(body);
     try { validateStudioCall(call, { input: 'source.png', acceptedRecipe }); } catch (error) { return send(response, 403, 'application/json', JSON.stringify({ error: error.message })); }
-    const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style'].includes(name);
+    const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style', 'dither_favorites_list', 'dither_favorite_load'].includes(name);
     if (pending && (call.name !== 'dither_random_style' || !readOnly(pending.name))) return send(response, 429, 'application/json', JSON.stringify({ error: 'A tool call is already running.' }));
     pending?.controller.abort();
     const controller = new AbortController();
     const operation = { name: call.name, controller };
     pending = operation;
-    if (readOnly(call.name)) acceptedRecipe = undefined;
+    if (readOnly(call.name) && call.name !== 'dither_favorites_list') acceptedRecipe = undefined;
     response.on('close', () => { if (!response.writableEnded) controller.abort(); });
     try {
       const toolResult = await client.callTool({ name: call.name, arguments: call.arguments }, { signal: controller.signal });

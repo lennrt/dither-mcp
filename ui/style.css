@@ -23,3 +23,8 @@
 #history-look { font-size: 11px; text-overflow: ellipsis; }
 .history-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
 #history-restore { margin-left: auto; }
+
+.favorites-panel { border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: 20px; }
+.favorites-panel h2 { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin: 0 0 9px; }
+.favorites-panel h2 span { color: var(--muted); font-size: 9px; font-weight: normal; }
+#favorite-list { font-size: 11px; text-overflow: ellipsis; }

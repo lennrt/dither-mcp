@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { StudioState, clone, decodePreview, editOption, parseColors, studioRequest } from './state.mjs';
+import { StudioState, clone, decodePreview, editOption, favoriteName, parseColors, studioRequest } from './state.mjs';
 
 const request = { input: 'source.png', palette: 'oat-and-ink', mask_input: 'mask.png', options: { algorithm: 'atkinson', width: 320, height: 160, strength: .9, seed: 17, crop: { x: 2, y: 3, width: 90, height: 80 }, mask: { shape: 'image' }, effects: { noise: .1, pixel_sort: true, pixel_sort_threshold: 0 } } };
 function result(value = request) {
   const source = clone(value);
-  return { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: source.input, mask_input: source.mask_input, width: source.options.width, height: source.options.height, mime_type: 'image/png', source_sha256: 'a'.repeat(64), mask_sha256: 'b'.repeat(64), source_width: 90, source_height: 80, export_limits: { max_width: 16384, max_height: 16384, max_pixels: 16777216 }, recipe: { version: 1, palette: source.palette, colors: source.colors, options: clone(source.options) } }, _meta: { dither: { request: source, algorithms: [{ id: 'atkinson', name: 'Atkinson', family: 'diffusion' }], palettes: [{ id: 'oat-and-ink', name: 'Oat & ink', colors: ['#182F37', '#E8DBC0'] }] } } };
+  return { content: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }], structuredContent: { path: source.input, mask_input: source.mask_input, width: source.options.width, height: source.options.height, mime_type: 'image/png', source_sha256: 'a'.repeat(64), mask_sha256: source.mask_input ? 'b'.repeat(64) : undefined, source_width: 90, source_height: 80, export_limits: { max_width: 16384, max_height: 16384, max_pixels: 16777216 }, recipe: { version: 1, palette: source.palette, colors: source.colors, options: clone(source.options) } }, _meta: { dither: { request: source, algorithms: [{ id: 'atkinson', name: 'Atkinson', family: 'diffusion' }], palettes: [{ id: 'oat-and-ink', name: 'Oat & ink', colors: ['#182F37', '#E8DBC0'] }] } } };
 }
 function ready() { const state = new StudioState(); state.canCallTools = true; state.setInput(request); assert.equal(state.hostResult(result()), true); return state; }
 
@@ -420,4 +420,95 @@ test('new host input resets history and stale restoration cannot cross sources',
   assert.equal(state.finishHistory(old, result(old.request)), false); assert.equal(state.canHistory, false);
   assert.equal(state.hostResult(result(other)), true); assert.equal(state.history.length, 1); assert.equal(state.history[0].request.input, 'other.png');
   state.canCallTools = false; assert.throws(() => state.beginHistory(state.historyActive), /unavailable/);
+});
+
+const favorite = (recipe = clone(result().structuredContent.recipe), name = 'Saved look', id = 'a'.repeat(64)) => ({ id, name, recipe });
+function withFavorites(state = ready(), items = [favorite()]) {
+  const operation = state.beginFavoritesList();
+  assert.equal(state.finishFavoritesList(operation, { structuredContent: { favorites: items.map(({ id, name }) => ({ id, name })), unavailable: 0 } }), true);
+  return state;
+}
+test('favorite names match Go Unicode whitespace, limits, and case-sensitive display', () => {
+  assert.equal(favoriteName(' \u0085Look\u2003'), 'Look'); assert.equal(favoriteName('\uFEFFLook'), '\uFEFFLook');
+  assert.equal(favoriteName('Look'), 'Look'); assert.equal(favoriteName('\uFFFD'), '\uFFFD'); assert.equal(favoriteName('look'), 'look');
+  assert.equal(favoriteName('💫'.repeat(80)), '💫'.repeat(80));
+  for (const name of ['', '  ', '💫'.repeat(81), 'a\nb', 'a\u0085b', '\ud800', '\udc00']) assert.throws(() => favoriteName(name));
+});
+test('favorites metadata refresh, failure, and cancellation preserve preview authorization', () => {
+  const state = ready(); const operation = state.beginFavoritesList(); assert.equal(state.canSave, false); assert.equal(state.validPreview, true);
+  assert.equal(state.finishFavoritesList(operation, { structuredContent: { favorites: [{ id: 'a'.repeat(64), name: '\uFEFFLook' }], unavailable: 2 } }), true);
+  assert.equal(state.canSave, true); assert.equal(state.favoritesUnavailable, 2); assert.equal(state.favorites[0].name, '\uFEFFLook');
+  const refresh = state.beginFavoritesList(); state.cancel('Favorite refresh cancelled.');
+  assert.equal(state.canSave, true); assert.equal(state.finishFavoritesList(refresh, { structuredContent: { favorites: [], unavailable: 0 } }), false);
+  const failing = state.beginFavoritesList(); assert.equal(state.finishFavoritesList(failing, { isError: true, content: [{ type: 'text', text: 'Unable to read favorites.' }] }), false);
+  assert.equal(state.canSave, true); assert.equal(state.favorites.length, 1); assert.match(state.status, /Unable/);
+  state.beginFavoritesList(); const random = state.beginRandom(); assert.equal(state.pending.id, random.id); assert.equal(state.canSave, false);
+});
+test('malformed favorites metadata cannot replace the current list', () => {
+  const state = withFavorites();
+  for (const data of [{}, { favorites: [], unavailable: -1 }, { favorites: [{ id: 'wrong', name: 'Name' }], unavailable: 0 }, { favorites: [favorite(), favorite()], unavailable: 0 }, { favorites: Array(513).fill(favorite()), unavailable: 0 }]) {
+    const operation = state.beginFavoritesList(); assert.equal(state.finishFavoritesList(operation, { structuredContent: data }), false); assert.equal(state.favorites.length, 1); assert.equal(state.canSave, true);
+  }
+});
+test('saving a favorite requires the current accepted recipe and verifies its receipt', () => {
+  const state = ready(); const operation = state.beginFavoriteSave('  Warm print  ');
+  assert.deepEqual(operation.request, { name: 'Warm print', recipe: state.rendered.recipe }); assert.equal(state.saving, true); assert.equal(state.canRandom, false);
+  assert.equal(state.finishFavoriteSave(operation, { structuredContent: favorite(operation.request.recipe, 'Warm print') }), true);
+  assert.equal(state.favorites[0].name, 'Warm print'); assert.equal(state.canSave, true); assert.match(state.status, /^Saved favorite/);
+  for (const mutate of [item => item.id = 'bad', item => item.name = 'Other', item => item.recipe.options.seed = 99]) {
+    const saving = state.beginFavoriteSave('Warm print'); const receipt = favorite(clone(saving.request.recipe), 'Warm print'); mutate(receipt);
+    assert.equal(state.finishFavoriteSave(saving, { structuredContent: receipt }), false); assert.equal(state.canSave, true); assert.equal(state.favorites.length, 1);
+  }
+  const collision = state.beginFavoriteSave('Warm print'); assert.equal(state.finishFavoriteSave(collision, { isError: true, content: [{ type: 'text', text: 'Favorite already exists.' }] }), false);
+  assert.equal(state.canSave, true); assert.match(state.status, /already exists/);
+  state.edit({ ...request, palette: 'mono' }); assert.throws(() => state.beginFavoriteSave('Dirty'), /Apply/);
+});
+test('favorite load applies its complete recipe to current source and mask only after a fresh exact preview', () => {
+  const state = ready(); const current = { ...request, input: 'new.png', mask_input: 'new-mask.png' };
+  state.setInput(current); assert.equal(state.hostResult(result(current)), true); withFavorites(state);
+  state.edit({ ...state.draft, palette: 'mono' }); const original = clone(state.draft);
+  const loading = state.beginFavoriteLoad(favorite().id); assert.equal(state.canSave, false);
+  const preview = state.finishFavoriteLoad(loading, { structuredContent: favorite() });
+  assert.equal(preview.request.input, 'new.png'); assert.equal(preview.request.mask_input, 'new-mask.png');
+  assert.deepEqual(preview.request.options, request.options); assert.deepEqual(state.draft, original);
+  assert.equal(state.finishFavoritePreview(preview, result(preview.request)), true); assert.equal(state.canSave, true);
+  assert.equal(state.draft.palette, request.palette); assert.equal(state.history.at(-1).request.input, 'new.png');
+});
+test('favorite defaults admit only canonical mono, algorithm, effects, and inferred dimensions', () => {
+  for (const options of [{}, { width: 45 }, { height: 40 }]) {
+    const plain = clone(request); delete plain.mask_input; delete plain.options.mask;
+    const state = ready(); state.setInput(plain); assert.equal(state.hostResult(result(plain)), true);
+    const entry = favorite({ version: 1, options }); withFavorites(state, [entry]);
+    const load = state.beginFavoriteLoad(entry.id); const preview = state.finishFavoriteLoad(load, { structuredContent: entry });
+    const canonical = { input: plain.input, palette: 'mono', options: { algorithm: 'floyd-steinberg', effects: {}, width: options.width || (options.height ? 45 : 90), height: options.height || (options.width ? 40 : 80) } };
+    assert.equal(state.finishFavoritePreview(preview, result(canonical)), true);
+    const again = state.beginFavoriteLoad(entry.id); const pending = state.finishFavoriteLoad(again, { structuredContent: entry });
+    canonical.options.brightness = .2;
+    assert.equal(state.finishFavoritePreview(pending, result(canonical)), false); assert.match(state.status, /different settings/);
+  }
+});
+test('favorite mask mismatches, large dimensions and malformed responses retain existing settings', () => {
+  for (const mode of ['no-mask', 'procedural', 'large', 'wrong-id', 'path']) {
+    const state = withFavorites(); const before = clone(state.draft); const entry = favorite();
+    if (mode === 'no-mask') delete entry.recipe.options.mask;
+    if (mode === 'procedural') entry.recipe.options.mask = { shape: 'rectangle', width: 4, height: 4 };
+    if (mode === 'large') entry.recipe.options.width = 2048;
+    if (mode === 'wrong-id') entry.id = 'b'.repeat(64);
+    if (mode === 'path') entry.recipe.input = 'elsewhere.png';
+    const operation = state.beginFavoriteLoad(favorite().id); assert.equal(state.finishFavoriteLoad(operation, { structuredContent: entry }), null);
+    assert.deepEqual(state.draft, before); assert.equal(state.canSave, false);
+  }
+  const plain = clone(request); delete plain.mask_input; delete plain.options.mask;
+  const state = ready(); state.setInput(plain); assert.equal(state.hostResult(result(plain)), true); withFavorites(state);
+  const operation = state.beginFavoriteLoad(favorite().id); assert.equal(state.finishFavoriteLoad(operation, { structuredContent: favorite() }), null); assert.match(state.status, /needs an image mask/);
+});
+test('edits, cancellation and newer operations discard both favorite loading stages and stale saves', () => {
+  const state = withFavorites(); const first = state.beginFavoriteLoad(favorite().id); state.cancel();
+  assert.equal(state.finishFavoriteLoad(first, { structuredContent: favorite() }), null);
+  const second = state.beginFavoriteLoad(favorite().id); const preview = state.finishFavoriteLoad(second, { structuredContent: favorite() });
+  state.edit({ ...state.draft, palette: 'mono' }); assert.equal(state.finishFavoritePreview(preview, result(preview.request)), false); assert.equal(state.draft.palette, 'mono');
+  const third = state.beginFavoriteLoad(favorite().id); const random = state.beginRandom();
+  assert.equal(state.finishFavoriteLoad(third, { structuredContent: favorite() }), null); assert.equal(state.pending.id, random.id);
+  const saved = withFavorites(); const save = saved.beginFavoriteSave('Old'); saved.setInput(request);
+  assert.equal(saved.finishFavoriteSave(save, { structuredContent: favorite(save.request.recipe, 'Old') }), false); assert.deepEqual(saved.favorites, []);
 });

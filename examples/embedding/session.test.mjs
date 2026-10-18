@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, copyFile, readFile, readdir, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, copyFile, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +11,7 @@ import { createStudioSession, relativeImagePath, validateStudioCall } from './se
 const repository = fileURLToPath(new URL('../..', import.meta.url));
 const binary = path.join(repository, 'bin', process.platform === 'win32' ? 'dither-mcp.exe' : 'dither-mcp');
 
-test('embedding grants only five tools for its selected source and relative output', () => {
+test('embedding grants only eight tools for its selected source and relative output', () => {
   for (const value of ['../source.png', '/source.png', 'file:///tmp/source.png', 'C:\\source.png', 'a/../b.png', 'a\\b.png', './source.png', '', 'a//b.png']) assert.throws(() => relativeImagePath(value));
   const policy = { input: 'source.png' };
   const request = { name: 'dither_render', arguments: { input: 'source.png', output: 'art/result.png', expected_source_sha256: 'a'.repeat(64), options: { width: 1600 } }, _meta: { example: 'preserve' } };
@@ -20,6 +20,15 @@ test('embedding grants only five tools for its selected source and relative outp
   assert.equal(validateStudioCall(extract, { ...policy, maskInput: 'mask.png' }), extract);
   for (const args of [{}, { seed: 0 }, { seed: -9007199254740991 }, { seed: 9007199254740991 }]) assert.equal(validateStudioCall({ name: 'dither_random_style', arguments: args }, policy).arguments, args);
   for (const args of [null, [], { seed: null }, { seed: 1.5 }, { seed: '1' }, { seed: 9007199254740992 }, { input: 'source.png' }, { output: 'art.png' }, { seed: 1, options: {} }]) assert.throws(() => validateStudioCall({ name: 'dither_random_style', arguments: args }, policy));
+  const favoritePolicy = { ...policy, acceptedRecipe: { version: 1, palette: 'mono', options: {} } };
+  for (const call of [{ name: 'dither_favorites_list', arguments: {} }, { name: 'dither_favorite_load', arguments: { id: 'a'.repeat(64) } }, { name: 'dither_favorite_save', arguments: { name: '\uFEFFLook', recipe: favoritePolicy.acceptedRecipe } }]) assert.equal(validateStudioCall(call, favoritePolicy), call);
+  for (const call of [
+    { name: 'dither_favorites_list', arguments: { input: 'private.json' } },
+    { name: 'dither_favorite_load', arguments: { id: '../recipe.json' } },
+    { name: 'dither_favorite_load', arguments: { id: 'a'.repeat(64), output: 'out.json' } },
+    { name: 'dither_favorite_save', arguments: { name: 'Name', recipe: { ...favoritePolicy.acceptedRecipe, palette: 'other' } } },
+    { name: 'dither_favorite_save', arguments: { name: 'Name', recipe: favoritePolicy.acceptedRecipe, output: 'out.json' } },
+  ]) assert.throws(() => validateStudioCall(call, favoritePolicy));
   const recipe = { version: 1, palette: 'mono', options: { width: 64, height: 32 } };
   const recipeCall = { name: 'dither_recipe_save', arguments: { output: 'recipes/art.json', recipe }, _meta: { keep: true } };
   assert.equal(validateStudioCall(recipeCall, { ...policy, acceptedRecipe: recipe }), recipeCall);
@@ -182,4 +191,52 @@ test('random host supersession keeps newer authority and pending state despite d
   const save = state.beginRecipeSave('latest.json');
   assert.equal(state.finishRecipeSave(save, await session.callTool({ name: 'dither_recipe_save', arguments: save.request })), true);
   assert.deepEqual(JSON.parse(await readFile(path.join(root, 'latest.json'), 'utf8')), state.rendered.recipe);
+});
+
+test('named favorites survive new real server sessions, preserve current source/mask, and require fresh preview authority', { timeout: 30_000 }, async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'dither-embedding-favorites-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const name of ['source.png', 'other.png', 'other-mask.png']) await copyFile(path.join(repository, 'docs/assets/source/moon-garden.png'), path.join(root, name));
+  const first = await createStudioSession({ binary, root, input: 'source.png', maskInput: 'source.png', initial: { colors: ['#182F37', '#E8DBC0'], options: { width: 64, algorithm: 'atkinson', seed: 17, effects: { noise: .1 }, mask: { shape: 'image', invert: true } } } });
+  t.after(() => first.close());
+  const recipe = first.bootstrap.result.structuredContent.recipe;
+  const originalPixels = Buffer.from(first.bootstrap.result.content.find(item => item.type === 'image').data, 'base64');
+  const saved = await first.callTool({ name: 'dither_favorite_save', arguments: { name: ' \u0085Warm print ', recipe } });
+  assert.ok(!saved.isError); assert.equal(saved.structuredContent.name, 'Warm print'); assert.match(saved.structuredContent.id, /^[a-f0-9]{64}$/);
+  assert.deepEqual(saved.structuredContent.recipe, recipe);
+  const collision = await first.callTool({ name: 'dither_favorite_save', arguments: { name: 'Warm print', recipe } }); assert.equal(collision.isError, true);
+  const listed = await first.callTool({ name: 'dither_favorites_list', arguments: {} });
+  assert.deepEqual(listed.structuredContent.favorites, [{ id: saved.structuredContent.id, name: 'Warm print' }]);
+  // A metadata read preserves accepted authority and Unicode name semantics.
+  const unicode = await first.callTool({ name: 'dither_favorite_save', arguments: { name: '\uFEFFArchive', recipe } }); assert.ok(!unicode.isError);
+  const controller = new AbortController(); controller.abort();
+  await assert.rejects(first.callTool({ name: 'dither_favorites_list', arguments: {} }, { signal: controller.signal }));
+  assert.ok(!(await first.callTool({ name: 'dither_recipe_save', arguments: { output: 'still-current.json', recipe } })).isError);
+  await first.close();
+
+  await writeFile(path.join(root, '.dither/favorites', 'b'.repeat(64) + '.json'), '{');
+  const second = await createStudioSession({ binary, root, input: 'other.png', maskInput: 'other-mask.png', initial: { options: { width: 32 } } });
+  t.after(() => second.close());
+  const state = new StudioState(); state.canCallTools = true; state.setInput(second.bootstrap.arguments); assert.equal(state.hostResult(second.bootstrap.result), true);
+  const listing = state.beginFavoritesList();
+  assert.equal(state.finishFavoritesList(listing, await second.callTool({ name: 'dither_favorites_list', arguments: listing.request })), true);
+  assert.equal(state.favorites.length, 2); assert.equal(state.favoritesUnavailable, 1); assert.ok(state.favorites.some(item => item.name === '\uFEFFArchive'));
+  const loading = state.beginFavoriteLoad(saved.structuredContent.id);
+  const favoriteResult = await second.callTool({ name: 'dither_favorite_load', arguments: loading.request });
+  await assert.rejects(second.callTool({ name: 'dither_favorite_save', arguments: { name: 'Premature', recipe } }), /successful preview/);
+  const preview = state.finishFavoriteLoad(loading, favoriteResult); assert.ok(preview);
+  assert.equal(preview.request.input, 'other.png'); assert.equal(preview.request.mask_input, 'other-mask.png'); assert.deepEqual(preview.request.options, recipe.options);
+  assert.equal(state.finishFavoritePreview(preview, await second.callTool({ name: 'dither_studio', arguments: preview.request })), true);
+  assert.deepEqual(Buffer.from(state.rendered.src.split(',')[1], 'base64'), originalPixels);
+  const output = state.beginSave('favorite.png'); assert.equal(state.finishSave(output, await second.callTool({ name: 'dither_render', arguments: output.request })), true);
+  assert.deepEqual(await readFile(path.join(root, 'favorite.png')), originalPixels);
+  const oldDigest = state.rendered.sourceSHA256;
+  await writeFile(path.join(root, 'other.png'), originalPixels);
+  const changedLoad = state.beginFavoriteLoad(saved.structuredContent.id);
+  const changedPreview = state.finishFavoriteLoad(changedLoad, await second.callTool({ name: 'dither_favorite_load', arguments: changedLoad.request }));
+  assert.equal(state.finishFavoritePreview(changedPreview, await second.callTool({ name: 'dither_studio', arguments: changedPreview.request })), true);
+  assert.notEqual(state.rendered.sourceSHA256, oldDigest);
+  const changedSave = state.beginSave('changed-favorite.png');
+  assert.equal(state.finishSave(changedSave, await second.callTool({ name: 'dither_render', arguments: changedSave.request })), true);
+  const again = state.beginFavoriteSave('New session'); assert.equal(state.finishFavoriteSave(again, await second.callTool({ name: 'dither_favorite_save', arguments: again.request })), true);
 });

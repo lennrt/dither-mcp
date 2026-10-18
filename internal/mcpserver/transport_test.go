@@ -96,7 +96,7 @@ func TestStdioProtocolEras(t *testing.T) {
 			listed := rpc("tools/list", map[string]any{})
 			result := listed["result"].(map[string]any)
 			tools := result["tools"].([]any)
-			if len(tools) != 15 {
+			if len(tools) != 18 {
 				t.Fatalf("tools=%d", len(tools))
 			}
 			checkStudio := func(tools []any, wantUI bool) {
@@ -153,6 +153,24 @@ func TestStdioProtocolEras(t *testing.T) {
 			var styleFallback map[string]any
 			if err := json.Unmarshal([]byte(styleText), &styleFallback); err != nil || styleFallback["seed"] != float64(42) || styleFallback["recipe"] == nil {
 				t.Fatal("random style needs serialized JSON fallback")
+			}
+			favorite := rpc("tools/call", map[string]any{"name": "dither_favorite_save", "arguments": map[string]any{"name": "Saved moon", "recipe": recipe}})["result"].(map[string]any)
+			favoriteData := favorite["structuredContent"].(map[string]any)
+			if favoriteData["name"] != "Saved moon" || favoriteData["recipe"] == nil || len(favoriteData["id"].(string)) != 64 {
+				t.Fatalf("favorite wire contract: %+v", favoriteData)
+			}
+			loaded := rpc("tools/call", map[string]any{"name": "dither_favorite_load", "arguments": map[string]any{"id": favoriteData["id"]}})["result"].(map[string]any)
+			if loaded["isError"] == true || loaded["structuredContent"].(map[string]any)["id"] != favoriteData["id"] {
+				t.Fatalf("favorite load wire contract: %+v", loaded)
+			}
+			favoriteText := loaded["content"].([]any)[0].(map[string]any)["text"].(string)
+			var favoriteFallback map[string]any
+			if err := json.Unmarshal([]byte(favoriteText), &favoriteFallback); err != nil || favoriteFallback["id"] != favoriteData["id"] || favoriteFallback["recipe"] == nil {
+				t.Fatal("favorite needs serialized JSON fallback")
+			}
+			favorites := rpc("tools/call", map[string]any{"name": "dither_favorites_list", "arguments": map[string]any{}})["result"].(map[string]any)["structuredContent"].(map[string]any)
+			if len(favorites["favorites"].([]any)) != 1 || favorites["unavailable"] != float64(0) {
+				t.Fatalf("favorites list wire contract: %+v", favorites)
 			}
 			invalid := rpc("tools/call", map[string]any{"name": "dither_catalog", "arguments": map[string]any{"extra": true}})
 			if invalid["result"].(map[string]any)["isError"] != true {

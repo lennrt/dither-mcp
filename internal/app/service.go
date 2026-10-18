@@ -89,6 +89,36 @@ func (s *Service) Do(ctx context.Context, name string, raw []byte) (result any, 
 			return nil, err
 		}
 		return style, nil
+	case "dither_favorites_list":
+		var q Empty
+		if err := StrictJSON(raw, &q); err != nil {
+			return nil, err
+		}
+		favorites, err := s.listFavorites(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return favorites, nil
+	case "dither_favorite_save":
+		var q FavoriteSaveRequest
+		if err := StrictJSON(raw, &q); err != nil {
+			return nil, err
+		}
+		favorite, err := s.saveFavorite(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+		return favorite, nil
+	case "dither_favorite_load":
+		var q FavoriteLoadRequest
+		if err := StrictJSON(raw, &q); err != nil {
+			return nil, err
+		}
+		favorite, err := s.loadFavorite(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+		return favorite, nil
 	case "dither_preview":
 		var q PreviewRequest
 		if err := StrictJSON(raw, &q); err != nil {
@@ -514,34 +544,43 @@ func (s *Service) publish(ctx context.Context, p, format string, b []byte, w, h,
 		return Artifact{}, err
 	}
 	defer dir.Close()
-	token := make([]byte, 12)
-	if _, err = rand.Read(token); err != nil {
+	if err := publishFile(ctx, dir, filepath.Base(p), b); err != nil {
 		return Artifact{}, err
+	}
+	return Artifact{Path: filepath.ToSlash(p), Format: format, Width: w, Height: h, Frames: n, Bytes: len(b), SHA256: digest(b), Recipe: r}, nil
+}
+
+// publishFile atomically creates one new file within an already pinned parent.
+// A concurrent writer to the same name wins or loses without replacing data.
+func publishFile(ctx context.Context, dir *os.Root, name string, b []byte) error {
+	token := make([]byte, 12)
+	if _, err := rand.Read(token); err != nil {
+		return err
 	}
 	tmp := ".dither-" + hex.EncodeToString(token) + ".tmp"
 	f, err := dir.OpenFile(tmp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
-		return Artifact{}, err
+		return err
 	}
 	defer dir.Remove(tmp)
 	if _, err = f.Write(b); err != nil {
 		f.Close()
-		return Artifact{}, err
+		return err
 	}
 	if err = f.Sync(); err != nil {
 		f.Close()
-		return Artifact{}, err
+		return err
 	}
 	if err = f.Close(); err != nil {
-		return Artifact{}, err
+		return err
 	}
 	if err = ctx.Err(); err != nil {
-		return Artifact{}, err
+		return err
 	}
-	if err = dir.Link(tmp, filepath.Base(p)); err != nil {
-		return Artifact{}, fmt.Errorf("publish without overwrite: %w", err)
+	if err = dir.Link(tmp, name); err != nil {
+		return fmt.Errorf("publish without overwrite: %w", err)
 	}
-	return Artifact{Path: filepath.ToSlash(p), Format: format, Width: w, Height: h, Frames: n, Bytes: len(b), SHA256: digest(b), Recipe: r}, nil
+	return nil
 }
 
 func (s *Service) batch(ctx context.Context, q BatchRequest) (BatchResult, error) {
