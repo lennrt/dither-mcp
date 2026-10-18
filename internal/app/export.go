@@ -19,20 +19,23 @@ import (
 	"github.com/lennrt/dither-mcp/engine"
 )
 
-func encodeBounded(format string, im image.Image, dpi int) ([]byte, error) {
+func encodeBounded(ctx context.Context, format string, im image.Image, dpi int) ([]byte, error) {
 	if dpi != 0 && (dpi < 36 || dpi > 2400) {
 		return nil, errors.New("dpi must be 0 (unspecified) or 36..2400")
 	}
 	if dpi != 0 && format != "png" {
 		return nil, errors.New("dpi metadata is supported only for PNG")
 	}
-	b := &boundedBuffer{max: int(MaxBytes) - 21}
-	if err := engine.Encode(format, b, im); err != nil {
+	b := &boundedBuffer{max: int(MaxBytes) - 21, ctx: ctx}
+	if err := engine.EncodeContext(ctx, format, b, im); err != nil {
 		return nil, err
 	}
 	data := b.Bytes()
 	if dpi != 0 {
 		data = pngDPI(data, dpi)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	return data, nil
 }
@@ -79,7 +82,7 @@ func (s *Service) separate(ctx context.Context, q RenderRequest) (Artifact, erro
 	if err != nil {
 		return Artifact{}, err
 	}
-	b := &boundedBuffer{max: int(MaxBytes)}
+	b := &boundedBuffer{max: int(MaxBytes), ctx: ctx}
 	z := zip.NewWriter(b)
 	inks := make([]map[string]any, 0, len(c.Palette))
 	bounds := out.Bounds()
@@ -104,7 +107,7 @@ func (s *Service) separate(ctx context.Context, q RenderRequest) (Artifact, erro
 			}
 		}
 		file := fmt.Sprintf("ink-%02d-%02x%02x%02x.png", n+1, ink.R, ink.G, ink.B)
-		data, err := encodeBounded("png", mask, q.DPI)
+		data, err := encodeBounded(ctx, "png", mask, q.DPI)
 		if err != nil {
 			return Artifact{}, err
 		}
@@ -512,10 +515,13 @@ func (s *Service) publishFrames(ctx context.Context, path, format string, frames
 		}
 		sheet := image.NewNRGBA(image.Rect(0, 0, sw, sh))
 		for i, frame := range frames {
+			if err := ctx.Err(); err != nil {
+				return Artifact{}, err
+			}
 			x, y := i%columns*w, i/columns*h
 			draw.Draw(sheet, image.Rect(x, y, x+w, y+h), frame, image.Point{}, draw.Src)
 		}
-		b, err := encodeBounded("png", sheet, 0)
+		b, err := encodeBounded(ctx, "png", sheet, 0)
 		if err != nil {
 			return Artifact{}, err
 		}
@@ -529,7 +535,7 @@ func (s *Service) publishFrames(ctx context.Context, path, format string, frames
 		if err := ctx.Err(); err != nil {
 			return Artifact{}, err
 		}
-		encoded, err := encodeBounded("gif", frame, 0)
+		encoded, err := encodeBounded(ctx, "gif", frame, 0)
 		if err != nil {
 			return Artifact{}, err
 		}
@@ -551,7 +557,7 @@ func (s *Service) publishFrames(ctx context.Context, path, format string, frames
 		g.Delay = append(g.Delay, delay)
 		g.Disposal = append(g.Disposal, gif.DisposalBackground)
 	}
-	b := &boundedBuffer{max: int(MaxBytes)}
+	b := &boundedBuffer{max: int(MaxBytes), ctx: ctx}
 	if err := gif.EncodeAll(b, g); err != nil {
 		return Artifact{}, err
 	}

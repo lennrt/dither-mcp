@@ -114,7 +114,17 @@ func DefaultConfig() Config { return Config{Algorithm: "floyd-steinberg"} }
 // Encode supports PNG, JPEG, GIF, SVG, PBM, and ASCII.
 // The format is a lowercase name without a dot. The names jpeg and jpg are equivalent.
 // Encode writes to the caller's writer. The caller remains responsible for closing it.
-func Encode(format string, w io.Writer, img image.Image) error { return encode(format, w, img) }
+func Encode(format string, w io.Writer, img image.Image) error {
+	return EncodeContext(context.Background(), format, w, img)
+}
+
+// EncodeContext supports the same formats as Encode with cooperative cancellation.
+// Handwritten image passes check cancellation at row boundaries. Standard codecs
+// check through writes; an individual codec step may finish before cancellation.
+// A canceled call may have written partial bytes. The caller owns their disposal.
+func EncodeContext(ctx context.Context, format string, w io.Writer, img image.Image) error {
+	return encode(ctx, format, w, img)
+}
 
 // Process preserves its input and configuration. It returns a new NRGBA image
 // with zero-origin bounds and retains source alpha. Fully transparent source

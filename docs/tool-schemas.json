@@ -2006,7 +2006,7 @@
       "idempotentHint": false,
       "openWorldHint": false
     },
-    "description": "Render 1..12 algorithms into a contact sheet with exact cell coordinates. Cells default to 320 pixels wide.",
+    "description": "Compare 1..12 algorithms with one palette, or 1..12 named palettes with one algorithm. Supply algorithms or palettes, not both. Palette mode rejects a shared palette, custom colors, and saved recipes. Cells identify candidates with exact coordinates and default to 320 pixels wide.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2261,7 +2261,17 @@
           "items": {
             "type": "string"
           },
-          "description": "Compare 1 through 12 algorithm IDs from dither_catalog. Each cell uses the same source, palette, and engine settings."
+          "description": "Compare 1 through 12 algorithm IDs from dither_catalog. Each cell uses the same source, palette, and engine settings. Supply algorithms or palettes, not both."
+        },
+        "palettes": {
+          "type": [
+            "null",
+            "array"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Compare 1 through 12 named palette IDs from dither_palettes with the same source, algorithm, and inline engine options. Omit algorithms, palette, colors, and recipe in this mode."
         },
         "columns": {
           "type": "integer",
@@ -2270,8 +2280,7 @@
       },
       "required": [
         "input",
-        "output",
-        "algorithms"
+        "output"
       ],
       "additionalProperties": false
     },
@@ -2559,6 +2568,9 @@
               },
               "height": {
                 "type": "integer"
+              },
+              "palette": {
+                "type": "string"
               },
               "width": {
                 "type": "integer"

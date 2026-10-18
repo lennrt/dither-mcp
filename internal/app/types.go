@@ -49,7 +49,8 @@ type RenderRequest struct {
 }
 type CompareRequest struct {
 	RenderRequest
-	Algorithms []string `json:"algorithms" jsonschema:"Compare 1 through 12 algorithm IDs from dither_catalog. Each cell uses the same source, palette, and engine settings."`
+	Algorithms []string `json:"algorithms,omitempty" jsonschema:"Compare 1 through 12 algorithm IDs from dither_catalog. Each cell uses the same source, palette, and engine settings. Supply algorithms or palettes, not both."`
+	Palettes   []string `json:"palettes,omitempty" jsonschema:"Compare 1 through 12 named palette IDs from dither_palettes with the same source, algorithm, and inline engine options. Omit algorithms, palette, colors, and recipe in this mode."`
 	Columns    int      `json:"columns,omitempty" jsonschema:"Use 1 through 12 columns in the contact sheet. Omission or zero selects 3."`
 }
 type BatchRequest struct {
@@ -107,6 +108,7 @@ type CompareResult struct {
 }
 type Cell struct {
 	Algorithm string `json:"algorithm"`
+	Palette   string `json:"palette,omitempty"`
 	X         int    `json:"x"`
 	Y         int    `json:"y"`
 	Width     int    `json:"width"`

@@ -450,7 +450,7 @@ func (s *Service) render(ctx context.Context, q RenderRequest) (Artifact, error)
 	if err != nil {
 		return Artifact{}, err
 	}
-	b, err := encodeBounded(f, out, q.DPI)
+	b, err := encodeBounded(ctx, f, out, q.DPI)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -460,11 +460,17 @@ func (s *Service) render(ctx context.Context, q RenderRequest) (Artifact, error)
 type boundedBuffer struct {
 	buf bytes.Buffer
 	max int
+	ctx context.Context
 }
 
 func (b *boundedBuffer) Len() int      { return b.buf.Len() }
 func (b *boundedBuffer) Bytes() []byte { return b.buf.Bytes() }
 func (b *boundedBuffer) Write(p []byte) (int, error) {
+	if b.ctx != nil {
+		if err := b.ctx.Err(); err != nil {
+			return 0, err
+		}
+	}
 	if len(p) > b.max-b.Len() {
 		return 0, errors.New("encoded output exceeds byte limit")
 	}
@@ -544,8 +550,34 @@ func (s *Service) batch(ctx context.Context, q BatchRequest) (BatchResult, error
 	return r, nil
 }
 func (s *Service) compare(ctx context.Context, q CompareRequest) (CompareResult, error) {
-	if len(q.Algorithms) < 1 || len(q.Algorithms) > 12 {
-		return CompareResult{}, errors.New("comparison needs 1..12 algorithms")
+	if len(q.Algorithms) > 0 && len(q.Palettes) > 0 {
+		return CompareResult{}, errors.New("compare algorithms or palettes, not both")
+	}
+	paletteMode := len(q.Palettes) > 0
+	candidates := q.Algorithms
+	if paletteMode {
+		candidates = q.Palettes
+		if q.Palette != "" || len(q.Colors) > 0 || q.Recipe != "" {
+			return CompareResult{}, errors.New("palette comparison cannot be combined with palette, colors, or recipe")
+		}
+	}
+	if len(candidates) < 1 || len(candidates) > 12 {
+		return CompareResult{}, errors.New("comparison needs 1..12 algorithms or palettes")
+	}
+	var palettes [][]color.NRGBA
+	if paletteMode {
+		for _, id := range q.Palettes {
+			// An empty render palette selects mono, but each comparison cell
+			// must name its palette explicitly.
+			if id == "" {
+				return CompareResult{}, errors.New("comparison palette IDs must not be empty")
+			}
+			palette, err := engine.ResolvePalette(id, nil)
+			if err != nil {
+				return CompareResult{}, err
+			}
+			palettes = append(palettes, palette)
+		}
 	}
 	if q.Columns == 0 {
 		q.Columns = 3
@@ -565,17 +597,21 @@ func (s *Service) compare(ctx context.Context, q CompareRequest) (CompareResult,
 		return CompareResult{}, err
 	}
 	var sheet *image.NRGBA
-	result := CompareResult{Cells: make([]Cell, 0, len(q.Algorithms))}
+	result := CompareResult{Cells: make([]Cell, 0, len(candidates))}
 	w, h := 0, 0
-	for i, id := range q.Algorithms {
-		c.Algorithm = id
+	for i, id := range candidates {
+		if paletteMode {
+			c.Palette = palettes[i]
+		} else {
+			c.Algorithm = id
+		}
 		out, err := engine.Process(ctx, im, c)
 		if err != nil {
 			return result, err
 		}
 		if sheet == nil {
 			w, h = out.Bounds().Dx(), out.Bounds().Dy()
-			sw, sh := w*q.Columns, h*((len(q.Algorithms)+q.Columns-1)/q.Columns)
+			sw, sh := w*q.Columns, h*((len(candidates)+q.Columns-1)/q.Columns)
 			if int64(sw)*int64(sh) > engine.MaxPixels || sw > engine.MaxDimension || sh > engine.MaxDimension {
 				return result, errors.New("comparison sheet exceeds image limits")
 			}
@@ -583,17 +619,27 @@ func (s *Service) compare(ctx context.Context, q CompareRequest) (CompareResult,
 		}
 		x, y := (i%q.Columns)*w, (i/q.Columns)*h
 		draw.Draw(sheet, image.Rect(x, y, x+w, y+h), out, image.Point{}, draw.Src)
-		result.Cells = append(result.Cells, Cell{Algorithm: id, X: x, Y: y, Width: w, Height: h})
+		cell := Cell{Algorithm: c.Algorithm, X: x, Y: y, Width: w, Height: h}
+		if paletteMode {
+			cell.Palette = id
+		}
+		result.Cells = append(result.Cells, cell)
 	}
 	f, err := outputFormat(q.RenderRequest)
 	if err != nil {
 		return result, err
 	}
-	b, err := encodeBounded(f, sheet, q.DPI)
+	b, err := encodeBounded(ctx, f, sheet, q.DPI)
 	if err != nil {
 		return result, err
 	}
-	result.Artifact, err = s.publish(ctx, q.Output, f, b, sheet.Bounds().Dx(), sheet.Bounds().Dy(), 1, &r)
+	recipe := &r
+	if paletteMode {
+		// One still recipe cannot represent several palettes. Operation
+		// parameters and cell metadata identify the settings for replay.
+		recipe = nil
+	}
+	result.Artifact, err = s.publish(ctx, q.Output, f, b, sheet.Bounds().Dx(), sheet.Bounds().Dy(), 1, recipe)
 	return result, err
 }
 

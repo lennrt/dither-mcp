@@ -90,6 +90,19 @@ func TestProtocolWorkflow(t *testing.T) {
 			t.Fatal(err)
 		}
 		validators[tool.Name] = compiled
+		if tool.Name == "dither_compare" {
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := inputSchema.Validate(map[string]any{"input": "source.png", "output": "palettes.png", "palettes": []any{"gameboy", "cga"}}); err != nil {
+				t.Fatalf("palette comparison violates advertised input schema: %v", err)
+			}
+		}
 	}
 	resources, err := c.ListResources(ctx, mcp.ListResourcesRequest{})
 	if err != nil || len(resources.Resources) != 3 {
@@ -150,6 +163,36 @@ func TestProtocolWorkflow(t *testing.T) {
 	}
 	if r := call("dither_catalog", map[string]any{}); r.IsError {
 		t.Fatal("session did not recover after tool errors")
+	}
+	paletteArgs := map[string]any{"input": "source.png", "output": "palettes.png", "palettes": []string{"gameboy", "cga"}, "options": map[string]any{"algorithm": "atkinson", "width": 16}, "columns": 2}
+	paletteResult := call("dither_compare", paletteArgs)
+	if paletteResult.IsError {
+		t.Fatalf("palette comparison failed: %v", paletteResult.Content)
+	}
+	wire, _ := json.Marshal(paletteResult.StructuredContent)
+	var comparison app.CompareResult
+	if err := json.Unmarshal(wire, &comparison); err != nil {
+		t.Fatal(err)
+	}
+	if comparison.Artifact.Recipe != nil || len(comparison.Cells) != 2 || comparison.Cells[0].Palette != "gameboy" || comparison.Cells[1].Palette != "cga" || comparison.Cells[0].Algorithm != "atkinson" {
+		t.Fatalf("MCP lost palette comparison metadata: %+v", comparison)
+	}
+	paletteArgs["output"] = "palettes-direct.png"
+	raw, _ := json.Marshal(paletteArgs)
+	direct, err := svc.Do(ctx, "dither_compare", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if direct.(app.CompareResult).Artifact.SHA256 != comparison.Artifact.SHA256 {
+		t.Fatal("MCP and shared service produced different palette comparison pixels")
+	}
+	paletteArgs["output"] = "palettes-invalid.png"
+	paletteArgs["algorithms"] = []string{"atkinson"}
+	if result := call("dither_compare", paletteArgs); !result.IsError {
+		t.Fatal("MCP accepted both comparison modes")
+	}
+	if _, err := os.Stat(filepath.Join(root, "palettes-invalid.png")); !os.IsNotExist(err) {
+		t.Fatal("invalid MCP comparison published output")
 	}
 	for _, step := range []struct {
 		name string
