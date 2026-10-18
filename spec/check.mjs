@@ -42,7 +42,7 @@ function run(name, args, expected = 0) {
   if (args[0] === 'run') {
     record.witnesses = [...output.matchAll(/(\w+) was witnessed in (\d+) trace\(s\) out of (\d+) explored/g)]
       .map(([, name, count, samples]) => ({ name, count: Number(count), samples: Number(samples) }));
-    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : args.includes('--step=exportStep') ? 'capturedBeforeDiskChange' : null;
+    const requiredWitness = args.includes('--step=productiveStep') ? 'bothComplete' : args.includes('--step=browseStep') ? 'completeTraversal' : args.includes('--step=normalizeStep') ? 'normalizedComplete' : args.includes('--step=saveStep') ? 'savedCurrent' : args.includes('--step=recipeSaveStep') ? 'recipeSaved' : args.includes('--step=exportStep') ? 'capturedBeforeDiskChange' : null;
     if (requiredWitness && !record.witnesses.some(w => w.name === requiredWitness && w.count > 0)) {
       process.stderr.write(output);
       throw new Error(`Coverage schedule never reached ${requiredWitness}`);
@@ -57,7 +57,7 @@ const modelWitnesses = {
   quantization: ['bothComplete', 'hasMaskedRegion'],
   palette_discovery: ['filteredNonempty', 'emptyMatch', 'completeTraversal', 'beyondEnd'],
   normalization: ['normalizedComplete', 'swappedAxes', 'rejectedMetadata', 'canceledDuringNormalization'],
-  mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent', 'paletteExtracted'],
+  mcp_apps: ['previewAccepted', 'staleDiscarded', 'canceledRequest', 'savedCurrent', 'paletteExtracted', 'recipeSaved', 'randomAccepted'],
   studio_export: ['sourceSizedExport', 'customSizedExport', 'changedInputRejected', 'capturedBeforeDiskChange'],
 };
 for (const [model, witnesses] of Object.entries(modelWitnesses)) {
@@ -69,6 +69,7 @@ run('quint', ['run', 'spec/quantization.qnt', '--backend=typescript', '--seed=20
 run('quint', ['run', 'spec/palette_discovery.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initBrowse', '--step=browseStep', '--verbosity=1', '--witnesses', 'completeTraversal']);
 run('quint', ['run', 'spec/normalization.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initNormalize', '--step=normalizeStep', '--verbosity=1', '--witnesses', 'normalizedComplete']);
 run('quint', ['run', 'spec/mcp_apps.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initSave', '--step=saveStep', '--verbosity=1', '--witnesses', 'savedCurrent']);
+run('quint', ['run', 'spec/mcp_apps.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=12', '--invariant=safety', '--init=initRecipeSave', '--step=recipeSaveStep', '--verbosity=1', '--witnesses', 'recipeSaved']);
 run('quint', ['run', 'spec/studio_export.qnt', '--backend=typescript', '--seed=20261003', '--max-samples=1000', '--max-steps=20', '--invariant=safety', '--init=initExport', '--step=exportStep', '--verbosity=1', '--witnesses', 'sourceSizedExport', 'capturedBeforeDiskChange']);
 // Remove the no-clobber guard in an isolated temporary copy. The negative test
 // must fail because this regression permits replacement of existing outputs.
@@ -82,7 +83,9 @@ try {
   for (const mutation of [
     { model: 'publication', before: 's.files.get(p) == -1,', after: 's.files.get(p) >= -1,' },
     { model: 'publication', before: 's.stage.get(j) == "encoding", s.encodedRows.get(j) < 2,', after: 's.encodedRows.get(j) < 2,' },
-    { model: 'quantization', before: 'else blockSample(visible, 0).union(blockSample(visible, 2))', after: 'else Set()' },
+    { model: 'quantization', before: 'tones.indices().filter(i => weights.nth(i) > 0)', after: 'tones.indices().filter(i => weights.nth(i) > 0).intersect(Set(0, 2))' },
+    { model: 'quantization', before: 'val folded = exact.size() > 2', after: 'val folded = false' },
+    { model: 'quantization', before: 'sum + tones.nth(i) * weights.nth(i)', after: 'sum + tones.nth(i)' },
     { model: 'quantization', before: 'palette: ids.nth(i), algorithm: algorithm', after: 'palette: ids.nth(0), algorithm: algorithm' },
     { model: 'quantization', before: 'algorithms.length() == 0 and not(sharedPaletteOrRecipe)', after: 'not(sharedPaletteOrRecipe)' },
     { model: 'palette_discovery', before: 'else offset + count', after: 'else offset + count - 1' },
@@ -90,7 +93,13 @@ try {
     { model: 'mcp_apps', before: 's.accepted >= 0, s.acceptedRevision == s.revision', after: 's.accepted >= 0' },
     { model: 'mcp_apps', before: 'val current = id == s.pending and s.requested.get(id) == s.revision', after: 'val current = true' },
     { model: 'mcp_apps', before: 'val extractionCurrent = id == s.pending and s.requested.get(id) == s.revision', after: 'val extractionCurrent = true' },
+    { model: 'mcp_apps', before: 'val styleCurrent = id == s.pending and s.requested.get(id) == s.revision', after: 'val styleCurrent = true' },
+    { model: 'mcp_apps', before: 's.connected, s.tools, not(s.saving), s.next < 3,', after: 's.connected, s.tools, s.next < 3,' },
     { model: 'mcp_apps', before: 'recipe: if (accept) s.requested.get(id) else s.recipe,', after: 'recipe: if (accept) s.requested.get(id) else s.recipe, writes: s.writes + 1,' },
+    { model: 'mcp_apps', before: 'val canSaveRecipe = s.recipeOutput and saveSettingsReady', after: 'val canSaveRecipe = saveSettingsReady' },
+    { model: 'mcp_apps', before: 'previewId: s.accepted, style: s.style,\n        explicit: explicit, output: s.recipeOutput', after: 'previewId: s.accepted, style: 0,\n        explicit: explicit, output: s.recipeOutput' },
+    { model: 'mcp_apps', before: 'tools: s.tools, kind: "recipe", width: 2', after: 'tools: s.tools, kind: "recipe", width: s.exportWidth' },
+    { model: 'mcp_apps', before: 'recipeReports: s.recipeReports + (if (success and receiptMatches) 1 else 0)', after: 'recipeReports: s.recipeReports + (if (success) 1 else 0)' },
     { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readMask == s.request.mask' },
     { model: 'studio_export', before: 'val matched = s.readSource == s.request.source and s.readMask == s.request.mask', after: 'val matched = s.readSource == s.request.source' },
     { model: 'studio_export', before: 'decodedSource: s.readSource,', after: 'decodedSource: s.source,' },

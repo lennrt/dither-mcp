@@ -1,5 +1,29 @@
 # Changes
 
+## Random style iteration
+
+- Add `dither_random_style`, the fifteenth MCP tool. Generate a valid style
+  recipe without an image, and return a safe integer seed for repeatable trials.
+- Put Random style above the studio preview. Generate and preview in one click,
+  preserve geometry and masks, and let repeated clicks supersede read-only work.
+- Reject stale generation and preview results. Keep explicit writes exclusive
+  and extend the restricted embedding host to the new tool.
+- Add runnable seed examples, rendered comparisons, and README/API guidance.
+
+## Studio recipes and rare source colors
+
+- Save exact accepted studio recipes to new JSON files, including extracted
+  palettes and advanced options. Keep image export dimensions independent.
+- Restrict embedding recipe saves to the latest accepted preview. Validate
+  publication receipts and preserve collision/error recovery.
+- Preserve external image-mask requirements in returned recipes, including
+  masks supplied implicitly. Reuse requires a mask file; paths remain excluded.
+- Replace periodic palette sampling with a full-source alpha-weighted histogram.
+  Keep up to 262,144 exact RGB values and use bounded 6-bit bins on overflow.
+  Preserve original weighted sums, deterministic median cut, and cancellation.
+- Large-image extraction and overflow GIF colors may change. Sources within
+  the former 262,144-pixel sample budget retain exact extraction behavior.
+
 ## Request reliability
 
 - Add context-aware encoding and palette mapping. Propagate request cancellation

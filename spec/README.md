@@ -17,12 +17,12 @@ The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the Type
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and seven changes.
+1. Strict validation of six baseline OpenSpec capabilities and nine changes.
 2. Typechecking of all six Quint modules.
-3. Ninety-six executable run tests, including negative precondition scenarios.
+3. 119 executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
-5. 1,000 additional traces for each completion-focused schedule: quantization, catalog browsing, normalization, studio saves, and guarded exports. Each schedule requires a completion witness.
-6. Nineteen negative mutation checks, each in an independent temporary model copy. Six remove the no-clobber guard, overlap pagination, bypass orientation readiness, permit dirty saves, accept stale studio results, or write during a preview. Eight bypass source/mask checks, reread source/mask paths after checking, retain an invalid preview, alter an accepted option, use the wrong source-size width, or ignore the export pixel limit. Five further mutations bypass encoding cancellation, empty-sample recovery, comparison mode separation, palette-cell identity, or extraction request identity. The harness confirms that the respective regression tests fail.
+5. 1,000 additional traces for six completion schedules: quantization, catalog browsing, normalization, image saves, recipe saves, and guarded exports.
+6. 27 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, and guarded exports. Each mutation must fail a regression test.
 
 The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
@@ -44,7 +44,7 @@ The model checks palette membership for selected visible pixels, unchanged unsel
 
 This order-independence applies only to the coordinate-local quantizer in the abstraction. Real error-diffusion algorithms depend on traversal order. The implementation promises equal output for equal complete configurations, including serpentine settings. The model does not encode RGB floating point, diffusion weights, resize arithmetic, blue-noise quality, or effects. It models quantization after adjustments and before post-effects. Masks and effects intentionally limit final palette-membership guarantees.
 
-The quantization module also checks palette-comparison admission and request-order cell identities using a three-candidate bound. Four positions and a two-sample budget model recovery when fixed-stride samples are empty. These tests do not implement median cut, alpha weighting, or image geometry. Independent Go fixtures check those boundaries and detect deliberate palette-switch regressions.
+The quantization module also checks palette-comparison admission and request-order cell identities using a three-candidate bound. A four-position weighted histogram models exact colors until two distinct entries, then two bounded bins. It checks all-visible coverage, transparency, raw weighted sums, permutation and exact-color preservation. This declarative abstraction models final grouping, not the incremental allocation transition, median cut, or RGB arithmetic. Independent Go fixtures check those boundaries, overflow centroids and palette-switch regressions.
 
 ## Palette discovery model
 
@@ -72,15 +72,17 @@ The [image-normalization change](../openspec/changes/image-normalization/proposa
 
 ## MCP Apps interaction model
 
-[`mcp_apps.qnt`](mcp_apps.qnt) represents complete source, palette, options, and mask settings with four revision values. It permits three preview requests and three save attempts. Each request keeps its identity and original revision, including after cancellation. Successful responses become current only while both identity and revision match.
+[`mcp_apps.qnt`](mcp_apps.qnt) represents user edits with four revision values and generated styles with separate identities. It permits three read operations and three save attempts. Each request keeps its identity and original revision, including after cancellation. Successful responses become current only while both identity and revision match.
 
 The model separates preview requests from explicit save authorization and publication outcomes. Save requires host tool support, a destination, a current successful preview, and no pending operation. An authorization records the current revision, accepted preview, and replay recipe. Invariants check that these agree. Run tests cover edits during requests, cancellation, late results, failed replacements, missing destinations, and busy-state guards.
 
 Extraction actions share request identity and revision guards. Successful extraction updates a palette draft but cannot authorize saving until another preview succeeds. The model abstracts returned-color validity; controller and browser tests check malformed values and pending JSON.
 
-Four mutations challenge the studio tests. They permit dirty saves, accept stale preview or extraction responses, or increment the publication count while receiving a preview. A completion-focused schedule must witness a successful save. This supplies coverage evidence rather than a liveness proof.
+Random generation and its automatic preview share one operation identity. A new random action may supersede pending reads, but never explicit writes. Both stages reject stale identities and edit revisions. Accepted style identity is captured in save authorization. Separate image/recipe destinations and dimensions preserve recipe authority independently of export size. A publication may succeed despite a malformed receipt; only a matching receipt permits recipe success reporting.
 
-Revision numbers abstract complete settings. The model does not parse tool data, render controls, implement the host bridge, validate filesystem paths, or compare image pixels. Preview actions have no publication transition by design. Go tests must independently check that the actual preview service writes no files. Controller and browser tests must check that real events enforce the modeled guards. The model alone establishes no UI behavior or machine-checked refinement.
+Ten studio mutations challenge dirty saves, stale preview/extraction/style results, preview writes, write supersession, wrong generated-style authority, missing recipe destinations, export-size leakage, and mismatched receipts. Separate completion schedules must witness image and recipe saves. These are coverage evidence rather than liveness proofs.
+
+Edit revisions and generated-style identities together abstract settings. The model does not parse tool data, render controls, implement the host bridge, validate filesystem paths, or compare image pixels. Preview actions have no publication transition by design. Go tests must independently check that the actual preview service writes no files. Controller and browser tests must check that real events enforce the modeled guards. The model alone establishes no UI behavior or machine-checked refinement.
 
 The [MCP Apps change](../openspec/changes/mcp-apps/proposal.md) defines negotiated presentation and fallback. The [studio guide](../docs/mcp-apps.md) describes host requirements, saves, and the runtime boundary.
 
@@ -106,6 +108,9 @@ The [studio-export change](../openspec/changes/studio-export/proposal.md) define
 | No-clobber atomic publication | `Service.publish` | `TestSecurityConcurrentPublicationHasOneWinner`, `TestSecurityOutputNeverOverwrites` |
 | No publication after observed cancellation | Context propagation and final commit check | `TestSecurityCancellationDoesNotPublish` |
 | Bounded inputs and aggregate animation | Byte/header checks, `frameDimensions`, GIF scanner | `TestSecurityLimitsFailBeforePublication`, `TestAnimationPreflightRejectsAggregateBeforeAllocation` |
+| Random style selection and portability | Shared service and MCP schemas | `TestRandomStyleSeedReplayAndBoundaries`, `TestRandomStyleDiversityBoundsAndRendering`, `TestRandomStyleDoesNotReadOrWriteWorkspace` |
+| Full-source weighted histograms | Exact RGB accumulation and overflow bins | `TestPaletteHistogramExactLimitAndOverflow`, `TestExtractPaletteFoldedCentroidsKeepOriginalSums`, `TestPaletteHistogramMaximumImageWeight` |
+| Accepted recipe and external mask reuse | Shared service plus restricted host | `TestStudioSavedRecipeRetainsExternalMask`, real studio save/load/replay and host recipe-authority tests |
 | Recipe admission | Strict JSON plus engine validation | `TestSecurityStrictArguments`, `TestSecurityRecipeValidation` |
 | Quantization/alpha/repeatability | Pure engine pipeline | Engine palette-membership, alpha, deterministic-seed, cancellation, and regression tests |
 | GIF composition and timing | Source compositor and frame encoder | `TestGIFCompositesLogicalBackgroundAndPrevious`, `TestGIFDisposalBackgroundRestoresColorOrTransparency`, `TestGIFSourceAnimationPreservesTimingAndLoop` |

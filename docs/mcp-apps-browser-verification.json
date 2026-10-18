@@ -6,9 +6,11 @@
     "Dirty settings reject late initial results; filtered palette library and real preview call",
     "Zoom, byte-identical PNG save, and overwrite rejection",
     "Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels",
+    "Recipe save keeps accepted dimensions, extracted colors and effects; rejects overwrite and mismatched receipt; freezes pending settings and permits retry",
     "Advanced JSON merges later slider, checkbox, and select edits while preserving crop and effects in the real preview request",
     "Invalid advanced JSON remains visible, restores controls without tool calls, and recovers after correction",
     "Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection",
+    "Prominent random action preserves geometry, replaces unfinished custom colors and all style effects, validates pending JSON, and discards edited or cancelled generation before auto-preview",
     "Custom-color validation and real custom-palette preview",
     "Host theme changes, 370px host and 390px viewport without horizontal overflow",
     "Host cancellation invalidates saving and a fresh preview recovers",
@@ -29,7 +31,8 @@
     "studio-export-mobile.png"
   ],
   "published_screenshot_sha256": {
-    "assets/mcp-app-studio.png": "912bc44062ad5bcd8135cd88c9b5f0d2f31ca8080c5895b9846a636658b3e86c",
-    "assets/mcp-app-studio-mobile.png": "0110106781ae5ba74df54d610e65d720d5997093abbb98bfcee943a457b5a082"
+    "assets/mcp-app-studio.png": "a86944e16ee3a709e537232daca03a8fa588f746c6a1867910dc5b1962471a66",
+    "assets/mcp-app-studio-mobile.png": "ff006f3b4b904359c7d44544d402b73cefe78031aa369291ce5f14fcfeb19fd3",
+    "assets/mcp-app-studio-dark.png": "b32c38be288c3495de11a909ab782920e29df67e27a80a9205f19d23030dc7dc"
   }
 }

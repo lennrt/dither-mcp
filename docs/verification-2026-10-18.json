@@ -13,7 +13,7 @@
     "playwright": "1.62.1",
     "chromium": "151.0.7922.34"
   },
-  "scope": "Palette comparison, source-color studio workflows, sparse extraction, cancellable encoders, explicit CLI flags, and mixed studio option edits. Local implementation checks and finite models; no hosted CI or external-client compatibility claim.",
+  "scope": "Random style generation and rapid studio iteration, accepted recipe saving and mask reuse, full-source rare-color histograms, palette comparisons, source-color studio workflows, cancellable encoders, explicit CLI flags and mixed studio option edits. Local implementation checks and finite models; no hosted CI or external-client compatibility claim.",
   "checks": [
     {
       "command": "make spec-install",
@@ -31,17 +31,17 @@
         "UI bundle freshness and JavaScript state/bridge tests",
         "embedding stdio and source/path authority tests"
       ],
-      "ui_tests": 36,
-      "embedding_tests": 5
+      "ui_tests": 45,
+      "embedding_tests": 7
     },
     {
       "command": "make spec-check",
       "result": "pass",
-      "openspec_items": 13,
+      "openspec_items": 15,
       "quint_models": 6,
-      "quint_run_tests": 96,
-      "simulation_traces": 65000,
-      "mutation_checks": 19,
+      "quint_run_tests": 119,
+      "simulation_traces": 66000,
+      "mutation_checks": 27,
       "detail": "../spec/verification.json"
     },
     {
@@ -50,10 +50,10 @@
       "seconds_per_target": 5,
       "parallel": 2,
       "executions": {
-        "FuzzProcess": 64516,
-        "FuzzStrictJSON": 155060,
-        "FuzzMetadata": 439742,
-        "FuzzICCProfile": 359207
+        "FuzzProcess": 120719,
+        "FuzzStrictJSON": 68103,
+        "FuzzMetadata": 576823,
+        "FuzzICCProfile": 201642
       }
     },
     {
@@ -72,8 +72,8 @@
         "mcp-apps-browser-verification.json",
         "embedding-browser-verification.json"
       ],
-      "studio_workflows": 15,
-      "embedding_checks": 7,
+      "studio_workflows": 17,
+      "embedding_checks": 9,
       "visual_review": [
         "desktop",
         "mobile",
@@ -82,10 +82,15 @@
       "browser_errors": 0,
       "external_requests": 0,
       "failed_requests": 0
+    },
+    {
+      "command": "node examples/random-styles.mjs <source> <fresh directory> 42 314 2026, followed by saved-recipe render",
+      "result": "pass",
+      "note": "Root and independent review ran examples. All three saved recipes replay 320x213 PNGs byte-for-byte. Independent real MCP snippet review verifies save errors, seed boundaries and immutable outputs."
     }
   ],
   "regression_evidence": [
-    "Original fixed-stride extractor falsely rejected four sparse-source fixtures; the fallback passes them and preserves nonempty sampling results.",
+    "Seven original nonempty fixed-stride fixtures missed singleton or minority stripe colors. Full-source histograms pass them, including nonzero origins; earlier transparent-sample regressions remain covered.",
     "Replacing every comparison cell palette with the first candidate fails two exact-pixel reference checks.",
     "Replacing application EncodeContext with legacy Encode fails five deterministic cancellation checks; background GIF palette training also fails its cancellation bound.",
     "Six pre-change output hashes verify byte compatibility for PNG, JPEG, GIF, SVG, PBM and ASCII.",
@@ -93,61 +98,115 @@
     "Original mixed-edit handler lost the latest control value. Removing active numeric-input preservation reproduces seed -17 becoming 17 in Chromium.",
     "Direct Apply of explicit null previously coerced options to defaults; state and browser checks now retain invalid text and make no tool call.",
     "A deterministic canceled reply exposed false disconnection in the original onerror handler. The final browser suite requires preserved connection and subsequent successful preview/save.",
-    "The documented palette-comparison CLI command reproduces the published contact sheet byte-for-byte."
+    "The documented palette-comparison CLI command reproduces the published contact sheet byte-for-byte.",
+    "Full-source histogram independently checks exact-cap overflow, alpha weights, 64-bit maximum-image totals and cancellation. A deliberate double-rounding mutation fails the original-sum centroid test.",
+    "Implicit mask_input previously produced a recipe without its external mask requirement. Save/load/replay now reproduces the preview and missing masks fail before publication, with caller-owned mask options unchanged.",
+    "Random styles exercise signed safe seeds, omission, zero, rejected null/fraction/string/overflow/unknown fields, 512 styles, all 41 algorithms, real MCP transport, reproducible rendering and no workspace reads/writes.",
+    "Six rapid random clicks hold actual Go/HTTP generation and preview responses and release them out of order. Only the newest preview restores recipe authority; old cleanup cannot clear a new operation.",
+    "Recipe state/browser tests cover extracted custom colors, hidden options, independent export dimensions, matched receipts, collisions, dirty/unsupported/pending states and masked save/load/replay.",
+    "The documentation example initially omitted checking the recipe-save MCP isError result. Independent real-stdio collision testing caught it, and the corrected example now reports the failure."
   ],
   "limitations": [
     "Only native macOS arm64 was exercised in this pass.",
     "Standard codecs may work between writer calls; a blocked external writer cannot be interrupted by context checks.",
     "Service-level cancellation admission test uses a pre-canceled request; deterministic mid-encoding tests cover the engine and bounded helper.",
-    "Fixed-stride extraction may retain sampling bias when its initial sample is nonempty.",
     "Finite seeded simulations and mutations do not prove Go or UI refinement.",
     "External MCP hosts, MCP Inspector, static showcase and terminal recordings were not rerun. Current studio screenshots and palette contact sheet were regenerated.",
     "No vulnerability audit was rerun because dependencies did not change; earlier advisory results remain historical.",
-    "The repository has no hosted CI."
+    "The repository has no hosted CI.",
+    "Full-source scans increase work on large low-color images. More than 262144 distinct colors fold into 6-bit/channel bins; reduction to 2\u2013256 output colors may still merge rare colors.",
+    "The active histogram key count is bounded, but the exact map, 8 MiB overflow bins and result storage may temporarily coexist. Allocation measurements are not peak resident memory.",
+    "Random seed selection is reproducible within the current engine/catalog version. Recipes retain settings; future engine versions need not reproduce exact output bytes."
   ],
   "source_sha256": {
-    "engine/SOURCES.md": "792191188f1c54ec0abc6c3c496a5c56f4638e5fe9f289a2022b688041f0f687",
+    "engine/SOURCES.md": "78019740c9a6ab37b12c0378e52d76c5eb6705a00333ad0748216c3b5955559d",
     "engine/encode.go": "8f07aace687b593f8aeb996dbd9a2a2447df106cdc92271d22e7c2fa2d0d7db7",
     "engine/encode_context_test.go": "d6d5260366c3a14b2aded5dfab97ba393cd192cb937be4fb982bed203a55b3f6",
-    "engine/palette.go": "2bc7e1622c675c1e7f536a891855644392fd9ef8f24a5d2cfdd15181279fc8a2",
-    "engine/palette_sampling_test.go": "ae6d6a4c03a6728b3dcc0ad498d01352ffe5aa71853543ea1ea0a5527b2a681a",
+    "engine/palette.go": "f7f472842471b963d5fc1408f0ddeddd39420ffc3ae893a89b26b70b688f6b34",
+    "engine/palette_histogram_test.go": "f3e9a259cdda614b328243b2e19fc3d3e673eb3936ae0fc1d40ce46a99bb8851",
+    "engine/palette_sampling_test.go": "5df9175ec9513acc155e01a13f1dba9cc32db258b931454dec15d4dd95386d3e",
     "engine/types.go": "c3a2388de0cf7f486c76501cb570b83b88896afe86900af95386af88455f053d",
-    "examples/embedding/browser-check.mjs": "5416269bdfe3e9a792cccb2a739eaea35016b9fed1b842170951a09c377de273",
-    "examples/embedding/session.mjs": "8c71374e520e3d42c1642d6591db13d71f29231b58d45b1f097a861167e2f4a9",
-    "examples/embedding/session.test.mjs": "c0c7f4c38eb3daea5114bf9c6657dc7d7c0ec791445a9e223de5aedc8323044e",
-    "examples/embedding/studio-host.mjs": "1939882effa5dce3859a81cb89e8b2c8b0043da7a052c901d0c0829c45be098a",
+    "examples/embedding/browser-check.mjs": "bb284f30fc17421cda4863037ca09daa4d767d3c55b4db25fa2c41495f4e4d63",
+    "examples/embedding/server.mjs": "787515ad38ee718137538e2a178fa0443bf4b243a800a5f898e17f3447c48fba",
+    "examples/embedding/session.mjs": "a27f22d25c2d9d1e7a9598049ee6f967e569aa438e9baf4ec47c4183668c5619",
+    "examples/embedding/session.test.mjs": "77242dd9967c219dbe76e7aba4b87c3540543b3cae2099ff395357717861b31f",
+    "examples/embedding/studio-host.mjs": "18e895f1ee92c553ddee66e5fa7fcae4f812bc1f327b0f3a28f1ae5a242399d3",
+    "examples/random-styles.mjs": "af4cd5948173109b9d121e6f3922db55d7bc6d4974b6bea378716907a84730ad",
     "internal/app/encode_context_test.go": "8451f3e5e335eca4524f0ec14e6128cae89e48b710a70e5c5c351f7fa4b124a7",
     "internal/app/export.go": "09d7392ddbf6fc218f5497b9183d213397f9cd5d341ad393b408a98e5d4fb85c",
     "internal/app/palette_compare_test.go": "2c0db430032ae695de7da24b227ee33a2da344b16adb8f886cf98f3d0bf91b3f",
     "internal/app/preview.go": "e008bf27d711a6984c5e7b26b77691af82a4464ab76dfa82f27b5398dc204477",
-    "internal/app/service.go": "2d0676fc766863eedeb4fb278aca19a2f1f44c4270dc1495955cefbadd8d38a9",
+    "internal/app/random_style.go": "5958800ce79f1547508c944e64d3b2612247457381a28c3be955766cfd260b34",
+    "internal/app/random_style_test.go": "5be56b43c33518c7595f297a098c8619cf12b3547e7e784e2dc0aebcc53a2462",
+    "internal/app/service.go": "eca2e2d13e5d3bd7e37667bffa8014dd4077112852f4ba84737b9f927081cd45",
     "internal/app/studio.go": "cdbd4c84c1915dcb5873b1bd731c21f4e70e08fc9a48ff73812bb2ba492411df",
+    "internal/app/studio_recipe_test.go": "263e8bc33dc589cd40ff2cd251791959dc0a5f90448698b2a9b440ca5b00cb78",
     "internal/app/types.go": "d6f2b69f43b341eac4e1246a3b26ef8ab91b9e3805d76f408f8d14905cc9f743",
     "internal/app/video.go": "80c0dbf0cf19463f7c7b08b2d7cad168192c4754bb659aafd0c2db6f265e47a6",
     "internal/cli/cli.go": "5686700eaa90b4b50f649e296a63593007249a77d79ea2cf17e76b15f62081a0",
     "internal/cli/cli_test.go": "73b417854d4b23571f776a3506671ef04b11125c104886acaae47d675bfae296",
     "internal/cli/flag_admission_test.go": "5fda1c08ca87c3b0b1d3ac43feafe266b7544635b65b3a6286b79c766f60d38c",
-    "internal/mcpapp/studio.html": "0dae406ace56c05aa8db91720f4e63347c646f10e27203eadde7da4c5a79f5e8",
-    "internal/mcpserver/server.go": "40009c63bfce8b404f42a5cd97c489dfdfcc955927a56f4ee733c5cd361a6eba",
-    "internal/mcpserver/server_test.go": "09345b72594208d02c0372c4f66f5c0b5917cd23758eefa6318008a389208526",
-    "spec/README.md": "83d1ca4bf231d5eafe1604e8bd0506469e95540babada0f94090b747575958d6",
-    "spec/check.mjs": "471f6fa4a185c8009fe8337d029da182fa053bef4b1027edc8c9576c3d0687dc",
-    "spec/mcp_apps.qnt": "c26c25d9cf3f2e46fa419018420f9a66970974a7de80615ab19f443dc4163954",
+    "internal/mcpapp/studio.html": "03092e4119ef9f061fc09bc80b7c11663b4abc93363116a135855d44f1f01aa7",
+    "internal/mcpserver/server.go": "34b8c6fe23bc014e1494606a6e83927e7e079a91e0eb64d2423bfa68c5d2217e",
+    "internal/mcpserver/server_test.go": "322ee2fedcdc6eb5fc997f95fa39898f746507186e6036216be73356e182c6db",
+    "internal/mcpserver/transport_test.go": "b5e149a27f84d6411b4b7c0d3254d272495a05febb4d1aad1c449abd49f1985d",
+    "spec/README.md": "587a4c1dac1cd1ffa432a928ba112c017c4b8f2e14b048273b740867d4fcfa1e",
+    "spec/check.mjs": "ef8bc9ba132385a07722ea353db93515a43992c373ea1384a58a429bee23fa01",
+    "spec/mcp_apps.qnt": "edad4430435486c6414453dcc8f118489767f5199a09ef48b721b9ae6cc7a1fc",
     "spec/publication.qnt": "71c86b97da500d36ac9f917f36198214716e75181b31a10488ce4c4f2c4d254e",
-    "spec/quantization.qnt": "757b43183ca7529fce96bb1af4dac5e2c680b4d7819ce10997e7796b3e033ae5",
-    "ui/app.mjs": "6f1ef5abca8d218a19ae8e710defe4a2f1c6ee43fe3388f1cd4103aa97e054fa",
-    "ui/browser-check.mjs": "21ca1072e8b84a6f5246ae9c892a3c51fb368653f37bacac846c7fb23994a1dd",
-    "ui/bundle-meta.json": "607d36f758511ac9600023ade5500741c9e96fe6a7f4b2572e16c5bafd20bc99",
-    "ui/harness-client.mjs": "767a82288226e9c44d110c97bfcbf24382c12413cc1448071879e26cf4b4aeb3",
-    "ui/harness.mjs": "9221a2f713975816762a40ab70098b828ff43dafd254cf239bcc89b4858b2059",
-    "ui/index.html": "4b9fd2c76bb1f29c531494d8cfa1269e110afb652e85e0d3d24984f405b5dc54",
-    "ui/server.test.mjs": "9e2f6e60900f1bc64377b4e58d9b969907abaef3ef8b632f278cce67998e2e31",
-    "ui/state.mjs": "2c4f18c710e4416356b86cb6b7c0ba4a52aa253be4cd8e2823a76888000224ef",
-    "ui/state.test.mjs": "65f303a0ab0a659c65788c8443ec36f1ce9b2fb62fb7b626bb1e1f2900749d4b",
-    "ui/style.css": "15145691c39a7c110eb23f69f5bdcbf5b0f5f9a5fe2dfe984cc44fa4d7533b61"
+    "spec/quantization.qnt": "571bbcf2c71b72e3e465abbfe27cf290e4b5957dfd9a0f7203bfaed1952af362",
+    "ui/app.mjs": "ceba5d89bf68c620d739a9f9c40ae931c0a218bb883f6f4a9adfd13a5dd68d49",
+    "ui/browser-check.mjs": "5e4800a6c58ed81fe2ed3c1ced356d076da82895d2acc694eb13bea9a5aded12",
+    "ui/bundle-meta.json": "d66408bd5c9c828b94fd1c1d2d8011226c39fb639d381b7cb8b07dcf97f121f9",
+    "ui/harness-client.mjs": "020d3c86bc7cecab456fc807121b66c6d5710549d45006a293299711041462ad",
+    "ui/harness.mjs": "3fe2116a3c90bacc041fc6ab5a4715f7f786334db9d62a0c512672947f83b098",
+    "ui/index.html": "a0d1f3a7e58353df8608223b11c11787f6609872175e4c44a2dbcbf71935ed1b",
+    "ui/server.test.mjs": "9d8e74ed3e171394fbd4dc2f2de4b37e743fc424b33df99f1f03f328a79df525",
+    "ui/state.mjs": "be945f47abc3a3875fa63047ff2921f65fdadc80bf9cdcc5077cd56cefe84b7d",
+    "ui/state.test.mjs": "7793d69b4fa750a008353bd03f303bbd5b768242363958c7d131ec16b71d47e0",
+    "ui/style.css": "569a89d8cc71aea0a5a9fdd3556798055538d882b96da54dd6beabcebbe07361"
   },
   "asset_sha256": {
-    "assets/palette-comparison.png": "c46662798e0486fbc82fe46f9ad4dcd240751ad0708418d378df9bad1d956b15"
+    "assets/palette-comparison.png": "c46662798e0486fbc82fe46f9ad4dcd240751ad0708418d378df9bad1d956b15",
+    "assets/random-styles.png": "71d8465cb22b0246322051ac19fc82f6a5abb4edf98b4818703a356b03915b04",
+    "assets/mcp-app-studio.png": "a86944e16ee3a709e537232daca03a8fa588f746c6a1867910dc5b1962471a66",
+    "assets/mcp-app-studio-mobile.png": "ff006f3b4b904359c7d44544d402b73cefe78031aa369291ce5f14fcfeb19fd3",
+    "assets/mcp-app-studio-dark.png": "b32c38be288c3495de11a909ab782920e29df67e27a80a9205f19d23030dc7dc"
   },
-  "independent_review": "Implementation, tests, OpenSpec/model changes, and final CLI/null/late-response corrections reviewed; substantiated findings fixed and affected checks passed."
+  "independent_review": "Engine, Go/API/schema, UI/embedding, specs/models and runnable examples reviewed independently. Corrected mask recipe metadata, geometry preservation, stale operation cleanup, example API shape/save errors, finite style authorization and stale documentation counts. Affected checks passed.",
+  "performance": {
+    "method": "Median of three local benchmark runs on Apple M3 Pro, Go 1.27.0, 16 requested colors, fixture creation excluded. Old branch implementation compared with new full-source histogram. Illustrative fixtures, not a throughput guarantee.",
+    "allocated_bytes_note": "Total allocated bytes per operation, not peak memory.",
+    "cases": [
+      {
+        "source": "1024x1024 16-color pattern",
+        "old_ms": 2.183,
+        "new_ms": 11.59,
+        "old_bytes_per_op": 824,
+        "new_bytes_per_op": 5800
+      },
+      {
+        "source": "1024x1024 high diversity",
+        "old_ms": 208.72,
+        "new_ms": 28.789,
+        "old_bytes_per_op": 24163432,
+        "new_bytes_per_op": 27965040
+      },
+      {
+        "source": "4096x4096 16-color pattern",
+        "old_ms": 4.124,
+        "new_ms": 188.502,
+        "old_bytes_per_op": 96,
+        "new_bytes_per_op": 5800
+      },
+      {
+        "source": "4096x4096 high diversity",
+        "old_ms": 176.237,
+        "new_ms": 289.848,
+        "old_bytes_per_op": 24163416,
+        "new_bytes_per_op": 37795328
+      }
+    ],
+    "coverage_note": "The old pattern sample saw 4 of 16 colors at1024 and 1 of 16 at4096; full scans include all16. Fixed bins reduced an initial high-diversity4096 implementation from112MB to37.8MB allocated/op."
+  }
 }

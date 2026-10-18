@@ -10,15 +10,22 @@ module quantization {
   pure def nearest(v) = if (v <= 1) 0 else if (v <= 5) 3 else 7
   pure def quantize(v, pixel, seed) = nearest(clamp(v + noise(pixel, seed)))
 
-  // Four positions and a two-sample budget model empty fixed-stride recovery.
-  // Color reduction and alpha weights remain independent implementation checks.
-  pure def strideSamples(visible) = visible.intersect(Set(0, 2))
-  pure def blockSample(visible, start) =
-    if (visible.contains(start)) Set(start)
-    else if (visible.contains(start + 1)) Set(start + 1) else Set()
-  pure def extractionSamples(visible) =
-    if (strideSamples(visible).size() > 0) strideSamples(visible)
-    else blockSample(visible, 0).union(blockSample(visible, 2))
+  // A two-entry limit and two coarse tone bins abstract bounded RGB storage.
+  // The final histogram includes every nontransparent position. This abstracts
+  // the one-way exact-to-binned transition, not allocation or RGB arithmetic.
+  pure def visiblePositions(tones, weights) = tones.indices().filter(i => weights.nth(i) > 0)
+  pure def histogram(tones, weights) = {
+    val positions = visiblePositions(tones, weights)
+    val exact = positions.map(i => tones.nth(i))
+    val folded = exact.size() > 2
+    pure def keyFor(i) = if (folded) tones.nth(i) / 4 else tones.nth(i)
+    val bins = positions.map(keyFor)
+    bins.mapBy(key => {
+      val members = positions.filter(i => keyFor(i) == key)
+      { weight: members.fold(0, (sum, i) => sum + weights.nth(i)),
+        sum: members.fold(0, (sum, i) => sum + tones.nth(i) * weights.nth(i)) }
+    })
+  }
 
   // Three candidates abstract the implementation's twelve-cell bound.
   pure val PaletteIDs = Set(0, 1, 2)
@@ -94,18 +101,31 @@ module quantization {
     .expect(noise(0, 0) != noise(0, 1))
   run cannotProcessAfterCancelTest = initCase(Pixels, 0).then(processLeft(0)).then(cancel).then(processLeft(1).fail())
 
+  run rareAccentIncludedTest = initCase(Pixels, 0)
+    .expect(histogram(List(0, 7, 0, 0), List(3, 3, 3, 3)) ==
+      Map(0 -> { weight: 9, sum: 0 }, 7 -> { weight: 3, sum: 21 }))
   run sparseExtractionFindsVisibleTest = initCase(Pixels, 0)
-    .expect(extractionSamples(Set(1, 3)) == Set(1, 3))
+    .expect(histogram(List(0, 2, 0, 7), List(0, 1, 0, 3)) ==
+      Map(2 -> { weight: 1, sum: 2 }, 7 -> { weight: 3, sum: 21 }))
   run transparentExtractionTest = initCase(Pixels, 0)
-    .expect(extractionSamples(Set()) == Set())
-  run extractionBoundAndCompletenessTest = initCase(Pixels, 0)
-    .expect(Pixels.powerset().forall(visible => all {
-      extractionSamples(visible).subseteq(visible),
-      extractionSamples(visible).size() <= 2,
-      (extractionSamples(visible).size() == 0) == (visible.size() == 0)
+    .expect(histogram(List(0, 1, 2, 3), List(0, 0, 0, 0)).keys() == Set())
+  run foldedHistogramPreservesOriginalSumsTest = initCase(Pixels, 0)
+    .expect(histogram(List(0, 1, 6, 7), List(3, 1, 1, 3)) ==
+      Map(0 -> { weight: 4, sum: 1 }, 1 -> { weight: 4, sum: 27 }))
+  run histogramBoundAndCoverageTest = initCase(Pixels, 0)
+    .expect(Pixels.powerset().forall(visible => {
+      val weights = List(0, 1, 2, 3).foldl(List(), (list, i) => list.append(if (visible.contains(i)) 3 else 0))
+      val h = histogram(List(0, 1, 6, 7), weights)
+      all { h.keys().size() <= 2,
+        h.keys().fold(0, (sum, key) => sum + h.get(key).weight) == visible.size() * 3,
+        (h.keys().size() == 0) == (visible.size() == 0) }
     }))
-  run existingExtractionUnchangedTest = initCase(Pixels, 0)
-    .expect(extractionSamples(Set(0, 1, 3)) == Set(0))
+  run histogramOrderIndependentTest = initCase(Pixels, 0)
+    .expect(histogram(List(0, 1, 6, 7), List(3, 1, 1, 3)) ==
+      histogram(List(7, 6, 1, 0), List(3, 1, 1, 3)))
+  run exactHistogramRetainsNearbyColorsTest = initCase(Pixels, 0)
+    .expect(histogram(List(0, 1, 0, 1), List(3, 2, 1, 3)) ==
+      Map(0 -> { weight: 4, sum: 0 }, 1 -> { weight: 5, sum: 5 }))
   run paletteComparisonOrderTest = initCase(Pixels, 0)
     .expect(comparisonValid(List(), List(2, 0, 1), false) and
       paletteCells(List(2, 0, 1), 1) == Map(

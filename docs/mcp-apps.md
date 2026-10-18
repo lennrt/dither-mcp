@@ -47,6 +47,41 @@ Select **Apply preview** to process changed settings. Editing controls marks the
 
 Enter a new workspace-relative destination, then select **Save image**. Saving calls the existing `dither_render` tool. Choose **Preview**, **Source**, or **Custom dimensions** for the export. The filename extension selects the output format. The destination must not exist.
 
+## Start with Random style
+
+Select **Random style** above the preview. One click generates a new palette,
+algorithm, tone treatment, and occasional subtle texture, then previews it.
+Click again while it works to try another look. Only the newest result can
+replace the controls, preview, or recipe available for saving.
+
+The action preserves dimensions, pixel scale, resize filter, crop, and masks.
+It replaces prior appearance settings, including custom colors and effects.
+Valid pending advanced options supply the preserved geometry. Invalid JSON
+stays visible and causes no call until corrected. Failed or canceled work
+keeps your controls and last image; apply a fresh preview before saving.
+
+Use Cancel during generation or preview. Random style remains available during
+read-only operations, but image and recipe writes must finish first. The seed
+can reproduce the selection through `dither_random_style`; save the recipe to
+keep the accepted treatment. See [API examples](mcp.md#random-style-iteration).
+
+## Save a reusable recipe
+
+After accepting a preview, enter a new workspace-relative `.json` destination
+and select **Save recipe**. This calls `dither_recipe_save` and creates only the
+recipe file. It preserves the accepted colors, dimensions, crop, effects, and
+other settings. Source-size or custom image export dimensions do not alter it.
+
+Changed settings and pending operations disable recipe saving. Existing files
+cannot be replaced. If publication fails, choose another destination and retry.
+A malformed receipt may arrive after publication; check the destination before
+retrying when the studio asks you to do so.
+
+Recipes contain no source or mask paths. An image-mask recipe retains its mask
+options and needs `mask_input` when reused. This also applies when the original
+tool call supplied a mask file without explicit mask options. Saving a recipe
+preserves settings without rereading or verifying the current source bytes.
+
 ## Preview and save behavior
 
 | Property | Behavior |
@@ -93,7 +128,7 @@ The public resource returns a complete HTML document through `resources/read`. E
 
 Scripts, styles, and the SDK are embedded in the Go binary. The running studio uses the host bridge and in-memory PNG data. It needs no CDN, HTTP listener, or external network access.
 
-The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable interactive preview, extraction, and save. Without that capability, the UI can show its supplied result and explains the unavailable controls.
+The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable random styles, interactive preview, extraction, image saving, and recipe saving. Without that capability, the UI can show its supplied result and explains the unavailable controls.
 
 For supporting clients, result `_meta.dither` supplies the canonical request and the algorithm/palette catalogs. The normal result still contains structured metadata, serialized JSON text, and native PNG image content. The server omits UI linkage and presentation metadata when the client does not advertise the supported MIME type.
 
@@ -129,7 +164,7 @@ make ui-browser
 The check uses the actual embedded HTML with external connections and native
 form submission blocked. It covers initial rendering, palette search, changed
 previews, exact PNG saving, overwrite rejection, custom-color validation,
-source-color extraction, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
+random-style generation and cancellation, source-color extraction, exact recipe saving and receipt validation, mixed JSON/control edits, keyboard saving, source-size and custom exports, changed-source rejection and recovery, cancellation, dark mode, narrow layouts, and hosts without
 `serverTools`. Screenshots and a JSON report go to `work/browser-check/`.
 
 To include the separate showcase, serve its directory locally and set
@@ -143,3 +178,5 @@ The browser check verifies navigation to the studio section, visible image
 loading, and desktop/mobile overflow. It fails on browser script errors,
 unexpected request failures, or external requests. On October 18, 2026, the studio and embedding checks passed
 with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate showcase was not rerun in this pass. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.
+
+Published captures: [desktop](assets/mcp-app-studio.png), [mobile](assets/mcp-app-studio-mobile.png), and [dark mode](assets/mcp-app-studio-dark.png).

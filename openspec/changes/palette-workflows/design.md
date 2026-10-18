@@ -18,6 +18,8 @@ The embedding host allows this third tool only for its selected source, with onl
 
 ## Sparse sampling
 
+This initial fallback is superseded by the [full-source histogram design](../studio-recipes-rare-colors/design.md) in this PR. The final implementation scans every pixel with bounded histogram storage.
+
 Keep the current bounded, fixed-stride sample when it sees any visible pixel. This preserves successful extracted palettes. If the sample is empty, inspect each stride-sized block for its first visible pixel. Collect at most one alpha-weighted sample per block, then use the existing deterministic median cut and color ordering.
 
 The fallback may read every admitted source pixel, but stores at most 262,144 samples. It checks cancellation during traversal. A truly transparent image still fails. This fallback corrects false full-transparency reports; it does not eliminate all periodic bias in nonempty fixed-stride samples.

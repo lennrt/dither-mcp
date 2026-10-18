@@ -7,12 +7,13 @@ All tool arguments and results are JSON objects. Tools advertise input and outpu
 
 See [formats and video](formats.md) for the complete support matrix, setup, examples, and tested codec combinations.
 
-The server provides **14 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
+The server provides **15 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
 
 ## Tools
 
 | Tool | Inputs | Result |
 |---|---|---|
+| `dither_random_style` | Optional integer `seed` | Seed and validated style recipe; no image input or file output |
 | `dither_catalog` | `{}` | Algorithms, formats, defaults, effects and limits |
 | `dither_palettes` | `query`, `category`, `min_colors`, `max_colors`, `limit`, `offset` (all optional) | Searchable palette pages with exact colors, descriptions, tags, provenance and category counts |
 | `dither_inspect` | `input` | Upright dimensions, normalization details, first-frame alpha, frame count, size, and SHA256 |
@@ -77,7 +78,62 @@ Algorithm comparisons retain
 their existing shared palette and recipe behavior. Both modes enforce the
 same geometry, source guards, and output limits.
 
+Palette extraction scans the complete normalized source, before crop, masks,
+and tone changes. Each visible pixel contributes its alpha weight. The histogram
+keeps up to 262,144 distinct RGB values exactly. If that bound is exceeded,
+6-bit-per-channel bins retain original weighted RGB sums before median cut.
+Small accents and periodic colors can no longer disappear between sample positions.
+Reduction to 2–256 output colors can still merge rare colors.
+
+Sources with at most 262,144 pixels retain exact extraction behavior. Larger
+sources may produce different palettes and overflow GIF colors. Full scanning
+reads more pixels than earlier stride sampling, within the existing image limits.
+
 Solid-color sources cannot produce two distinct extracted colors. Extraction returns an actionable error instead of an unusable one-color render palette.
+
+## Random style iteration
+
+Call `dither_random_style` with `{}` to choose a fresh look. Supply a `seed` to
+repeat it. Seeds must be integers from -9007199254740991 through 9007199254740991.
+Zero is valid. Null, fractional values, strings, unknown arguments, and values
+outside that range are rejected. The tool is read-only but is not annotated
+idempotent because omitted seeds choose new values.
+
+The response contains `seed` and a version-1 `recipe`. It selects from all 41
+algorithms and 256 palettes, adds moderate tone adjustments, and sometimes adds
+one subtle scanline, CRT, or noise effect. It omits geometry, masks, and source
+paths. It needs no image and publishes no artifact.
+
+Example MCP sequence, using the structured result from each tool call:
+
+```js
+// `client` is an already-connected MCP client.
+const generated = await client.callTool({ name: 'dither_random_style', arguments: { seed: 42 } });
+if (generated.isError) throw new Error('Style generation failed');
+const { seed, recipe } = generated.structuredContent;
+const preview = await client.callTool({ name: 'dither_studio', arguments: {
+  input: 'photo.png', palette: recipe.palette,
+  options: { ...recipe.options, width: 320, pixel_scale: 2 },
+} });
+if (preview.isError) throw new Error('Preview failed');
+// After choosing the look, explicitly save its accepted settings.
+const saved = await client.callTool({ name: 'dither_recipe_save', arguments: {
+  output: `recipes/style-${seed}.json`, recipe: preview.structuredContent.recipe,
+} });
+if (saved.isError) throw new Error('Recipe save failed; choose a new destination');
+```
+
+To render directly, pass `recipe.palette` and `recipe.options` as inline fields
+to `dither_render`, with an input and new output path. Its `recipe` argument is
+a saved JSON path, not an inline object. To preserve an existing composition in a studio, retain its width, height,
+pixel scale, resize filter, crop and mask when replacing style options. The
+built-in Random style button does this automatically and previews the result.
+
+A repeated seed returns the same selection within the current engine and catalog
+version. Save the complete recipe for later reuse. The engine's existing JSON
+format omits a zero `options.seed`; omission still means zero. The outer `seed`
+is always present. The [runnable example](../examples/random-styles.mjs) renders
+three fixed seeds and saves matching recipes.
 
 ## Guard a render against changed inputs
 

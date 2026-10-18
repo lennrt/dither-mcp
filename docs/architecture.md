@@ -63,7 +63,7 @@ Color distance is squared Euclidean distance in either sRGB values or linearized
 
 ## Agent workflow
 
-The server exposes 14 tools: catalog, palettes, inspect, preview, studio, palette extraction, render, compare, batch, animate, video, separate, recipe save, and recipe load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. `ui://dither/studio.html` supplies the embedded studio. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
+The server exposes 15 tools: random style, catalog, palettes, inspect, preview, studio, palette extraction, render, compare, batch, animate, video, separate, recipe save, and recipe load. `dither://capabilities` contains the live catalog and limits. `dither://workflow` supplies usage context. `ui://dither/studio.html` supplies the embedded studio. The `art_director`, `prepare_print`, and `make_loop` prompts describe common workflows.
 
 A typical agent follows this workflow:
 
@@ -77,6 +77,12 @@ A typical agent follows this workflow:
 
 Candidate cell coordinates identify each comparison image without text embedded in the pixels. Comparisons vary algorithms with one palette, or named palettes with one algorithm. Palette cells also identify their palette and algorithm. A palette sheet omits a single shared recipe and retains full operation parameters. CLI operations call the same service as tools.
 
+Palette extraction scans all admitted pixels. It retains exact alpha-weighted
+RGB counts up to 262,144 distinct values. Overflow folds into at most 262,144
+6-bit-per-channel bins. Original weighted RGB sums survive binning and final
+median-cut averaging. Temporary fold storage is bounded too; the histogram bound
+does not describe total process memory. Source size still controls scan work.
+
 ## Embedded studio
 
 `dither_studio` adds an optional graphical view through the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). The tool remains read-only. It loads a rooted source, applies the shared engine pipeline, and encodes a bounded PNG in memory. It returns the image, metadata, and resolved version-1 recipe without entering the artifact publication path.
@@ -85,7 +91,7 @@ When dimensions are omitted, the preview fits within 512 × 512 pixels without e
 
 The tool's `_meta.ui.resourceUri` points to `ui://dither/studio.html`. This third resource uses `text/html;profile=mcp-app`. It embeds HTML, CSS, and JavaScript built with the official `@modelcontextprotocol/ext-apps` SDK. Development tools create the bundle. The Go binary embeds and serves it with no runtime Node.js process or external asset request.
 
-A supporting host displays the resource and bridges app tool calls to the same stdio server. The controls discover algorithms and palettes, extract source colors into a custom draft, apply read-only previews, and inspect the image and swatches. Extraction uses the complete normalized source and requires a new explicit preview before saving. Its response must match the current request and control revision. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. Changes that have not produced a successful preview cannot silently change the saved result.
+A supporting host displays the resource and bridges app tool calls to the same stdio server. A prominent Random style action generates a seedable style and previews it in one operation. It preserves geometry and masks, supersedes pending read-only work, and accepts only the newest successful preview. The controls also discover algorithms and palettes, extract source colors into a custom draft, apply read-only previews, and inspect the image and swatches. Extraction uses the complete normalized source and requires a new explicit preview before saving. Its response must match the current request and control revision. The app keeps the recipe from the last successful preview. **Save image** calls `dither_render` with that recipe, selected preview/source/custom dimensions, source/mask fingerprints, and a new relative destination. **Save recipe** calls `dither_recipe_save` with the accepted preview recipe and a separate JSON destination. Image export dimensions do not change it. Recipes retain external image-mask requirements without storing mask paths. Changes that have not produced a successful preview cannot silently change either saved result.
 
 Hosts must support both MCP Apps and local stdio servers to display this view. Other hosts receive the PNG and structured JSON from `dither_studio`. The original 13 tools retain their existing tool results. See the [MCP Apps guide](mcp-apps.md) for the detailed host and verification contracts.
 

@@ -8,23 +8,24 @@ The live `dither_catalog` and `dither_palettes` results are the authoritative li
 
 | Capability | dither-mcp implementation | Boundary |
 |---|---|---|
-| Agent interface | 14 MCP tools, three resources, three prompts. Matching CLI workflows | Stdio transport. Host controls model interaction |
-| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Apply preview, zoom, inspect swatches, and explicitly save an image | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save preserves accepted settings with explicit export dimensions and checks source/mask fingerprints |
+| Agent interface | 15 MCP tools, three resources, three prompts. Matching CLI workflows | Stdio transport. Host controls model interaction |
+| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Random style, Apply preview, zoom, swatches, and explicit image/recipe saves | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save preserves accepted settings with explicit export dimensions and checks source/mask fingerprints |
+| Random styles | Seedable style recipes and one-click studio previews. Selects all catalog algorithms and palettes with moderate tone/texture | Geometry and masks stay in place. Seeds repeat within the current engine/catalog version. Save the recipe for reuse |
 | Local processing | Go image engine, rooted local files, immutable output artifacts | Preview images and metadata go to the connected client |
 | Error diffusion | Floyd–Steinberg, false Floyd–Steinberg, Jarvis–Judice–Ninke, Atkinson, Stucki, Burkes, three Sierra variants, simple 2D, Steven Pigeon, Fan, two Shiau–Fan variants, Stevenson–Arce | Implemented kernels. Not a bit-exact clone of another application |
 | Curve diffusion | Riemersma with Hilbert traversal | Fixed documented error-history implementation |
 | Ordered dithering | Bayer 2/4/8/16/32, clustered screens, arithmetic screens, checkerboard | Explicit screen sizes |
 | Noise | Seeded uniform noise, void-and-cluster blue-noise tile, interleaved gradient noise | Finite repeating blue-noise tile, not a spatially unbounded optimized distribution |
 | Artistic screening | Halftone dots, horizontal/vertical/diagonal lines, crosshatch, diamond, spiral, stipple, waves | Original procedural screens, not calibrated physical print simulation |
-| Palettes | 256 named palettes in 16 categories, 2–256 custom colors, deterministic extraction | Opaque sRGB hex colors. Original, referenced and approximate origins are explicit |
+| Palettes | 256 named palettes in 16 categories, 2–256 custom colors, deterministic full-source extraction | Opaque sRGB hex colors. Original, referenced and approximate origins are explicit |
 | Palette discovery | Text/category/color-count filters, descriptions, tags, provenance, stable pagination | Default 32 results. At most 256 per page. Original 22 IDs and ordered colors remain stable |
 | Input normalization | Eight EXIF orientations. Supported ICC v2/v4 RGB matrix/TRC profiles and PNG color metadata convert to sRGB | JPEG, PNG, WebP, and TIFF metadata. BMP V5 embedded profiles and V4/V5 sRGB declarations. Unsupported or malformed selected profiles cause errors. No output device profiles or HDR processing |
 | Tonal/color controls | Brightness, contrast, gamma, saturation, grayscale, inversion, threshold, strength. sRGB or linear-RGB quantization | No perceptual Lab/OKLab distance |
 | Sampling | Crop after orientation, width/height resize, nearest or alpha-correct bilinear resampling, coarse pixel grid, and exact-size enlargement | Crop uses upright source coordinates. Imported DPI does not automatically change pixel dimensions |
 | Regional effects | Rectangle, circle, inverted selection, local image mask | No learned subject segmentation, click tracking, or camera UI |
 | Retro effects | Scanlines, CRT modulation, seeded noise/glitch bands, thresholded pixel sorting | A focused set, not Ditherer's 300+ filter library |
-| Inspection and iteration | Upright dimensions, normalization details, alpha/hash metadata, source preview, in-memory dithered studio preview, and algorithm or palette comparison contact sheets | Studio previews fit within 1,024 pixels per axis and 2 MiB PNG. The studio provides source-color extraction, image settings, and zoom, without brush editing |
-| Recipes and batch | Versioned JSON look recipes, per-item batch results, independent atomic destinations | No multi-output transaction or automatic rollback |
+| Inspection and iteration | Upright dimensions, normalization details, alpha/hash metadata, source preview, in-memory dithered studio preview, and algorithm or palette comparison contact sheets | Studio previews fit within 1,024 pixels per axis and 2 MiB PNG. The studio provides source-color extraction, image/recipe saving, image settings, and zoom, without brush editing |
+| Recipes and batch | Versioned JSON look recipes, exact accepted-preview recipe saves, per-item batch results, independent atomic destinations | No multi-output transaction or automatic rollback |
 | Still input | PNG, JPEG, GIF, WebP, BMP, TIFF | Animated GIF uses first frame in still render. No SVG/HEIC/RAW input |
 | Still output | PNG, JPEG, GIF, SVG, PBM, ASCII | WebP/TIFF/BMP encode not included. JPEG is lossy |
 | SVG | Safe generated pixel-run paths preserving alpha | Raster-derived geometry, not traced editable Bézier artwork |

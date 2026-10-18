@@ -56,6 +56,7 @@ common flags documented by `help`. Advanced JSON options merge into the configur
 requests, use `call`, whose arguments exactly match the MCP schemas:
 
 ```sh
+./bin/dither-mcp call --root . dither_random_style '{"seed":42}'
 ./bin/dither-mcp call --root . dither_palette_extract \
   '{"input":"docs/assets/source/moon-garden.png","count":5}'
 ./bin/dither-mcp call --root . dither_render '{

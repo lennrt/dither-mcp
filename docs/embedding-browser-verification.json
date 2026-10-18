@@ -3,9 +3,11 @@
   "checks": [
     "Exact Host and Origin checks, sandbox denied access to bootstrap, per-session token required",
     "Opaque sandbox renders real Go preview through official AppBridge without writing",
+    "Six repeated random clicks supersede in-flight Go/HTTP style and preview calls; late results cannot restore old settings or recipe authority",
     "Current-source extraction crosses the restricted host bridge and requires a new preview",
     "Extraction rejects other sources, invalid counts, and extra fields at the HTTP boundary",
     "App-initiated guarded save writes the selected relative output byte-identically",
+    "Masked custom recipe saves exactly; mask reuse reminder, dirty palette gating, and host rejects forged recipes and paths",
     "Host theme update and 390px responsive layout",
     "Official teardown handshake closes the view before unmount"
   ],
