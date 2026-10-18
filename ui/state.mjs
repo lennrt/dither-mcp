@@ -86,6 +86,20 @@ export function decodePreview(result) {
   return { request, width: data.width, height: data.height, sourceWidth: data.source_width, sourceHeight: data.source_height, sourceSHA256: data.source_sha256, maskSHA256: data.mask_sha256, exportLimits: clone(data.export_limits), src: `data:image/png;base64,${image.data}`, algorithms: clone(meta.algorithms ?? []), palettes: clone(meta.palettes ?? []), recipe: clone(recipe) };
 }
 
+// Random styles replace appearance while keeping the user's composition and mask.
+export function randomStyleRequest(current, result, algorithms = [], palettes = []) {
+  if (result?.isError) throw new Error(toolError(result));
+  const data = result?.structuredContent;
+  const recipe = data?.recipe;
+  const options = recipe?.options;
+  const geometry = ['width', 'height', 'crop', 'mask', 'pixel_scale', 'resize_filter'];
+  if (!Number.isSafeInteger(data?.seed) || recipe?.version !== 1 || typeof recipe.palette !== 'string' || !recipe.palette || Object.keys(recipe).some(key => !['version', 'palette', 'options'].includes(key)) || !options || Array.isArray(options) || typeof options !== 'object' || typeof options.algorithm !== 'string' || (options.seed ?? 0) !== data.seed || geometry.some(key => key in options) || (algorithms.length && !algorithms.some(item => item.id === options.algorithm)) || (palettes.length && !palettes.some(item => item.id === recipe.palette))) throw new Error('The host returned an invalid random style. Your settings were kept.');
+  const request = { input: current.input, palette: recipe.palette, options: clone(options) };
+  if (current.mask_input) request.mask_input = current.mask_input;
+  for (const key of geometry) if (current.options[key] !== undefined) request.options[key] = clone(current.options[key]);
+  return studioRequest(request);
+}
+
 // Export size is separate from preview settings. Every other option stays intact.
 export function exportDimensions(preview, selection = { mode: 'preview' }) {
   if (!preview) throw new Error('Apply preview to choose an export size.');
@@ -119,6 +133,8 @@ export class StudioState {
   }
   get dirty() { return !this.rendered || !this.draft || fingerprint(this.draft) !== fingerprint(this.rendered.request); }
   get busy() { return !!this.pending; }
+  get saving() { return ['save', 'recipe'].includes(this.pending?.kind); }
+  get canRandom() { return this.canCallTools && !!this.draft && !this.saving; }
   get canPreview() { return this.canCallTools && !!this.draft && !this.busy; }
   get canSave() { return this.canCallTools && this.validPreview && !!this.rendered && !this.dirty && !this.busy; }
   setInput(value) {
@@ -154,6 +170,31 @@ export class StudioState {
       this.accept(preview, true);
       return true;
     } catch (error) { this.hostPending = null; this.fail(error); return false; }
+  }
+  beginRandom(value = this.draft) {
+    if (!this.canRandom) throw new Error('Random styles are unavailable while saving or without host tools.');
+    const base = studioRequest(value);
+    this.hostPending = null;
+    this.validPreview = false;
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'random', request: {}, base };
+    this.pending = operation;
+    this.status = 'Finding a new look…'; this.error = false;
+    return clone(operation);
+  }
+  finishRandom(operation, result) {
+    if (!this.current(operation)) return null;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while choosing a style. Click Random style again to try another.';
+      return null;
+    }
+    try {
+      const request = randomStyleRequest(operation.base, result, this.algorithms, this.palettes);
+      const preview = { id: ++this.sequence, revision: this.revision, kind: 'preview', request };
+      this.pending = preview;
+      this.status = 'Previewing your new style…'; this.error = false;
+      return clone(preview);
+    } catch (error) { this.fail(error); return null; }
   }
   beginExtraction(count = 8) {
     if (!this.canPreview) throw new Error('Palette tools are unavailable or another request is running.');
@@ -232,6 +273,36 @@ export class StudioState {
     this.status = `Saving ${dimensions.width} × ${dimensions.height} px…`;
     this.error = false;
     return clone(operation);
+  }
+  beginRecipeSave(output, imageOutput = '') {
+    if (!this.canSave) throw new Error('Apply the current preview before saving a recipe.');
+    if (typeof output !== 'string' || !output.trim()) throw new Error('Enter a new recipe path relative to the workspace.');
+    output = output.trim();
+    if (!/\.json$/i.test(output) || output.includes('\\') || output.includes('\0') || output.startsWith('/') || /^[a-z]+:/i.test(output) || output.split('/').some((part) => !part || part === '.' || part === '..')) throw new Error('Use a relative .json recipe path with no traversal or URL.');
+    if ([this.rendered.request.input, this.rendered.request.mask_input, imageOutput.trim()].includes(output)) throw new Error('Choose a recipe path different from the source, mask, and image output.');
+    const request = { output, recipe: clone(this.rendered.recipe) };
+    const operation = { id: ++this.sequence, revision: this.revision, kind: 'recipe', request };
+    this.pending = operation;
+    this.status = 'Saving the preview recipe…';
+    this.error = false;
+    return clone(operation);
+  }
+  finishRecipeSave(operation, result) {
+    if (!this.current(operation)) return false;
+    this.pending = null;
+    if (operation.revision !== this.revision) {
+      this.status = 'Settings changed while saving the recipe. Check the destination before retrying.';
+      return false;
+    }
+    if (result?.isError) { this.fail(new Error(toolError(result))); return false; }
+    const receipt = result?.structuredContent;
+    if (receipt?.path !== operation.request.output || receipt.format !== 'json' || !Number.isSafeInteger(receipt.bytes) || receipt.bytes <= 0 || typeof receipt.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(receipt.sha256) || fingerprint(receipt.recipe) !== fingerprint(operation.request.recipe)) {
+      this.fail(new Error('The host returned an incomplete or different recipe save receipt. Check the destination before retrying.'));
+      return false;
+    }
+    this.status = `Saved recipe ${receipt.path}`;
+    this.error = false;
+    return true;
   }
   finishSave(operation, result) {
     if (!this.current(operation)) return false;

@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func TestProtocolWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(listed.Tools) != 14 {
+	if len(listed.Tools) != 15 {
 		t.Fatalf("tools=%d", len(listed.Tools))
 	}
 	seen := map[string]bool{}
@@ -103,6 +104,29 @@ func TestProtocolWorkflow(t *testing.T) {
 				t.Fatalf("palette comparison violates advertised input schema: %v", err)
 			}
 		}
+		if tool.Name == "dither_random_style" {
+			if tool.Annotations.ReadOnlyHint == nil || !*tool.Annotations.ReadOnlyHint || tool.Annotations.IdempotentHint == nil || *tool.Annotations.IdempotentHint || tool.Annotations.DestructiveHint == nil || *tool.Annotations.DestructiveHint || tool.Annotations.OpenWorldHint == nil || *tool.Annotations.OpenWorldHint {
+				t.Fatalf("random style annotations misrepresent file access or freshness: %+v", tool.Annotations)
+			}
+			inputURI := uri + ":input"
+			if err := compiler.AddResource(inputURI, schema); err != nil {
+				t.Fatal(err)
+			}
+			inputSchema, err := compiler.Compile(inputURI)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, args := range []map[string]any{{}, {"seed": 0}, {"seed": app.MaxStyleSeed}, {"seed": -app.MaxStyleSeed}} {
+				if err := inputSchema.Validate(args); err != nil {
+					t.Fatalf("valid random style request violates advertised schema: %v", err)
+				}
+			}
+			for _, args := range []map[string]any{{"seed": nil}, {"seed": 1.5}, {"seed": "1"}, {"seed": app.MaxStyleSeed + 1}, {"seed": -app.MaxStyleSeed - 1}, {"output": "unexpected.json"}} {
+				if err := inputSchema.Validate(args); err == nil {
+					t.Fatalf("invalid random style request satisfies advertised schema: %+v", args)
+				}
+			}
+		}
 	}
 	resources, err := c.ListResources(ctx, mcp.ListResourcesRequest{})
 	if err != nil || len(resources.Resources) != 3 {
@@ -135,6 +159,30 @@ func TestProtocolWorkflow(t *testing.T) {
 			}
 		}
 		return res
+	}
+	styleResult := call("dither_random_style", map[string]any{"seed": 42})
+	if styleResult.IsError {
+		t.Fatalf("random style failed: %+v", styleResult.Content)
+	}
+	styleWire, _ := json.Marshal(styleResult.StructuredContent)
+	var style app.RandomStyleResult
+	if err := json.Unmarshal(styleWire, &style); err != nil || style.Seed != 42 || style.Recipe.Options.Seed != 42 {
+		t.Fatalf("random style metadata: %+v / %v", style, err)
+	}
+	directStyle, err := svc.Do(ctx, "dither_random_style", []byte(`{"seed":42}`))
+	if err != nil || !reflect.DeepEqual(style, directStyle) {
+		t.Fatalf("MCP and service style generation disagree: %v", err)
+	}
+	if files, err := os.ReadDir(root); err != nil || len(files) != 1 {
+		t.Fatalf("random style wrote files: %v", err)
+	}
+	if preview := call("dither_studio", map[string]any{"input": "source.png", "palette": style.Recipe.Palette, "options": style.Recipe.Options}); preview.IsError || len(preview.Content) < 2 {
+		t.Fatalf("generated recipe did not preview through MCP: %+v", preview.Content)
+	}
+	for _, args := range []map[string]any{{"seed": nil}, {"seed": 1.5}, {"seed": "1"}, {"seed": app.MaxStyleSeed + 1}, {"seed": -app.MaxStyleSeed - 1}, {"input": "source.png"}} {
+		if result := call("dither_random_style", args); !result.IsError {
+			t.Fatalf("random style accepted invalid arguments: %+v", args)
+		}
 	}
 	result := call("dither_render", map[string]any{"input": "source.png", "output": "out.png", "palette": "gameboy", "options": map[string]any{"algorithm": "atkinson", "width": 48}})
 	if result.IsError {
@@ -199,6 +247,10 @@ func TestProtocolWorkflow(t *testing.T) {
 		args any
 	}{
 		{"dither_palettes", map[string]any{}},
+		{"dither_random_style", map[string]any{}},
+		{"dither_random_style", map[string]any{"seed": 0}},
+		{"dither_random_style", map[string]any{"seed": -app.MaxStyleSeed}},
+		{"dither_random_style", map[string]any{"seed": app.MaxStyleSeed}},
 		{"dither_palettes", map[string]any{"query": "game boy", "category": "retro", "min_colors": 4, "max_colors": 4, "limit": 1}},
 		{"dither_inspect", map[string]any{"input": "source.png"}},
 		{"dither_palette_extract", map[string]any{"input": "source.png", "count": 4}},

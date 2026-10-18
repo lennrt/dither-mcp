@@ -79,6 +79,16 @@ func (s *Service) Do(ctx context.Context, name string, raw []byte) (result any, 
 			return nil, err
 		}
 		return listPalettes(q)
+	case "dither_random_style":
+		var q RandomStyleRequest
+		if err := StrictJSON(raw, &q); err != nil {
+			return nil, err
+		}
+		style, err := randomStyle(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+		return style, nil
 	case "dither_preview":
 		var q PreviewRequest
 		if err := StrictJSON(raw, &q); err != nil {
@@ -404,10 +414,16 @@ func (s *Service) configWithMaskDigest(ctx context.Context, q RenderRequest) (en
 			return c, r, "", errors.New("mask_input requires options.mask.shape=image or no inline mask")
 		}
 		maskSHA256 = digest(b)
-		c.Mask = &engine.Mask{Shape: "image", Image: im}
+		// Record the external-mask requirement even when it was implicit in
+		// mask_input. Keep recipes reusable without retaining paths, pixels, or
+		// mutable pointers supplied by the caller.
+		recipeMask := engine.Mask{Shape: "image"}
 		if r.Options.Mask != nil {
-			c.Mask.Invert = r.Options.Mask.Invert
+			recipeMask = *r.Options.Mask
+			recipeMask.Image = nil
 		}
+		r.Options.Mask = &recipeMask
+		c.Mask = &engine.Mask{Shape: "image", Image: im, Invert: recipeMask.Invert}
 	}
 	return c, r, maskSHA256, nil
 }

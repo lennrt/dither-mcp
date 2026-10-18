@@ -15,6 +15,7 @@
     <div id="host-note" class="notice" hidden></div>
     <div class="workspace">
       <section class="canvas-panel" aria-labelledby="preview-title">
+        <div class="random-row"><button id="random-style" class="primary" type="button" disabled>Random style <span aria-hidden="true">↻</span></button><p>One click, a new look. Keep clicking to explore.</p></div>
         <div class="panel-heading"><div><p class="eyebrow" id="preview-title">YOUR PREVIEW</p><p class="source" id="source">Waiting for a source image</p></div><span id="preview-badge" class="badge">WAITING</span></div>
         <div class="canvas fit" id="canvas" tabindex="0" role="region" aria-label="Image preview. Use the view controls to zoom.">
           <div id="empty" class="empty"><span aria-hidden="true" class="empty-mark">▧</span><p>A little texture goes a long way.</p><span>Your source preview appears here.</span></div>
@@ -31,6 +32,9 @@
             <p id="export-note" aria-live="polite">Apply preview to choose an export size.</p>
           </fieldset>
           <label for="output" class="small-label">Output path</label><div class="save-line"><input id="output" name="output" placeholder="artwork/dithered.png" autocomplete="off" spellcheck="false" aria-describedby="save-note"><button id="save" class="secondary" type="button" disabled>Save image <span aria-hidden="true">↗</span></button></div><p id="save-note">New workspace path · the file extension chooses the format.</p>
+        </form>
+        <form id="recipe-form" class="save-form">
+          <label for="recipe-output" class="small-label">Recipe path</label><div class="save-line"><input id="recipe-output" name="recipe-output" placeholder="recipes/garden.json" autocomplete="off" spellcheck="false" aria-describedby="recipe-note"><button id="save-recipe" class="secondary" type="button" disabled>Save recipe</button></div><p id="recipe-note">Keeps the preview dimensions and settings, including custom colors. Source paths and export size choices stay separate.</p>
         </form>
       </section>
       <form id="controls" class="controls" aria-label="Dither settings">

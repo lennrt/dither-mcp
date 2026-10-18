@@ -244,3 +244,95 @@ test('omitted options default to an object but explicit null cannot reset the dr
   assert.throws(() => studioRequest({ ...state.draft, options: JSON.parse('null') }), /Options must be a JSON object/);
   assert.deepEqual(state.draft, original);
 });
+
+function recipeReceipt(operation) {
+  return { structuredContent: { path: operation.request.output, format: 'json', bytes: 128, sha256: 'a'.repeat(64), recipe: clone(operation.request.recipe) } };
+}
+test('recipe saving preserves the exact accepted custom recipe and excludes source, mask, and output paths', () => {
+  const state = ready(); const custom = clone(request); delete custom.palette; custom.colors = ['#182F37', '#E8DBC0'];
+  state.edit(custom); const preview = state.beginPreview(); assert.equal(state.finishPreview(preview, result(custom)), true);
+  const operation = state.beginRecipeSave(' recipes/extracted.json ', 'art.png');
+  assert.deepEqual(operation.request, { output: 'recipes/extracted.json', recipe: state.rendered.recipe });
+  assert.deepEqual(Object.keys(operation.request.recipe).sort(), ['colors', 'options', 'version']);
+  assert.equal(operation.request.recipe.options.mask.shape, 'image'); assert.equal(operation.request.recipe.options.effects.pixel_sort_threshold, 0);
+  assert.equal(state.saving, true); assert.equal(state.canSave, false); assert.equal(state.canPreview, false);
+  assert.equal(state.finishRecipeSave(operation, recipeReceipt(operation)), true);
+  assert.equal(state.canSave, true); assert.match(state.status, /^Saved recipe recipes\/extracted.json$/);
+  operation.request.recipe.options.width = 12; assert.equal(state.rendered.recipe.options.width, 320);
+});
+test('recipe saving requires current preview, capability, and a distinct relative JSON destination', () => {
+  for (const output of ['', ' ', 'recipe.png', '../recipe.json', '/recipe.json', 'file:recipe.json', 'a\\recipe.json', './recipe.json', 'a//recipe.json', 'a/../recipe.json']) {
+    assert.throws(() => ready().beginRecipeSave(output));
+  }
+  const state = ready(); assert.throws(() => state.beginRecipeSave('export.json', 'export.json'), /different/);
+  for (const key of ['input', 'mask_input']) {
+    const protectedState = ready(); protectedState.rendered.request[key] = 'protected.json'; protectedState.draft[key] = 'protected.json'; assert.throws(() => protectedState.beginRecipeSave('protected.json'), /different/);
+  }
+  const dirty = ready(); dirty.edit({ ...request, palette: 'mono' }); assert.throws(() => dirty.beginRecipeSave('recipe.json'), /Apply/);
+  const denied = ready(); denied.canCallTools = false; assert.throws(() => denied.beginRecipeSave('recipe.json'), /Apply/);
+  const extracting = ready(); extracting.beginExtraction(); assert.throws(() => extracting.beginRecipeSave('recipe.json'), /Apply/);
+  extracting.cancel(); assert.throws(() => extracting.beginRecipeSave('recipe.json'), /Apply/);
+});
+test('recipe receipt rejects missing, malformed, mismatched and error results without losing retry settings', () => {
+  const mutations = [value => delete value.structuredContent, value => value.structuredContent.path = 'other.json', value => value.structuredContent.format = 'png', value => value.structuredContent.bytes = 0, value => value.structuredContent.bytes = 1.5, value => value.structuredContent.sha256 = 'wrong', value => delete value.structuredContent.recipe, value => value.structuredContent.recipe.options.seed = 18];
+  for (const mutate of mutations) {
+    const state = ready(); const operation = state.beginRecipeSave('recipe.json'); const receipt = recipeReceipt(operation); mutate(receipt);
+    assert.equal(state.finishRecipeSave(operation, receipt), false); assert.equal(state.error, true); assert.doesNotMatch(state.status, /^Saved/);
+    assert.equal(state.canSave, true); assert.deepEqual(state.draft, request); assert.equal(state.beginRecipeSave('retry.json').request.recipe.options.seed, 17);
+  }
+  const state = ready(); const operation = state.beginRecipeSave('recipe.json');
+  assert.equal(state.finishRecipeSave(operation, { isError: true, content: [{ type: 'text', text: 'Output already exists.' }] }), false);
+  assert.match(state.status, /already exists/); assert.equal(state.canSave, true);
+});
+test('stale recipe completions cannot announce success or clear a newer operation', () => {
+  const state = ready(); const operation = state.beginRecipeSave('recipe.json');
+  state.setInput(request); assert.equal(state.hostResult(result()), true); const newer = state.beginPreview();
+  assert.equal(state.finishRecipeSave(operation, recipeReceipt(operation)), false); assert.equal(state.pending.id, newer.id);
+  const edited = ready(); const saving = edited.beginRecipeSave('recipe.json'); edited.edit({ ...request, palette: 'mono' });
+  assert.equal(edited.finishRecipeSave(saving, recipeReceipt(saving)), false); assert.equal(edited.canSave, false); assert.match(edited.status, /changed while/);
+});
+
+const randomResult = (seed = 42) => ({ structuredContent: { seed, recipe: { version: 1, palette: 'oat-and-ink', options: { algorithm: 'atkinson', seed, strength: .8, effects: { scanlines: .1 } } } } });
+test('random style previews complete appearance replacement while retaining geometry and mask', () => {
+  const state = ready(); const base = clone(state.draft); base.options.pixel_scale = 3; base.options.resize_filter = 'nearest';
+  const random = state.beginRandom(base); assert.equal(state.canSave, false); assert.equal(state.canRandom, true); assert.equal(state.pending.kind, 'random');
+  const preview = state.finishRandom(random, randomResult());
+  assert.equal(preview.kind, 'preview'); assert.equal(state.canRandom, true); assert.deepEqual(state.draft, request);
+  assert.equal(preview.request.input, request.input); assert.equal(preview.request.mask_input, request.mask_input);
+  assert.deepEqual(preview.request.options, { algorithm: 'atkinson', seed: 42, strength: .8, effects: { scanlines: .1 }, width: 320, height: 160, crop: request.options.crop, mask: request.options.mask, pixel_scale: 3, resize_filter: 'nearest' });
+  assert.equal(state.finishPreview(preview, result(preview.request)), true); assert.equal(state.canSave, true);
+  assert.deepEqual(state.beginRecipeSave('random.json').request.recipe, clone(result(preview.request).structuredContent.recipe));
+  assert.equal(state.canRandom, false);
+});
+test('repeated random clicks supersede either stage and ignore late results and failures', () => {
+  const state = ready(); const first = state.beginRandom(); const second = state.beginRandom();
+  assert.equal(state.finishRandom(first, randomResult(1)), null); assert.equal(state.pending.id, second.id);
+  assert.equal(state.reject(first, new Error('late error')), false);
+  const oldPreview = state.finishRandom(second, randomResult(2)); const third = state.beginRandom();
+  assert.equal(state.finishPreview(oldPreview, result(oldPreview.request)), false); assert.equal(state.pending.id, third.id);
+  const latestPreview = state.finishRandom(third, randomResult(3));
+  assert.equal(state.finishPreview(latestPreview, result(latestPreview.request)), true); assert.equal(state.draft.options.seed, 3);
+});
+test('edits, source replacement and cancellation supersede random generation without auto preview', () => {
+  for (const change of [state => state.edit({ ...request, palette: 'mono' }), state => state.setInput({ ...request, input: 'other.png' }), state => state.cancel()]) {
+    const state = ready(); const operation = state.beginRandom(); change(state);
+    const draft = clone(state.draft); assert.equal(state.finishRandom(operation, randomResult()), null); assert.deepEqual(state.draft, draft); assert.equal(state.canSave, false);
+  }
+});
+test('malformed or failed random styles preserve the draft and cannot authorize saving', () => {
+  const mutations = [value => delete value.structuredContent, value => value.structuredContent.seed = 1.5, value => value.structuredContent.seed = 9007199254740992, value => value.structuredContent.recipe.options.seed = 2, value => value.structuredContent.recipe.version = 2, value => value.structuredContent.recipe.palette = 'unknown', value => value.structuredContent.recipe.options.algorithm = 'unknown', value => value.structuredContent.recipe.options = null, value => value.structuredContent.recipe.input = 'wrong.png', ...['width', 'height', 'pixel_scale', 'crop', 'mask', 'resize_filter'].map(key => value => value.structuredContent.recipe.options[key] = 1)];
+  for (const mutate of mutations) {
+    const state = ready(); const random = state.beginRandom(); const value = randomResult(); mutate(value);
+    assert.equal(state.finishRandom(random, value), null); assert.deepEqual(state.draft, request); assert.equal(state.canSave, false); assert.equal(state.error, true);
+  }
+  const state = ready(); const operation = state.beginRandom();
+  assert.equal(state.finishRandom(operation, { isError: true, content: [{ type: 'text', text: 'Random generation failed.' }] }), null);
+  assert.match(state.status, /generation failed/); assert.deepEqual(state.draft, request);
+  const noTools = ready(); noTools.canCallTools = false; assert.throws(() => noTools.beginRandom(), /unavailable/);
+  const saving = ready(); saving.beginSave('art.png'); assert.throws(() => saving.beginRandom(), /saving/);
+});
+
+test('zero-seeded random style allows canonical omitted engine seed', () => {
+  const state = ready(); const random = state.beginRandom(); const value = randomResult(0); delete value.structuredContent.recipe.options.seed;
+  const preview = state.finishRandom(random, value); assert.equal(preview.kind, 'preview'); assert.equal(preview.request.options.seed, undefined);
+});

@@ -96,7 +96,7 @@ func TestStdioProtocolEras(t *testing.T) {
 			listed := rpc("tools/list", map[string]any{})
 			result := listed["result"].(map[string]any)
 			tools := result["tools"].([]any)
-			if len(tools) != 14 {
+			if len(tools) != 15 {
 				t.Fatalf("tools=%d", len(tools))
 			}
 			checkStudio := func(tools []any, wantUI bool) {
@@ -141,6 +141,18 @@ func TestStdioProtocolEras(t *testing.T) {
 			var fallback map[string]any
 			if err := json.Unmarshal([]byte(text), &fallback); err != nil || fallback["media"] == nil {
 				t.Fatal("structured results need serialized JSON text for older clients")
+			}
+			style := rpc("tools/call", map[string]any{"name": "dither_random_style", "arguments": map[string]any{"seed": 42}})["result"].(map[string]any)
+			styleData := style["structuredContent"].(map[string]any)
+			recipe := styleData["recipe"].(map[string]any)
+			options := recipe["options"].(map[string]any)
+			if styleData["seed"] != float64(42) || recipe["version"] != float64(1) || options["seed"] != float64(42) || options["algorithm"] == nil || recipe["palette"] == nil || options["width"] != nil || options["pixel_scale"] != nil || options["mask"] != nil {
+				t.Fatalf("random style wire contract: %+v", styleData)
+			}
+			styleText := style["content"].([]any)[0].(map[string]any)["text"].(string)
+			var styleFallback map[string]any
+			if err := json.Unmarshal([]byte(styleText), &styleFallback); err != nil || styleFallback["seed"] != float64(42) || styleFallback["recipe"] == nil {
+				t.Fatal("random style needs serialized JSON fallback")
 			}
 			invalid := rpc("tools/call", map[string]any{"name": "dither_catalog", "arguments": map[string]any{"extra": true}})
 			if invalid["result"].(map[string]any)["isError"] != true {

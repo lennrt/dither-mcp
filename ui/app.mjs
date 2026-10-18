@@ -93,17 +93,23 @@ function syncControls(preserveInput) {
 }
 function render(sync = false) {
   if (sync) { renderCatalog(); syncControls(); }
-  $('settings').disabled = !state.draft || state.pending?.kind === 'save';
+  $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
   $('extract').disabled = !state.canPreview;
+  $('random-style').disabled = !state.canRandom;
   const exportValid = renderExport();
   $('save').disabled = !state.canSave || jsonDirty || customDirty || !exportValid || !$('output').value.trim();
-  $('output').disabled = state.pending?.kind === 'save';
-  $('cancel').hidden = !['preview', 'extract'].includes(state.pending?.kind);
+  $('output').disabled = state.saving;
+  $('recipe-output').disabled = state.saving;
+  $('save-recipe').disabled = !state.canSave || jsonDirty || customDirty || !$('recipe-output').value.trim();
+  $('recipe-note').textContent = state.rendered?.request.mask_input
+    ? `Keeps the preview dimensions and settings. Image and mask paths stay separate. Reuse with mask_input: ${state.rendered.request.mask_input}`
+    : 'Keeps the preview dimensions and settings, including custom colors. Source paths and export size choices stay separate.';
+  $('cancel').hidden = !['preview', 'extract', 'random'].includes(state.pending?.kind);
   $('status').textContent = state.status;
   $('status-dot').className = `status-dot${state.busy ? ' busy' : ''}${state.error ? ' error' : ''}`;
   const dirty = state.dirty || jsonDirty || customDirty;
-  $('preview-badge').textContent = state.busy ? ({ save: 'SAVING', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
+  $('preview-badge').textContent = state.busy ? ({ random: 'NEW STYLE', save: 'SAVING', recipe: 'SAVING RECIPE', extract: 'EXTRACTING', preview: 'RENDERING' }[state.pending.kind]) : (dirty || !state.validPreview) && state.rendered ? 'UNAPPLIED' : state.rendered ? 'PREVIEW' : 'WAITING';
   $('preview-badge').classList.toggle('dirty', dirty && !!state.rendered);
   $('source').textContent = state.draft?.input?.split(/[\\/]/).pop() || 'Waiting for a source image';
   if (state.rendered) {
@@ -199,6 +205,30 @@ $('apply').addEventListener('click', async (event) => {
     const accepted = state.finishPreview(operation, result); render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+$('random-style').addEventListener('click', async () => {
+  if (!state.canRandom) return;
+  let operation;
+  try {
+    const draft = clone(state.draft);
+    if (jsonDirty) {
+      try { draft.options = JSON.parse($('options-json').value); }
+      catch { throw new Error('Correct the advanced options JSON before choosing a random style.'); }
+    }
+    // Validate geometry before canceling work or replacing any pending text.
+    const base = studioRequest(draft);
+    abortController?.abort();
+    operation = state.beginRandom(base);
+    const controller = new AbortController(); abortController = controller; render();
+    const style = await app.callServerTool({ name: 'dither_random_style', arguments: operation.request }, { signal: controller.signal });
+    const preview = state.finishRandom(operation, style);
+    if (!preview) { render(); return; }
+    operation = preview; render();
+    const result = await app.callServerTool({ name: 'dither_studio', arguments: operation.request }, { signal: controller.signal });
+    const accepted = state.finishPreview(operation, result);
+    if (accepted) { jsonDirty = false; customDirty = false; }
+    render(accepted);
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
 $('extract-count').addEventListener('input', () => {
   if (state.pending?.kind === 'extract') { state.edit(clone(state.draft)); render(); }
 });
@@ -214,8 +244,9 @@ $('extract').addEventListener('click', async () => {
     render(accepted);
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
-$('cancel').addEventListener('click', () => { const extracting = state.pending?.kind === 'extract'; abortController?.abort(); state.cancel(extracting ? 'Color extraction cancelled. Your settings were kept.' : undefined); render(); });
+$('cancel').addEventListener('click', () => { const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
+$('recipe-output').addEventListener('input', () => render());
 for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
 $('save').addEventListener('click', async (event) => {
   event.preventDefault();
@@ -227,9 +258,18 @@ $('save').addEventListener('click', async (event) => {
     state.finishSave(operation, result); render();
   } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
 });
+$('save-recipe').addEventListener('click', async () => {
+  if (!state.canSave || jsonDirty || customDirty) return;
+  let operation;
+  try {
+    operation = state.beginRecipeSave($('recipe-output').value, $('output').value); render();
+    const result = await app.callServerTool({ name: 'dither_recipe_save', arguments: operation.request });
+    state.finishRecipeSave(operation, result); render();
+  } catch (error) { if (operation) state.reject(operation, error); else state.fail(error); render(); }
+});
 
 // MCP Apps hosts can omit allow-forms. Route explicit actions through buttons.
-for (const [form, button] of [['controls', 'apply'], ['save-form', 'save']]) {
+for (const [form, button] of [['controls', 'apply'], ['save-form', 'save'], ['recipe-form', 'save-recipe']]) {
   $(form).addEventListener('submit', (event) => event.preventDefault());
   $(form).addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && event.target.tagName === 'INPUT') {

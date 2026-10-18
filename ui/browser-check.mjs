@@ -134,6 +134,7 @@ try {
   assert.equal(extractedColors.split(' ').length, 6);
   await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
   assert.equal(await studio.locator('#preview').getAttribute('src'), preview);
   const extractionCalls = await page.evaluate(() => window.ditherHarness.calls.filter(call => call.name === 'dither_palette_extract'));
   assert.deepEqual(extractionCalls.map(call => call.arguments), [{ input: 'source.png', count: 6 }]);
@@ -146,6 +147,58 @@ try {
   await expect(studio.locator('#status')).toHaveText('Saved extracted.png');
   assert.deepEqual(await readFile(`${workspace}/extracted.png`), Buffer.from(extractedPreview.split(',')[1], 'base64'));
   record('Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels');
+
+  await studio.locator('#recipe-output').fill('recipes/extracted.json');
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  // Recipe dimensions come from the accepted preview, even with invalid custom image export dimensions.
+  await studio.locator('#export-size').selectOption('custom');
+  await studio.locator('#export-width').fill('0');
+  await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  await studio.locator('#recipe-output').press('Enter');
+  await expect(studio.locator('#status')).toHaveText('Saved recipe recipes/extracted.json');
+  const savedRecipeBytes = await readFile(`${workspace}/recipes/extracted.json`);
+  const savedRecipe = JSON.parse(savedRecipeBytes);
+  assert.deepEqual(savedRecipe.colors, extractedColors.split(' '));
+  assert.deepEqual(savedRecipe.options, JSON.parse(await studio.locator('#options-json').inputValue()));
+  assert.deepEqual(savedRecipe.options.effects, { noise: 0.1 });
+  const recipeCall = await page.evaluate(() => window.ditherHarness.calls.at(-1));
+  assert.equal(recipeCall.name, 'dither_recipe_save');
+  assert.deepEqual(recipeCall.arguments, { output: 'recipes/extracted.json', recipe: savedRecipe });
+  await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#status')).toContainText(/exist|replace/i);
+  assert.deepEqual(await readFile(`${workspace}/recipes/extracted.json`), savedRecipeBytes);
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  // Hold a real save result to exercise pending controls and validate the response before success.
+  await page.evaluate(() => {
+    const host = window.ditherHarness; const original = host.bridge.oncalltool;
+    host.bridge.oncalltool = async (params, extra) => {
+      const result = await original(params, extra);
+      if (params.name === 'dither_recipe_save') {
+        await new Promise(resolve => { host.releaseRecipe = resolve; });
+        return { ...result, structuredContent: { ...result.structuredContent, path: 'different.json' } };
+      }
+      return result;
+    };
+    host.restoreRecipe = () => { host.bridge.oncalltool = original; };
+  });
+  await studio.locator('#recipe-output').fill('recipes/receipt.json');
+  await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#preview-badge')).toHaveText('SAVING RECIPE');
+  await expect(studio.locator('#random-style')).toBeDisabled();
+  await expect(studio.locator('#algorithm')).toBeDisabled();
+  await expect(studio.locator('#recipe-output')).toBeDisabled();
+  await expect(studio.locator('#output')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => !!window.ditherHarness.releaseRecipe)).toBe(true);
+  await page.evaluate(() => { window.ditherHarness.releaseRecipe(); window.ditherHarness.restoreRecipe(); });
+  await expect(studio.locator('#status')).toContainText('different recipe save receipt');
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  await studio.locator('#recipe-output').fill('recipes/retry.json');
+  await studio.locator('#save-recipe').click();
+  await expect(studio.locator('#status')).toHaveText('Saved recipe recipes/retry.json');
+  await studio.locator('#export-size').selectOption('preview');
+  record('Recipe save keeps accepted dimensions, extracted colors and effects; rejects overwrite and mismatched receipt; freezes pending settings and permits retry');
 
   const beforeMixed = JSON.parse(await studio.locator('#options-json').inputValue());
   const mixed = { ...beforeMixed, brightness: -0.1, algorithm: 'atkinson', serpentine: true, contrast: 1.5, crop: { x: 2, y: 3, width: 120, height: 90 }, effects: { noise: 0.2, scanlines: 0.1 } };
@@ -163,6 +216,7 @@ try {
   await studio.locator('#options-json').fill(JSON.stringify({ ...afterCheckbox, saturation: 0.8 }));
   await studio.locator('#algorithm').selectOption('bayer-8');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
   await studio.locator('#apply').click();
   await expect(studio.locator('#status')).toContainText('Preview ready');
   const mergedCall = await page.evaluate(() => window.ditherHarness.calls.at(-1));
@@ -182,6 +236,7 @@ try {
     await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
     await expect(studio.locator('[data-option="serpentine"]')).not.toBeChecked();
     await expect(studio.locator('#save')).toBeDisabled();
+    await expect(studio.locator('#save-recipe')).toBeDisabled();
   }
   await studio.locator('#options-json').fill('null');
   await studio.locator('#apply').click();
@@ -190,6 +245,7 @@ try {
   await expect(studio.locator('#brightness')).toHaveValue('0.35');
   await expect(studio.locator('#algorithm')).toHaveValue('bayer-8');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
   assert.equal(await page.evaluate(() => window.ditherHarness.calls.length), callsBeforeInvalidJSON);
   await studio.locator('#options-json').fill(JSON.stringify(beforeMixed));
   // The first numeric edit must merge JSON without resetting a cleared field.
@@ -233,6 +289,7 @@ try {
     await expect(studio.locator('#apply')).toBeDisabled();
     await expect(studio.locator('#extract')).toBeDisabled();
     await expect(studio.locator('#save')).toBeDisabled();
+    await expect(studio.locator('#save-recipe')).toBeDisabled();
     if (change === 'tone') await studio.locator('#brightness').fill('0.2');
     if (change === 'count') await studio.locator('#extract-count').fill('7');
     if (change === 'cancel') await studio.locator('#cancel').click();
@@ -248,11 +305,74 @@ try {
     await expect(studio.locator('#status')).toContainText(change === 'cancel' ? 'extraction cancelled' : 'Settings changed while extracting');
     await expect(studio.locator('#custom-colors')).toHaveValue(extractedColors);
     await expect(studio.locator('#save')).toBeDisabled();
+    await expect(studio.locator('#save-recipe')).toBeDisabled();
     await expect(studio.locator('#apply')).toBeEnabled();
     await expect(studio.locator('#host-note')).toBeHidden();
   }
   await page.evaluate(() => { window.ditherHarness.bridge.oncalltool = window.ditherHarness.originalCallTool; });
   record('Pending extraction gates preview/save; edited controls, changed count, and cancellation discard delayed results without losing the host connection');
+
+  const filesBeforeRandom = (await readdir(workspace)).sort();
+  const callsBeforeRandom = await page.evaluate(() => window.ditherHarness.calls.length);
+  for (const invalid of ['{', 'null', '[]']) {
+    await studio.locator('#options-json').fill(invalid);
+    await studio.locator('#random-style').click();
+    await expect(studio.locator('#status')).toContainText(invalid === '{' ? 'Correct the advanced options JSON' : 'Options must be a JSON object');
+    await expect(studio.locator('#options-json')).toHaveValue(invalid);
+  }
+  assert.equal(await page.evaluate(() => window.ditherHarness.calls.length), callsBeforeRandom);
+  const randomBase = { ...beforeMixed, crop: { x: 2, y: 3, width: 120, height: 90 }, mask: { shape: 'rectangle', x: 4, y: 6, width: 40, height: 30, invert: true }, pixel_scale: 2, resize_filter: 'nearest', effects: { noise: .4, pixel_sort: true } };
+  await studio.locator('#options-json').fill(JSON.stringify(randomBase));
+  await studio.locator('#custom-colors').fill('replace this unfinished palette');
+  await page.evaluate(() => {
+    const host = window.ditherHarness; const original = host.bridge.oncalltool;
+    host.randomOriginal = original;
+    host.bridge.oncalltool = async (params, extra) => {
+      const result = await original(params, extra);
+      if (params.name === 'dither_random_style') host.randomResult = result;
+      return result;
+    };
+  });
+  await studio.locator('#random-style').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  const randomCalls = await page.evaluate(start => window.ditherHarness.calls.slice(start), callsBeforeRandom);
+  assert.deepEqual(randomCalls.map(call => call.name), ['dither_random_style', 'dither_studio']);
+  const generated = await page.evaluate(() => window.ditherHarness.randomResult.structuredContent);
+  const randomOptions = JSON.parse(await studio.locator('#options-json').inputValue());
+  for (const key of ['width', 'height', 'crop', 'mask', 'pixel_scale', 'resize_filter']) assert.deepEqual(randomOptions[key], randomBase[key]);
+  assert.deepEqual(randomOptions.effects, generated.recipe.options.effects);
+  assert.equal(randomOptions.seed ?? 0, generated.seed);
+  await expect(studio.locator('[data-mode="builtin"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
+  assert.deepEqual((await readdir(workspace)).sort(), filesBeforeRandom);
+  // Editing or canceling a delayed style cannot start its automatic preview.
+  await page.evaluate(() => {
+    const host = window.ditherHarness;
+    host.bridge.oncalltool = async (params, extra) => {
+      const result = await host.randomOriginal(params, extra);
+      if (params.name === 'dither_random_style') await new Promise(resolve => { host.releaseRandom = resolve; });
+      return result;
+    };
+  });
+  for (const change of ['edit', 'cancel']) {
+    await page.evaluate(() => { window.ditherHarness.releaseRandom = null; });
+    const start = await page.evaluate(() => window.ditherHarness.calls.length);
+    await studio.locator('#random-style').click();
+    await page.waitForFunction(() => !!window.ditherHarness.releaseRandom);
+    await expect(studio.locator('#random-style')).toBeEnabled();
+    await expect(studio.locator('#cancel')).toBeVisible();
+    if (change === 'edit') await studio.locator('#brightness').fill('0.45');
+    else await studio.locator('#cancel').click();
+    await page.evaluate(() => window.ditherHarness.releaseRandom());
+    await expect(studio.locator('#status')).toContainText(change === 'edit' ? 'Settings changed while choosing' : 'Random style cancelled');
+    assert.deepEqual(await page.evaluate(start => window.ditherHarness.calls.slice(start).map(call => call.name), start), ['dither_random_style']);
+    await expect(studio.locator('#save-recipe')).toBeDisabled();
+  }
+  await page.evaluate(() => { window.ditherHarness.bridge.oncalltool = window.ditherHarness.randomOriginal; });
+  await studio.locator('#options-json').fill(JSON.stringify(beforeMixed));
+  await studio.locator('#apply').click();
+  await expect(studio.locator('#status')).toContainText('Preview ready');
+  record('Prominent random action preserves geometry, replaces unfinished custom colors and all style effects, validates pending JSON, and discards edited or cancelled generation before auto-preview');
 
   await studio.getByRole("button", { name: "Custom colors", exact: true }).click();
   await studio.locator("#custom-colors").fill("#123 #123");
@@ -315,9 +435,11 @@ try {
   await studio.locator('#export-width').fill('');
   await studio.locator('#export-height').fill('');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
   await studio.locator('#export-width').fill('4097');
   await studio.locator('#export-height').fill('4096');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeEnabled();
   await expect(studio.locator('#export-note')).toContainText('Export must fit');
   await studio.locator('#export-width').fill('240');
   await studio.locator('#export-height').fill('160');
@@ -335,6 +457,7 @@ try {
   await expect(studio.locator('#status')).toContainText('source image changed');
   await expect(studio.locator('#status')).toContainText('Apply preview again');
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
   assert(!(await readdir(workspace)).includes('stale.png'));
   await studio.locator('#apply').click();
   await expect(studio.locator('#status')).toContainText('Preview ready');
@@ -355,6 +478,7 @@ try {
   await expect(studio.locator('#status')).toContainText('fewer than two visible colors');
   await expect(studio.locator('#custom-colors')).toHaveValue(beforeMono);
   await expect(studio.locator('#save')).toBeDisabled();
+  await expect(studio.locator('#save-recipe')).toBeDisabled();
   await expect(studio.locator('#apply')).toBeEnabled();
   record('Monochrome source extraction reports the tool error and keeps the current custom palette');
 
@@ -366,8 +490,11 @@ try {
   await expect(limited.locator("#host-note")).toContainText("does not support app tool calls");
   await expect(limited.locator("#apply")).toBeDisabled();
   await expect(limited.locator("#extract")).toBeDisabled();
+  await expect(limited.locator("#random-style")).toBeDisabled();
   await limited.locator("#output").fill("no-tools.png");
   await expect(limited.locator("#save")).toBeDisabled();
+  await limited.locator("#recipe-output").fill("no-tools.json");
+  await expect(limited.locator("#save-recipe")).toBeDisabled();
   await noTools.close();
   record("Host without serverTools displays result and disables mutations");
   if (siteURL) {

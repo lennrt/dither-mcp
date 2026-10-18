@@ -33,6 +33,7 @@ var Tools = []ToolInfo{
 	{"dither_recipe_save", "Validate a version-1 JSON recipe. Save it to a new relative path without replacing an existing file.", false},
 	{"dither_recipe_load", "Read and validate a saved version-1 JSON recipe.", true},
 	{"dither_studio", "Preview a dither recipe in memory. Supporting MCP Apps hosts open an interactive studio with algorithms, palettes, adjustments, and an explicit Save action. Other hosts receive a PNG and a replayable recipe. Metadata includes source and mask byte fingerprints, upright source dimensions after cropping, and export limits. No files are written by this tool. Preview dimensions are at most 1024 per side and default to fit within 512 by 512 without enlargement.", true},
+	{"dither_random_style", "Generate a portable version-1 dither recipe for creative exploration without reading or writing files. Chooses a current algorithm and palette, moderate tone adjustments, and occasional subtle texture. Omit seed for a fresh style; supply a JavaScript-safe signed integer to repeat the selection within this engine and catalog version. The result includes the seed and recipe, without source paths, dimensions, pixel scale, resize filter, crop, or mask. Preview with dither_studio before saving.", true},
 }
 
 func New(svc *app.Service) *server.MCPServer {
@@ -51,6 +52,7 @@ func New(svc *app.Service) *server.MCPServer {
 	add[app.RecipeSaveRequest, app.Artifact](s, svc, Tools[11])
 	add[app.InputRequest, app.Recipe](s, svc, Tools[12])
 	add[app.StudioRequest, app.StudioMetadata](s, svc, Tools[13])
+	add[app.RandomStyleRequest, app.RandomStyleResult](s, svc, Tools[14])
 	addStudioResource(s)
 	s.AddResource(mcp.NewResource("dither://capabilities", "Dither capabilities", mcp.WithMIMEType("application/json")), func(ctx context.Context, r mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		b, err := json.Marshal(svc.Catalog())
@@ -75,7 +77,12 @@ func New(svc *app.Service) *server.MCPServer {
 	return s
 }
 func add[T any, O any](s *server.MCPServer, svc *app.Service, info ToolInfo) {
-	tool := mcp.NewTool(info.Name, mcp.WithDescription(info.Description), mcp.WithInputSchema[T](), mcp.WithOutputSchema[O](), mcp.WithReadOnlyHintAnnotation(info.ReadOnly), mcp.WithDestructiveHintAnnotation(false), mcp.WithIdempotentHintAnnotation(info.ReadOnly), mcp.WithOpenWorldHintAnnotation(false))
+	tool := mcp.NewTool(info.Name, mcp.WithDescription(info.Description), mcp.WithInputSchema[T](), mcp.WithOutputSchema[O](), mcp.WithReadOnlyHintAnnotation(info.ReadOnly), mcp.WithDestructiveHintAnnotation(false), mcp.WithIdempotentHintAnnotation(info.ReadOnly && info.Name != "dither_random_style"), mcp.WithOpenWorldHintAnnotation(false))
+	if info.Name == "dither_random_style" {
+		// The optional pointer distinguishes omission from zero in Go; the wire
+		// contract permits only integers within the JavaScript-safe range.
+		tool.RawInputSchema = json.RawMessage(fmt.Sprintf(`{"type":"object","properties":{"seed":{"type":"integer","minimum":%d,"maximum":%d,"description":"Omit for a fresh random style. Supply a signed JavaScript-safe integer, including zero, to repeat a style within the current engine and catalog version."}},"additionalProperties":false}`, -app.MaxStyleSeed, app.MaxStyleSeed))
+	}
 	if info.Name == "dither_studio" {
 		tool.Meta = studioToolMeta()
 	}
@@ -133,6 +140,8 @@ Choose a new output name if the path already exists. Place engine settings under
 Masks use the reduced pixel grid. Post-effects may produce colors outside the palette. The engine preserves alpha. JPEG and PBM cannot represent alpha. GIF uses binary alpha.
 
 Use dither_palettes query, category, and color-count filters to discover a palette. Use next_offset with the same filters for more matches. Consult dither_catalog for actual IDs and budgets. Preview results to assess quality.
+
+Use dither_random_style for a fresh creative starting point without an image or output path. Pass its recipe.palette and recipe.options to dither_studio with an input image. The returned seed repeats the selection within the current engine and catalog version; save the recipe itself for a portable record of the chosen settings. Preserve existing crop, dimensions, pixel scale, resize filter, and mask settings when applying a style to an in-progress edit.
 
 Calls run synchronously within defined limits. If the service observes cancellation before publication, it leaves no output. A batch publishes each successful item separately.`
 

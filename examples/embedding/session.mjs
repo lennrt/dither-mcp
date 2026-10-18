@@ -1,6 +1,7 @@
-// Node/desktop side: one source image, three tools, and one embedded UI resource.
+// Node/desktop side: one source image, five tools, and one embedded UI resource.
 import path from 'node:path';
 import { realpath, stat } from 'node:fs/promises';
+import { isDeepStrictEqual } from 'node:util';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
@@ -11,10 +12,22 @@ export function relativeImagePath(value, label = 'path') {
   return value;
 }
 
-export function validateStudioCall(params, { input, maskInput }) {
-  if (!params || !['dither_studio', 'dither_render', 'dither_palette_extract'].includes(params.name)) throw new Error('Only studio, render, and palette extraction tools are allowed.');
+export function validateStudioCall(params, { input, maskInput, acceptedRecipe }) {
+  if (!params || !['dither_studio', 'dither_render', 'dither_palette_extract', 'dither_recipe_save', 'dither_random_style'].includes(params.name)) throw new Error('Only studio, render, palette extraction, recipe save, and random style tools are allowed.');
   if (Object.keys(params).some((key) => !['name', 'arguments', '_meta'].includes(key))) throw new Error('Unknown tool call field.');
   const args = params.arguments;
+  if (params.name === 'dither_random_style') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).some(key => key !== 'seed') || ('seed' in args && !Number.isSafeInteger(args.seed))) throw new Error('Random style accepts only an optional safe integer seed.');
+    return params;
+  }
+  if (params.name === 'dither_recipe_save') {
+    if (!args || Array.isArray(args) || typeof args !== 'object' || Object.keys(args).some((key) => !['output', 'recipe'].includes(key))) throw new Error('Recipe saving accepts only output and recipe.');
+    relativeImagePath(args.output, 'recipe output');
+    if (!/\.json$/i.test(args.output)) throw new Error('The recipe output must use a .json extension.');
+    if (args.output === input || args.output === maskInput) throw new Error('The recipe output cannot replace the source or mask.');
+    if (!acceptedRecipe || !isDeepStrictEqual(args.recipe, acceptedRecipe)) throw new Error('Apply a successful preview before saving its exact recipe.');
+    return params;
+  }
   if (params.name === 'dither_palette_extract') {
     if (!args || Array.isArray(args) || typeof args !== 'object' || args.input !== input) throw new Error('The source must match this embedding session.');
     if (Object.keys(args).some((key) => !['input', 'count'].includes(key))) throw new Error('Unsupported palette extraction argument.');
@@ -54,14 +67,25 @@ export async function createStudioSession({ binary, root, input, maskInput, init
     validateStudioCall({ name: 'dither_studio', arguments: args }, { input, maskInput });
     const result = await client.callTool({ name: 'dither_studio', arguments: args });
     if (result.isError) throw new Error(result.content.filter((item) => item.type === 'text').map((item) => item.text).join('\n'));
-    let pending = false;
+    let pending = null;
+    let acceptedRecipe = structuredClone(result.structuredContent?.recipe);
     return {
       bootstrap: { resource, arguments: args, result },
       async callTool(params, options) {
-        validateStudioCall(params, { input, maskInput });
-        if (pending) throw new Error('A studio operation is already running.');
-        pending = true;
-        try { return await client.callTool(params, options); } finally { pending = false; }
+        if (options?.signal?.aborted) throw new DOMException('The studio request was aborted.', 'AbortError');
+        validateStudioCall(params, { input, maskInput, acceptedRecipe });
+        const readOnly = name => ['dither_studio', 'dither_palette_extract', 'dither_random_style'].includes(name);
+        if (pending && (params.name !== 'dither_random_style' || !readOnly(pending.name))) throw new Error('A studio operation is already running.');
+        pending?.controller.abort();
+        const operation = { name: params.name, controller: new AbortController() };
+        const signal = options?.signal ? AbortSignal.any([options.signal, operation.controller.signal]) : operation.controller.signal;
+        pending = operation;
+        if (readOnly(params.name)) acceptedRecipe = undefined;
+        try {
+          const result = await client.callTool(params, { ...options, signal });
+          if (pending === operation && params.name === 'dither_studio' && !result.isError && !signal.aborted) acceptedRecipe = structuredClone(result.structuredContent?.recipe);
+          return result;
+        } finally { if (pending === operation) pending = null; }
       },
       close: () => client.close(),
     };

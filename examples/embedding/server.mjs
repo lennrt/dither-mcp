@@ -44,6 +44,7 @@ export async function startStudioHost({ root, input, maskInput, binary = path.jo
           if (bytes > 1 << 20) return send(res, 413, 'text/plain', 'Request too large.');
           chunks.push(chunk);
         }
+        if (req.aborted || res.destroyed) return;
         const controller = new AbortController();
         res.on('close', () => { if (!res.writableEnded) controller.abort(); });
         const result = await session.callTool(JSON.parse(Buffer.concat(chunks).toString('utf8')), { signal: controller.signal });
