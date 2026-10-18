@@ -7,7 +7,7 @@ All tool arguments and results are JSON objects. Tools advertise input and outpu
 
 See [formats and video](formats.md) for the complete support matrix, setup, examples, and tested codec combinations.
 
-The server provides **15 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
+The server provides **18 tools**, **3 resources**, and **3 prompts**. The read-only `dither_studio` tool adds an optional [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) view. A host that supports MCP Apps and local stdio servers can display its image controls inside the conversation. Other hosts receive the same PNG preview and structured JSON. The server keeps its local Go runtime and stdio transport.
 
 ## Tools
 
@@ -28,6 +28,9 @@ The server provides **15 tools**, **3 resources**, and **3 prompts**. The read-o
 | `dither_separate` | Render request | ZIP of spot-color PNG plates and manifest |
 | `dither_recipe_save` | `output`, versioned `recipe` | JSON artifact |
 | `dither_recipe_load` | `input` | Validated versioned recipe |
+| `dither_favorite_save` | `name`, versioned `recipe` | Immutable named favorite with ID, name and recipe |
+| `dither_favorites_list` | Empty object | Sorted ID/name summaries and unavailable-entry count |
+| `dither_favorite_load` | `id` | Validated favorite with ID, name and recipe |
 
 Render requests use `input`, `output`, either `palette` or `colors`, and nested
 `options`. Optional `recipe` replaces all inline options and palette selection.
@@ -129,14 +132,78 @@ a saved JSON path, not an inline object. To preserve an existing composition in 
 pixel scale, resize filter, crop and mask when replacing style options. The
 built-in Random style button does this automatically and previews the result.
 Its Recent looks picker and Undo/Redo controls can restore the last 20 accepted
-looks through a fresh `dither_studio` preview. This history is session-local;
-no new MCP tool or persistent storage is required.
+looks through a fresh `dither_studio` preview. History is session-local.
+The named-favorites tools below provide persistent reuse in the workspace.
 
 A repeated seed returns the same selection within the current engine and catalog
 version. Save the complete recipe for later reuse. The engine's existing JSON
 format omits a zero `options.seed`; omission still means zero. The outer `seed`
 is always present. The [runnable example](../examples/random-styles.mjs) renders
 three fixed seeds and saves matching recipes.
+
+## Named favorites
+
+Favorites share a library under `.dither/favorites/` in the configured workspace.
+Save a full version-1 recipe, list its display name and stable ID from another
+session, and load it by ID. Save/load return `{id, name, recipe}`; list returns
+`{favorites: [{id, name}], unavailable}`. An empty library returns an empty array
+without creating directories. Listing and loading are read-only.
+
+With an initialized MCP SDK client:
+
+```js
+async function call(name, args) {
+  const result = await client.callTool({ name, arguments: args });
+  if (result.isError) throw new Error(JSON.stringify(result.content));
+  return result.structuredContent;
+}
+const style = await call('dither_random_style', { seed: 42 });
+const preview = await call('dither_studio', {
+  input: 'photo.png', palette: style.recipe.palette, options: style.recipe.options,
+});
+const saved = await call('dither_favorite_save', {
+  name: 'Moonlit paper', recipe: preview.recipe,
+});
+// In this or a later connection to the same workspace:
+const library = await call('dither_favorites_list', {});
+const choice = library.favorites.find(item => item.name === 'Moonlit paper');
+if (!choice) throw new Error('Favorite is unavailable.');
+const favorite = await call('dither_favorite_load', { id: choice.id });
+const restored = await call('dither_studio', {
+  input: 'photo.png', palette: favorite.recipe.palette, colors: favorite.recipe.colors,
+  options: favorite.recipe.options,
+});
+```
+
+Use a new name when repeating a save. Names are trimmed, case-sensitive valid
+UTF-8 strings of 1–80 Unicode characters without controls. IDs are 64 lowercase
+hexadecimal characters: SHA-256 of the trimmed name. The service validates the
+name, ID, version and recipe on load; names never become user-controlled paths.
+`Moonlit paper` and `moonlit paper` are different names.
+
+Each file is a version-1 envelope containing the name and recipe, limited to
+64 KiB. Publication uses the same immutable atomic-link protocol as outputs.
+There is no overwrite, rename or delete tool. The recipe carries no source or
+mask paths. Use its palette/colors/options inline for rendering or previews;
+the `dither_render.recipe` field expects a portable recipe-file path, not a
+favorite ID or envelope path. Image-mask recipes need a compatible `mask_input`.
+
+Listing sorts names and counts unavailable recognized favorite files. It scans
+at most 512 directory entries, including unrelated files and temporary files;
+an oversized directory reports an error rather than hiding part of the library.
+Save checks that capacity before publication. Concurrent different-name saves
+from separate processes can exceed it; this is not a global storage quota.
+Direct loading by ID still works. An operator can move old favorite files to a
+separate workspace or remove abandoned temporary files when no writer is active.
+Visible library symlinks and nonregular favorite files are refused. Other
+rooted-access and cancellation limitations apply as described in [security](security.md).
+
+The studio loads a favorite on its current source and mask through a fresh
+preview. Complete geometry and appearance settings are preserved; only omitted
+engine/preview defaults are resolved. Mask incompatibility, an out-of-bounds crop
+or dimensions above the studio limit report an error without discarding edits.
+Saving a favorite preserves settings without rereading source bytes. Future
+engine versions may produce different pixels from the same recipe.
 
 ## Guard a render against changed inputs
 

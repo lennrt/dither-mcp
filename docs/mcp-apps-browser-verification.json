@@ -19,6 +19,7 @@
     "Keyboard save works without sandbox form permission",
     "Source-size and custom exports, pixel-budget validation, and unchanged preview size",
     "Changed source creates no artifact, invalidates save, and requires a fresh preview",
+    "Named favorite saves once, recovers invalid JSON through exact fresh preview, preserves save authority after refresh cancellation, and ignores edited pending loads",
     "Monochrome source extraction reports the tool error and keeps the current custom palette",
     "Host without serverTools displays result and disables mutations"
   ],
@@ -30,11 +31,14 @@
     "studio-dark.png",
     "studio-narrow-dark.png",
     "studio-mobile.png",
-    "studio-export-mobile.png"
+    "studio-export-mobile.png",
+    "studio-favorites-desktop.png",
+    "studio-favorites-dark.png",
+    "studio-favorites-mobile.png"
   ],
   "published_screenshot_sha256": {
-    "assets/mcp-app-studio.png": "4422212a4ede95a8e977a838cd41465f9103c5a6cdd0e5c20ce08fd78be477e8",
-    "assets/mcp-app-studio-mobile.png": "1124028f8ddce9b082a7aaa43699cde51a99738feae0563256771d4825b245a9",
-    "assets/mcp-app-studio-dark.png": "8d9faf78e0dd6b4b29e0fda88d840d50c23489d17d0c7a5c8329a3f93aacb89e"
+    "assets/mcp-app-studio.png": "e0db6627e899241cf95755d3eae89b8230e5bc7c1cbdee3be896ebf9da1ac7c4",
+    "assets/mcp-app-studio-mobile.png": "f6ad4f227ade813053452db6c7b685bdfaf0ee2e81bee144e61abb02f4bb670c",
+    "assets/mcp-app-studio-dark.png": "0baf9556c4c43f1337ae2f5b7a45e46ad0c0a55bad9bc972220653c5ffd31df7"
   }
 }

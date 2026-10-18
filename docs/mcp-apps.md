@@ -61,7 +61,7 @@ stays visible and causes no call until corrected. Failed or canceled work
 keeps your controls and last image; apply a fresh preview before saving.
 
 Use Cancel during generation or preview. Random style remains available during
-read-only operations, but image and recipe writes must finish first. The seed
+read-only operations, but image, recipe, and favorite writes must finish first. The seed
 can reproduce the selection through `dither_random_style`; save the recipe to
 keep the accepted treatment. See [API examples](mcp.md#random-style-iteration).
 
@@ -90,9 +90,48 @@ but replaces that text only on success. Failure keeps your edits and previous
 image. Use Cancel to stop restoration.
 
 History contains settings, not cached PNGs or source files. Closing the studio
-or receiving new host input clears it. Use **Save recipe** for lasting reuse.
+or receiving new host input clears it. Use **Save favorite** for named reuse across sessions, or **Save recipe** for a portable file.
 Undo affects preview settings; it does not remove saved files or change export
 paths and export-size choices.
+
+## Keep named favorites
+
+The **Favorites** library appears below Recent looks. After a successful preview,
+enter a name and select **Save favorite**. This saves the exact accepted recipe
+under that name in the configured workspace. It does not save the source, mask,
+or a rendered image. Image export-size choices do not change the favorite.
+
+Names are trimmed, case-sensitive, and limited to 80 Unicode characters without
+control characters. Existing names cannot be replaced. Save a revised look under
+a new name. Changed settings, pending operations, or unavailable tool support
+disable saving. A matching receipt confirms persistence and adds the name to
+the chooser; a later refresh error does not undo that confirmation.
+
+Opening another studio on the same workspace discovers the library automatically.
+Use **Refresh** to see entries added by another client. Metadata discovery does
+not invalidate your preview. An unavailable-entry count identifies damaged or
+unreadable favorite files without hiding valid entries. See the
+[API library limits](mcp.md#named-favorites).
+
+Choose a name and select **Load favorite**. Loading retrieves its recipe and
+calls `dither_studio` on your current source. Complete settings are preserved,
+including dimensions, crop, masks, custom colors and effects. API-created recipes
+may omit default settings; only documented defaults and inferred preview sizes
+are filled in. Current source bytes are read again. Only a matching current
+preview replaces the controls and pending text, enters recent history and enables
+saving. Undo can return to the previous accepted look.
+
+Loading an image-mask favorite needs the session's current external mask. An
+unmasked or geometric-mask favorite cannot silently use an external mask already
+fixed by the host. Incompatible masks, invalid crops, or dimensions exceeding the
+studio preview limit report an error and preserve your edits. Canceled, failed,
+edited or superseded loads cannot change the current look. Random style can
+supersede favorite reads; it cannot interrupt a favorite save.
+
+Favorites live in `.dither/favorites/`, persist through server restarts, and are
+shared by the MCP tools. They are independent of the 20-look session history.
+Use the same workspace to find them later. The library does not use browser
+storage or synchronize between unrelated workspace roots.
 
 ## Save a reusable recipe
 

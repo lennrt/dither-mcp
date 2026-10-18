@@ -2,7 +2,7 @@
 
 The behavioral requirements live in [`openspec/specs`](../openspec/specs). The initial [`proposal`](../openspec/changes/initial-suite/proposal.md), [`design`](../openspec/changes/initial-suite/design.md), and [`tasks`](../openspec/changes/initial-suite/tasks.md) record the feature and architecture decisions. We wrote and strictly validated the initial baseline before implementing the application.
 
-Quint models seven small contracts covering publication, quantization, palette discovery, source normalization, MCP Apps interactions, guarded studio exports, and look history. They make sequencing and invariants executable. Concrete implementation tests challenge the same claims. They are not a formal proof of the Go program or browser UI.
+Quint models eight small contracts covering publication, quantization, palette discovery, source normalization, MCP Apps interactions, guarded studio exports, look history, and persistent favorites. They make sequencing and invariants executable. Concrete implementation tests challenge the same claims. They are not a formal proof of the Go program or browser UI.
 
 ## Run the checks
 
@@ -17,12 +17,12 @@ The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the Type
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and ten changes.
-2. Typechecking of all seven Quint modules.
-3. 133 executable run tests, including negative precondition scenarios.
+1. Strict validation of six baseline OpenSpec capabilities and eleven changes.
+2. Typechecking of all eight Quint modules.
+3. 151 executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
-5. 1,000 additional traces for seven completion schedules: quantization, catalog browsing, normalization, image saves, recipe saves, guarded exports, and restored-look saves.
-6. 34 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, guarded exports, and bounded current-look navigation. Each mutation must fail a regression test.
+5. 1,000 additional traces for eight completion schedules: quantization, catalog browsing, normalization, image saves, recipe saves, guarded exports, restored-look saves, and favorite reload after restart.
+6. 42 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, guarded exports, bounded current-look navigation, and persistent favorite authority. Each mutation must fail a regression test.
 
 The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
@@ -127,6 +127,28 @@ model does not establish pixel equality, JSON cloning, actual source reads,
 keyboard behavior, or a machine-checked refinement. State, real-server and
 browser tests check those separate claims.
 
+## Named favorites model
+
+[`favorites.qnt`](favorites.qnt) uses two name identities, three exact recipe
+identities, six requests, four edit revisions and three session epochs. An
+immutable map represents the workspace store. Restart clears session state
+while retaining that store. Other API processes can race create-only saves.
+The existing publication model abstracts complete-file atomicity separately.
+
+Save requires an accepted clean preview and idle state. Publication and reporting
+are separate: a malformed receipt can follow a completed write. Listing preserves
+preview authority. Loading has read and fresh-preview phases; identity, revision,
+epoch and exact recipe checks precede adoption. Random previews may supersede
+reads but not writes. Eighteen concrete runs and eight mutations challenge these
+boundaries. A completion schedule must witness a load after session restart.
+
+Recipe identity abstracts canonical default resolution, mask compatibility and
+complete JSON validation. The model contains no filenames, Unicode names, hashes,
+directory scans, file sizes, symlinks, bytes or pixels. Go, controller and browser
+tests check those implementation boundaries, including service/session restarts.
+The model does not prove filesystem durability, global storage capacity, external
+host behavior, or machine-checked refinement.
+
 ## Refinement evidence
 
 | Contract | Implementation boundary | Implementation evidence |
@@ -150,6 +172,7 @@ browser tests check those separate claims.
 | Read-only processed previews and exact replay | Shared application studio service | `TestStudioPreviewReplaysWithoutWriting`, `TestStudioGeometryAndAdmission`, `TestStudioImageMaskReplay`, `TestStudioNormalization`, `TestStudioEncodedBudgetAndSafeSeeds` |
 | Guarded byte snapshots and source-size geometry | Shared bounded read/decode buffers and studio metadata | `TestGuardedRenderDetectsSourceAndMaskReplacement`, `TestGuardChecksBytesBeforeDecodingAndPreservesNormalRenders`, `TestStudioSourceDimensionsFollowOrientationAndCrop`, `TestStudioAndGuardedRenderUseTheDecodedSnapshot`, `TestEmbeddedRenderRequestsApplySourceGuard` |
 | Negotiated MCP Apps linkage and core fallback | Tool filter, resource handler, and result encoder | `TestAppsNegotiationAndFallback`, `TestStdioProtocolEras`, `TestStudioExportGuardsReturnStructuredMCPError` |
+| Persistent favorite store and current-source adoption | Rooted immutable service plus studio and restricted host | `internal/app/favorites_test.go`, real MCP favorite workflows, state and browser restart/replay tests |
 | History bounds, navigation and exact re-preview | Canonical request snapshots and current response validation | [`ui/state.test.mjs`](../ui/state.test.mjs), [`ui/server.test.mjs`](../ui/server.test.mjs), and real browser Undo/Redo/restored-save checks |
 | Dirty controls, stale responses, and exact save arguments | Concrete JavaScript state controller | [`ui/state.test.mjs`](../ui/state.test.mjs), including canceled replacements, late host results, custom color preservation, hidden options, invalid seeds, export bounds, exact dimension-only changes, guard forwarding, and mismatch invalidation/recovery |
 | Host lifecycle and tool-call capability | Official SDK App and AppBridge over paired transports | [`ui/bridge.test.mjs`](../ui/bridge.test.mjs) checks initial input/result, exact save arguments, theme, cancellation, and a host without tool capability |

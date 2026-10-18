@@ -25,6 +25,7 @@ the current repository scope.
 - Engine tests cover all 41 algorithms, deterministic seeds, palette membership, source alpha, and distinct pattern fingerprints. They check reference diffusion pixels, Bayer ranks, blue-noise ranks, and Hilbert traversal. They also check adjustment validation, mask/transparent diffusion barriers, cancellation, six encoder formats, and GIF palette fidelity. Sparse visible-pixel tests challenge missed extraction samples. Context-aware encoder tests cancel during scanning, training, mapping, and writes; six baseline hashes check unchanged successful output bytes.
 - Filesystem and service tests cover traversal and URL rejection, symlink escapes, and named special files. They check two independent services that race for one destination, immutable destinations, and temporary-file cleanup. They also check argument validation, input/output budgets, canceled writes, and portable recipes with external masks.
 - Workflow tests cover algorithm and palette comparison cell pixels and metadata, partial batch success, versioned recipe replay, print plates, and PNG DPI CRCs. They check animation determinism, sheet frames, source-GIF background/disposal/timing/loop, and 12 fps timing quantization. They also check rendering with extracted palettes and bounded previews.
+- Favorites tests save and replay complete recipes across service and stdio sessions, race independent same-name saves, and reject invalid Unicode names, IDs, envelopes, symlinks, special files, oversized records and full directory scans. Discovery counts unavailable entries; direct loading remains available above its scan limit. State and browser tests check new-session discovery, masked/default recipe loading, malformed receipts, stale reads/previews and exclusive writes.
 - MCP and CLI tests cover initialization, discovery, input/output schemas, native image results, and recoverable tool errors. They check protocol-only stdout, message framing limits, JSON CLI output, unsupported flags including explicit zero/false, an actual subprocess demo, and overwrite rejection.
 - Studio tests check memory-only previews, default and inferred dimensions, crop, EXIF/color normalization, exact recipe replay, image masks, safe integer seeds, the 2 MiB PNG budget, and cancellation. Guard tests replace files with equal-size, equal-timestamp content; remove inputs; and replace paths during decoding. They verify the exact captured bytes and inherited render workflows. MCP tests check negotiated UI linkage, fallback JSON/PNG, resource MIME/CSP, and unchanged shared descriptors.
 - JavaScript tests cover the delivered bundle syntax, concrete controller cases, and two official SDK bridge cases. A third bridge test connects to the real Go stdio server, changes a preview, saves identical PNG bytes, verifies overwrite rejection, checks source/custom export dimensions, and rejects changed source bytes. The optional Playwright suite renders the actual embedded app in Chromium. It checks random generation/preview, Undo/Redo and restored PNG/recipe replay, exact recipe saves, extraction races, mixed advanced JSON/control edits, negative-number typing, invalid JSON preservation, export-size limits, source-change recovery, keyboard saving without sandbox form permission, validation, cancellation, host capabilities, theme changes, and narrow layouts. These checks do not establish compatibility with every host.
@@ -39,19 +40,20 @@ Tests use finite timeouts and small synthetic inputs. They do not demonstrate
 large-scale throughput, every malformed decoder input, power-loss persistence,
 all operating systems, or byte compatibility across future codec versions.
 
-The embedding example has separate tests for its five-tool allowlist, selected source, rooted paths, real stdio results, byte-identical PNG saves, and recipe save/load/replay. Its optional browser suite checks the loopback HTTP boundary, session token, cross-origin sandbox, six out-of-order random clicks, recipe authority, restored-look navigation and supersession, theme changes, and mobile layout. [Host compatibility](hosts.md) records external-client checks separately.
+The embedding example has separate tests for its eight-tool allowlist, selected source, rooted paths, real stdio results, byte-identical PNG saves, and recipe save/load/replay. Its optional browser suite checks the loopback HTTP boundary, session token, cross-origin sandbox, six out-of-order random clicks, recipe authority, restored-look navigation and supersession, theme changes, and mobile layout. [Host compatibility](hosts.md) records external-client checks separately.
 
 ## Formal checks
 
-There are 57 OpenSpec requirements across six capability specifications and ten
-implementation changes. Strict validation checks all sixteen items for structure
-and scenario coverage. Seven Quint models cover artifact publication, quantization,
-palette discovery, normalization, MCP Apps interactions, guarded exports, and look history:
+There are 59 OpenSpec requirements across six capability specifications and eleven
+implementation changes. Strict validation checks all seventeen items for structure
+and scenario coverage. Eight Quint models cover artifact publication, quantization,
+palette discovery, normalization, MCP Apps interactions, guarded exports, look history,
+and persistent favorites:
 
-- Seven typechecks and 133 concrete model tests.
-- 70,000 seeded safety traces, each with at most 30 transitions.
-- Seven completion schedules add 1,000 traces each, for 77,000 traces overall. Each requires a completion witness.
-- 34 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, and bounded fresh-preview history navigation. The tests must detect every mutation.
+- Eight typechecks and 151 concrete model tests.
+- 80,000 seeded safety traces, each with at most 30 transitions.
+- Eight completion schedules add 1,000 traces each, for 88,000 traces overall. Each requires a completion witness.
+- 42 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, bounded fresh-preview history navigation, and persistent favorites with exact preview authority. The tests must detect every mutation.
 
 The seed is 20261003. Exact command results, source hashes, durations, and limits
 are in [spec/verification.json](../spec/verification.json). The finite models do
@@ -60,12 +62,13 @@ exhaustive model checking. The palette model uses six abstract records to exerci
 The normalization model checks six pixel identities and exact alpha transport through all eight orientations. Its abstract color transform does not establish numerical ICC accuracy. Independent implementation vectors check that separate claim.
 The export model uses abstract byte identities and fixed geometry. It checks accepted-buffer use despite independent disk changes; it does not establish SHA-256 collision resistance, actual codec behavior, host compatibility, or browser enforcement.
 The history model bounds canonical look IDs and independent navigation stacks. It checks fresh-preview authority, MRU promotion, eviction, branching and stale-result rejection. Concrete tests additionally check exact request equality and refreshed source fingerprints.
+The favorites model separates persistent storage from session state and requires a fresh exact preview after loading. It checks duplicate-name races, matching save receipts and rejection of old replies after edits, cancellation or restart. Unicode names, bounded directory access and source pixels are covered by implementation tests.
 Read [the model guide](../spec/README.md) for mappings between model requirements
 and Go regression tests.
 
 ## Local evidence
 
-[verification-2026-10-18.json](verification-2026-10-18.json) records random styles, studio recipes, full-source color extraction, and earlier request-reliability verification outcomes. It includes the environment and performance tradeoffs. The earlier [verification.json](verification.json) retains historical host and showcase checks. These are local snapshots, not assertions that a hosted CI system passed. Rerun the commands on your deployment platform before release.
+[verification-2026-10-18.json](verification-2026-10-18.json) records named favorites, random styles, studio recipes, full-source color extraction, and earlier request-reliability verification outcomes. It includes the environment and performance tradeoffs. The earlier [verification.json](verification.json) retains historical host and showcase checks. These are local snapshots, not assertions that a hosted CI system passed. Rerun the commands on your deployment platform before release.
 
 The showcase uses deterministic original scenes and actual engine outputs.
 Four VHS tapes record real CLI, palette discovery and MCP workflows. The site was

@@ -8,9 +8,10 @@ The live `dither_catalog` and `dither_palettes` results are the authoritative li
 
 | Capability | dither-mcp implementation | Boundary |
 |---|---|---|
-| Agent interface | 15 MCP tools, three resources, three prompts. Matching CLI workflows | Stdio transport. Host controls model interaction |
-| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Random style, Apply preview, zoom, swatches, and explicit image/recipe saves | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save preserves accepted settings with explicit export dimensions and checks source/mask fingerprints |
+| Agent interface | 18 MCP tools, three resources, three prompts. Matching CLI workflows | Stdio transport. Host controls model interaction |
+| MCP Apps studio | Embedded algorithm, palette, and adjustment controls. Random style, Apply preview, zoom, swatches, and named favorites and explicit image/recipe saves | Requires host support for MCP Apps and local stdio. Other hosts receive PNG and structured JSON. Preview is read-only. Save preserves accepted settings with explicit export dimensions and checks source/mask fingerprints |
 | Style history | Last 20 accepted looks with Undo, Redo and direct restoration; includes starting and manual previews | Session-only settings. Fresh previews reread source/mask; no cached files. New branches retain recent discoveries |
+| Named favorites | Save, discover and load exact recipes by name across studio/MCP sessions | Workspace-scoped immutable library, 64 KiB per entry and 512-entry directory scan; fresh preview on current source, compatible mask required |
 | Random styles | Seedable style recipes and one-click studio previews. Selects all catalog algorithms and palettes with moderate tone/texture | Geometry and masks stay in place. Seeds repeat within the current engine/catalog version. Save the recipe for reuse |
 | Local processing | Go image engine, rooted local files, immutable output artifacts | Preview images and metadata go to the connected client |
 | Error diffusion | Floyd–Steinberg, false Floyd–Steinberg, Jarvis–Judice–Ninke, Atkinson, Stucki, Burkes, three Sierra variants, simple 2D, Steven Pigeon, Fan, two Shiau–Fan variants, Stevenson–Arce | Implemented kernels. Not a bit-exact clone of another application |

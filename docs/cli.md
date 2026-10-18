@@ -115,3 +115,18 @@ The service orders results by ID and includes `next_offset` when more matches ex
 
 `--limit 256` exports the full built-in collection. A category list and counts
 accompany every page, including empty search results. All search behavior matches MCP `dither_palettes`. See the [complete palette reference](palettes.md).
+
+## Named favorites
+
+The generic `call` command exposes the same persistent favorites library as MCP:
+
+```sh
+dither-mcp call --root . dither_favorite_save '{"name":"Paper study","recipe":{"version":1,"palette":"oat-and-ink","options":{"algorithm":"atkinson","width":320}}}'
+dither-mcp call --root . dither_favorites_list '{}'
+```
+
+Use `dither_favorite_load` with `{"id":"<returned ID>"}` to retrieve a recipe.
+Pass its palette/colors/options inline to render or studio calls. Favorite files
+are envelopes, so their paths are not portable recipe-file arguments. Names cannot
+be replaced. The [executable example](../examples/favorites.mjs) saves, discovers
+and reloads across separate CLI processes and verifies exact PNG replay.

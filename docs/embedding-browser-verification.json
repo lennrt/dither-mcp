@@ -10,6 +10,7 @@
     "Extraction rejects other sources, invalid counts, and extra fields at the HTTP boundary",
     "App-initiated guarded save writes the selected relative output byte-identically",
     "Masked custom recipe saves exactly; mask reuse reminder, dirty palette gating, and host rejects forged recipes and paths",
+    "Named favorite persists across new app and Go server sessions, auto-discovers, uses current source/mask, and reproduces exact image/recipe; corrupt listing entries are reported",
     "Host theme update and 390px responsive layout",
     "Official teardown handshake closes the view before unmount"
   ],

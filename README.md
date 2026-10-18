@@ -16,12 +16,12 @@ dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotoco
 
 ## What your agent can do
 
-The toolkit provides **15 tools with typed inputs**, **3 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. File-producing tools also return local artifact paths and SHA-256 digests. Image artifacts include dimensions.
+The toolkit provides **18 tools with typed inputs**, **3 resources**, and **3 prompts**. It includes **41 dithering algorithms**, **256 curated palettes**, and custom palettes. It also supports image adjustments, masks, retro effects, comparison sheets, batch renders, motion, and print exports. Tools return structured results. Artifact-producing tools also return local paths and SHA-256 digests. Named favorites return a stable ID and recipe. Image artifacts include dimensions.
 
 | Ask your agent | Workflow |
 |---|---|
 | “Surprise me with a new dither style.” | `dither_random_style` → `dither_studio` or `dither_render` |
-| “Open a studio so I can try a few looks.” | `dither_studio` → **Random style** → Undo or Recent looks → Save image or Save recipe |
+| “Open a studio so I can try a few looks.” | `dither_studio` → **Random style** → Undo or Recent looks → Save favorite or Save image |
 | “Find four warm colors for a botanical print.” | Filter `dither_palettes` by name, category, and color count → `dither_render` |
 | “Build a palette from this image’s own colors.” | `dither_inspect` → `dither_palette_extract` → `dither_render` |
 | “Show me Atkinson, Floyd–Steinberg, and Bayer side by side.” | `dither_catalog` → `dither_compare` |
@@ -30,7 +30,8 @@ The toolkit provides **15 tools with typed inputs**, **3 resources**, and **3 pr
 | “Dither the subject. Keep the background. Add CRT texture.” | `dither_render` with a geometric or local image mask and effects |
 | “Create a short looping animation from this image.” | `dither_animate` → GIF or sprite sheet |
 | “Process a short clip with this palette.” | `dither_video`, with local FFmpeg enabled |
-| “Keep the settings so I can make this again.” | `dither_recipe_save` |
+| “Keep this as Moonlit paper and use it next time.” | `dither_favorite_save` → `dither_favorites_list` → `dither_favorite_load` |
+| “Export these settings as a portable file.” | `dither_recipe_save` |
 | “Show me the result. Create separate print plates.” | `dither_preview` → `dither_separate` |
 
 Image processing stays in your configured workspace, with source files and artifacts under your control. Your connected MCP host receives tool results and controls which information reaches its model.
@@ -45,16 +46,16 @@ your starting preview and manual refinements. New experiments keep other recent
 looks available.
 
 For example: try three random looks, select Undo to return to the second, then
-save its image or recipe. To compare an older favorite, choose its algorithm,
+enter **Moonlit paper** under Favorites and select **Save favorite**. To compare an older look, choose its algorithm,
 palette, and seed label in Recent looks and select Restore look.
 
 History lasts for this studio session. Restoring re-previews the complete
-settings against the current source and mask. Save a recipe to keep a favorite
-after closing the studio.
+settings against the current source and mask. Named favorites survive closing
+the studio and are shared by sessions using the same workspace.
 
 For API-driven iteration, call `dither_random_style` with `{}` for a fresh look or
 `{"seed":42}` for a repeatable one. It returns `{seed, recipe}` without reading an
-image or creating a file. Pass its palette and options to `dither_render` or `dither_studio`. Save a favorite with `dither_recipe_save`.
+image or creating a file. Pass its palette and options to `dither_render` or `dither_studio`. Keep a named look with `dither_favorite_save`.
 
 ```sh
 ./bin/dither-mcp call --root . dither_random_style '{}'
@@ -86,15 +87,50 @@ Seeds reproduce selections within the current engine and catalog version.
 Save the full recipe to retain its settings for later reuse.
 [See the exact API and preview examples](docs/mcp.md#random-style-iteration).
 
+## Keep named favorites across sessions
+
+After a preview succeeds, enter a name under **Favorites** and select **Save
+favorite**. Open another studio on the same workspace, choose the saved name,
+and select **Load favorite**. **Refresh** discovers favorites added by another
+client. Loading previews the saved settings on the current source before
+changing your controls. Undo can return to the look you had before loading.
+
+Favorites preserve custom colors, dimensions, crop, masks, and effects. They
+live in `.dither/favorites/` under the server's configured workspace, shared by
+the MCP API and studio. They contain settings, not images or source paths. Use
+the same workspace to find them later; copy the directory to carry the library
+to another workspace. **Save recipe** remains available for individual portable
+JSON files.
+
+Names are case-sensitive, trimmed, and limited to 80 Unicode characters without
+control characters. Existing names cannot be replaced; save a revised look under
+a new name. Loading requires a compatible source and, for image-mask recipes,
+a current external mask. Geometry is preserved, so incompatible crops or
+preview dimensions report an error and retain your edits.
+
+Try the executable example, which saves, discovers, and reloads a favorite
+through separate CLI processes, then checks identical preview and PNG bytes:
+
+```sh
+make build
+node examples/favorites.mjs docs/assets/source/moon-garden.png 'Moonlit paper' output/moonlit-paper.png
+./bin/dither-mcp call --root . dither_favorites_list '{}'
+```
+
+Use a new name and PNG destination when repeating the example. MCP clients use
+`dither_favorite_save` with `{name, recipe}`, `dither_favorites_list` with `{}`,
+and `dither_favorite_load` with the returned `{id}`. See the
+[named-favorites API example and limits](docs/mcp.md#named-favorites).
+
 ## An image studio inside your chat
 
-![Actual MCP Apps studio showing Random style, Recent looks, Undo and Redo, plus Moon Garden and image controls](docs/assets/mcp-app-studio.png)
+![Actual MCP Apps studio showing Random style, Recent looks, named Favorites, plus Moon Garden and image controls](docs/assets/mcp-app-studio.png)
 
-*Actual studio connected to the local Go server through the official MCP Apps bridge. Atkinson / Oat and Ink.*
+*Actual studio connected to the local Go server through the official MCP Apps bridge. Bayer 8×8 / six extracted colors / “Warm press” favorite.*
 
 Ask your agent to open `dither_studio` for a local image. In a host that supports [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) and local stdio servers, the tool opens an interactive view beside the conversation.
 
-Start with the **Random style** button above the image. Each click generates and previews a new palette, algorithm, and treatment. Click again to explore another look; the newest click wins. Your crop, mask, dimensions, and pixel size stay in place. Use Undo, Redo, or Recent looks to revisit a successful preview. Nothing is saved until you choose **Save image** or **Save recipe**.
+Start with the **Random style** button above the image. Each click generates and previews a new palette, algorithm, and treatment. Click again to explore another look; the newest click wins. Your crop, mask, dimensions, and pixel size stay in place. Use Undo, Redo, or Recent looks to revisit a successful preview. Nothing is saved until you choose **Save favorite**, **Save image**, or **Save recipe**.
 
 To refine a look manually, choose an algorithm and palette, adjust the image, and select **Apply preview**. Zoom in to examine the pixels and inspect the palette swatches. The studio uses all 41 algorithms and 256 palettes, with custom colors and the shared engine options available through the tool.
 
