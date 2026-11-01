@@ -89,6 +89,74 @@ try {
   await expect(studio.locator("#save")).toBeEnabled();
   await studio.locator(".studio").screenshot({ path: `${out}/studio-desktop.png` });
   record("Initial preview, complete catalogs, and explicit save gating");
+  const inputPage = await context.newPage();
+  await inputPage.goto(baseURL);
+  await expect(inputPage.locator('#host-status')).toContainText('Connected through');
+  const inputStudio = inputPage.frames().find(frame => frame.url() === 'about:srcdoc');
+  await expect(inputStudio.locator('#status')).toContainText('Preview ready');
+  await expect(inputStudio.locator('#cancel')).toBeHidden();
+  const oldInputImage = await inputStudio.locator('#preview').getAttribute('src');
+  const callsBeforeInput = await inputPage.evaluate(() => window.ditherHarness.calls.length);
+  for (const outcome of ['error', 'cancel']) {
+    await inputPage.evaluate(async () => {
+      await window.ditherHarness.bridge.sendToolInput({ arguments: { input: 'source.png', mask_input: 'replacement-mask.png', palette: 'gameboy', options: { algorithm: 'bayer-8', width: 80, height: 80 } } });
+    });
+    await expect(inputStudio.locator('#algorithm')).toHaveValue('bayer-8');
+    await expect(inputStudio.locator('#discard')).toBeDisabled();
+    await inputPage.evaluate(async outcome => {
+      const bridge = window.ditherHarness.bridge;
+      if (outcome === 'error') await bridge.sendToolResult({ isError: true, content: [{ type: 'text', text: 'mask_not_found: replacement mask is unavailable' }] });
+      else await bridge.sendToolCancelled({ reason: 'Cancel replacement host input' });
+    }, outcome);
+    await expect(inputStudio.locator('#status')).toContainText(outcome === 'error' ? 'mask_not_found' : 'host cancelled');
+    await expect(inputStudio.locator('#discard')).toBeDisabled();
+    await expect(inputStudio.locator('#save')).toBeDisabled();
+    await expect(inputStudio.locator('#history-count')).toHaveText('0 / 20');
+    assert.equal(await inputStudio.locator('#preview').getAttribute('src'), oldInputImage);
+    assert.equal(await inputPage.evaluate(() => window.ditherHarness.calls.length), callsBeforeInput);
+    if (outcome === 'error') await inputStudio.locator('.studio').screenshot({ path: `${out}/studio-host-input-failure.png` });
+  }
+  await inputPage.evaluate(async () => {
+    await window.ditherHarness.bridge.sendToolInput({ arguments: { input: 'source.png', options: null } });
+  });
+  await expect(inputStudio.locator('#status')).toContainText('JSON object');
+  await expect(inputStudio.locator('#discard')).toBeDisabled();
+  assert.equal(await inputStudio.locator('#preview').getAttribute('src'), oldInputImage);
+  // Generate a real Go preview, then deliver it as the new host input's result.
+  await inputPage.evaluate(async () => {
+    const host = window.ditherHarness;
+    const arguments_ = { input: 'source.png', palette: 'gameboy', options: { algorithm: 'bayer-8', width: 80, height: 80 } };
+    await host.bridge.sendToolInput({ arguments: arguments_ });
+    const result = await host.bridge.oncalltool({ name: 'dither_studio', arguments: arguments_ }, { mcpReq: { signal: new AbortController().signal } });
+    await host.bridge.sendToolResult(result);
+  });
+  await expect(inputStudio.locator('#status')).toContainText('Preview ready · 80 × 80');
+  const acceptedInputImage = await inputStudio.locator('#preview').getAttribute('src');
+  await inputStudio.locator('#output').fill('current-input.png');
+  await inputStudio.locator('#recipe-output').fill('current-input.json');
+  await inputStudio.locator('#export-size').selectOption('custom');
+  await inputStudio.locator('#export-width').fill('101');
+  await inputStudio.locator('details.advanced > summary').click();
+  await inputStudio.locator('.json-settings > summary').click();
+  const inputOptions = await inputStudio.locator('#options-json').inputValue();
+  await inputStudio.locator('#options-json').fill('{unfinished');
+  await expect(inputStudio.locator('#discard')).toBeEnabled();
+  const callsBeforeRecovery = await inputPage.evaluate(() => window.ditherHarness.calls.length);
+  await inputStudio.locator('#discard').click();
+  await expect(inputStudio.locator('#options-json')).toHaveValue(inputOptions);
+  await expect(inputStudio.locator('#algorithm')).toHaveValue('bayer-8');
+  await expect(inputStudio.locator('#palette')).toHaveValue('gameboy');
+  await expect(inputStudio.locator('#export-size')).toHaveValue('custom');
+  await expect(inputStudio.locator('#export-width')).toHaveValue('101');
+  await expect(inputStudio.locator('#export-height')).toHaveValue('101');
+  await expect(inputStudio.locator('#output')).toHaveValue('current-input.png');
+  await expect(inputStudio.locator('#recipe-output')).toHaveValue('current-input.json');
+  await expect(inputStudio.locator('#history-count')).toHaveText('1 / 20');
+  await expect(inputStudio.locator('#save')).toBeEnabled();
+  assert.equal(await inputStudio.locator('#preview').getAttribute('src'), acceptedInputImage);
+  assert.equal(await inputPage.evaluate(() => window.ditherHarness.calls.length), callsBeforeRecovery);
+  await inputPage.close();
+  record('New host input revokes local discard across same-path mask changes, errors, cancellation and invalid arguments; real new acceptance renews recovery');
   const ratioPage = await context.newPage();
   await ratioPage.goto(baseURL);
   await expect(ratioPage.locator('#host-status')).toContainText('Connected through');
@@ -757,7 +825,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   assert.deepEqual(failures, []);
-  await writeFile(`${out}/verification.json`, JSON.stringify({ date: (new Date()).toISOString().slice(0, 10), browser: await browser.version(), checks, errors, externalRequests: external, failedRequests: failures, screenshots: ["studio-desktop.png", "studio-dark.png", "studio-narrow-dark.png", "studio-mobile.png", "studio-export-mobile.png", "studio-favorites-desktop.png", "studio-favorites-dark.png", "studio-favorites-mobile.png", ...siteURL ? ["site-studio-desktop.png", "site-studio-mobile.png", "site-mobile.png"] : []] }, null, 2) + "\n");
+  await writeFile(`${out}/verification.json`, JSON.stringify({ date: (new Date()).toISOString().slice(0, 10), browser: await browser.version(), checks, errors, externalRequests: external, failedRequests: failures, screenshots: ["studio-host-input-failure.png", "studio-desktop.png", "studio-dark.png", "studio-narrow-dark.png", "studio-mobile.png", "studio-export-mobile.png", "studio-favorites-desktop.png", "studio-favorites-dark.png", "studio-favorites-mobile.png", ...siteURL ? ["site-studio-desktop.png", "site-studio-mobile.png", "site-mobile.png"] : []] }, null, 2) + "\n");
   console.log(JSON.stringify({ passed: checks, errors, externalRequests: external, browser: await browser.version() }, null, 2));
 } catch (error) {
   console.error(error);

@@ -134,7 +134,7 @@ function render(sync = false) {
   renderHistory(); renderFavorites();
   $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
-  $('discard').disabled = !state.rendered || !!state.hostPending || state.busy || state.draft?.input !== state.rendered.request.input || !(state.dirty || jsonDirty || customDirty);
+  $('discard').disabled = !state.canDiscard || !(state.dirty || jsonDirty || customDirty);
   $('extract').disabled = !state.canPreview;
   $('random-style').disabled = !state.canRandom;
   const exportValid = renderExport();

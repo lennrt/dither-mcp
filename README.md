@@ -150,14 +150,31 @@ after an invalid advanced JSON edit. In the custom-colors and advanced-options
 textareas, **Ctrl+Enter** or **Cmd+Enter** applies a preview. Selecting the active
 Custom colors tab preserves your edits.
 
+Discard applies to the current studio input. A new input needs a successful
+preview before settings can be restored, even when its path is unchanged.
+A failed or canceled replacement preview keeps your new settings and mask.
+
+<details>
+<summary>Example: a replacement input needs a valid preview</summary>
+
+![Studio retaining the old image while the new input's mask is unavailable; Discard edits and Save image stay disabled](docs/assets/mcp-app-studio-input-error.png)
+
+*Actual bundled studio in the local test host, with a simulated host mask error.
+The old image remains visible. Correct the new input, then apply a preview before
+restoring its settings or saving.*
+
+</details>
+
 Custom exports start with the accepted preview dimensions. Keep **Keep preview
 aspect ratio** enabled to change either axis proportionally. Unlock it for a different
 shape. Export sizing leaves your saved recipe unchanged.
 
 For small outputs, choose the **Area** resize filter to average source-pixel
 coverage before dithering. This helps retain repeating detail that point samples
-can miss. The default remains bilinear. BMP exports flatten transparency onto
+can miss. Integer coverage sums round half values up, including alpha at GIF's
+transparency cutoff. The default remains bilinear. BMP exports flatten transparency onto
 white; lossless TIFF exports retain RGBA values.
+The catalog describes each output's MIME type, representation, and alpha behavior.
 
 The studio is verified in MCP Inspector 2.10.1 and the included embedding host. The host guide records the exact checks and versions. Read the [MCP Apps guide](docs/mcp-apps.md) and [host setup and compatibility](docs/hosts.md).
 
@@ -325,6 +342,10 @@ Each result cell includes a complete `recipe` with its algorithm, palette, and
 rendered dimensions. Save that cell's recipe with `dither_recipe_save` to replay
 the selected treatment, including comparison defaults. Supply the current mask
 file again when the recipe uses an image mask.
+
+Cell recipes describe the processing settings before the sheet is encoded.
+Use PNG or TIFF for pixel comparisons. JPEG compression, GIF palette and alpha
+reduction, and formats that flatten transparency can change saved pixels.
 
 CLI flags and `--options` may set different engine fields. If both set the same
 field, the command reports the conflict, including explicit zero and false values:

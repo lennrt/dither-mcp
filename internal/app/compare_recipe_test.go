@@ -5,11 +5,51 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"reflect"
 	"testing"
 
 	"github.com/lennrt/dither-mcp/engine"
 	"github.com/lennrt/dither-mcp/internal/app"
 )
+
+func TestComparisonCellRecipeReplaysBeforeOutputEncoding(t *testing.T) {
+	s, root, _ := workflowFixture(t)
+	mask := image.NewGray(image.Rect(0, 0, 2, 1))
+	mask.SetGray(1, 0, color.Gray{Y: 255})
+	workflowWritePNG(t, root, "mask.png", mask)
+	q := app.CompareRequest{
+		RenderRequest: app.RenderRequest{
+			Input: "input.png", Output: "reference.png", MaskInput: "mask.png",
+			Options: engine.Config{Width: 13, Height: 9, PixelScale: 2, ResizeFilter: "area", Seed: 27, Effects: engine.Effects{Noise: .1}},
+		},
+		Palettes: []string{"cga", "gameboy"}, Columns: 2,
+	}
+	reference := workflowCall[app.CompareResult](t, s, "dither_compare", q)
+	sheet := workflowDecode(t, workflowRead(t, root, reference.Artifact.Path))
+	for _, format := range engine.Formats() {
+		t.Run(format, func(t *testing.T) {
+			q.Output = "sheet." + format
+			result := workflowCall[app.CompareResult](t, s, "dither_compare", q)
+			cell := result.Cells[1]
+			if !reflect.DeepEqual(cell.Recipe, reference.Cells[1].Recipe) {
+				t.Fatalf("output encoding changed the reusable recipe: %+v", cell.Recipe)
+			}
+			path := format + "-cell.json"
+			workflowCall[app.Artifact](t, s, "dither_recipe_save", app.RecipeSaveRequest{Output: path, Recipe: cell.Recipe})
+			artifact := workflowCall[app.Artifact](t, s, "dither_render", app.RenderRequest{Input: q.Input, Output: format + "-cell.png", Recipe: path, MaskInput: q.MaskInput})
+			replay := workflowDecode(t, workflowRead(t, root, artifact.Path))
+			for y := 0; y < cell.Height; y++ {
+				for x := 0; x < cell.Width; x++ {
+					got := color.NRGBAModel.Convert(replay.At(x, y))
+					want := color.NRGBAModel.Convert(sheet.At(cell.X+x, cell.Y+y))
+					if got != want {
+						t.Fatalf("processing pixel differs at %d,%d: %v != %v", x, y, got, want)
+					}
+				}
+			}
+		})
+	}
+}
 
 func TestComparisonCellRecipesReplayPixels(t *testing.T) {
 	for _, mode := range []string{"algorithms-default", "palettes-advanced", "custom-colors", "saved-recipe"} {

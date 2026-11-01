@@ -6,11 +6,13 @@ import (
 	"image/color"
 )
 
-type areaSample struct{ r, g, b, a float64 }
+type areaSample struct{ r, g, b, a uint64 }
 
 // resampleArea integrates exact box coverage in source-pixel coordinates.
-// Integer endpoints avoid rounding errors at shared footprint edges. The smaller
-// separable intermediate controls axis order. Two scanline buffers bound storage.
+// Integer endpoints and numerators preserve coverage until final byte rounding.
+// Validated source geometry bounds every numerator by MaxPixels*255*255, which
+// fits uint64. The smaller separable intermediate controls axis order, and two
+// scanline buffers bound storage.
 func resampleArea(ctx context.Context, src image.Image, r image.Rectangle, w, h int) (*image.NRGBA, error) {
 	out := image.NewNRGBA(image.Rect(0, 0, w, h))
 	read := pixelReader(src)
@@ -18,6 +20,10 @@ func resampleArea(ctx context.Context, src image.Image, r image.Rectangle, w, h 
 	transpose := w*sh > h*sw
 	if transpose {
 		sw, sh, w, h = sh, sw, h, w
+	}
+	area := uint64(sw) * uint64(sh)
+	round := func(numerator, denominator uint64) uint8 {
+		return uint8((numerator + denominator/2) / denominator)
 	}
 	get := func(x, y int) color.NRGBA {
 		if transpose {
@@ -44,17 +50,17 @@ func resampleArea(ctx context.Context, src image.Image, r image.Rectangle, w, h 
 					var sum areaSample
 					for sx := left / w; sx < (right+w-1)/w; sx++ {
 						c := get(sx, sy)
-						weight := float64(min(right, (sx+1)*w)-max(left, sx*w)) * float64(c.A) / float64(sw)
+						weight := uint64(min(right, (sx+1)*w)-max(left, sx*w)) * uint64(c.A)
 						sum.a += weight
-						sum.r += weight * float64(c.R)
-						sum.g += weight * float64(c.G)
-						sum.b += weight * float64(c.B)
+						sum.r += weight * uint64(c.R)
+						sum.g += weight * uint64(c.G)
+						sum.b += weight * uint64(c.B)
 					}
 					horizontal[x] = sum
 				}
 				cachedY = sy
 			}
-			weight := float64(min(bottom, (sy+1)*h)-max(top, sy*h)) / float64(sh)
+			weight := uint64(min(bottom, (sy+1)*h) - max(top, sy*h))
 			for x, p := range horizontal {
 				accumulated[x].a += p.a * weight
 				accumulated[x].r += p.r * weight
@@ -65,7 +71,7 @@ func resampleArea(ctx context.Context, src image.Image, r image.Rectangle, w, h 
 		for x, p := range accumulated {
 			c := color.NRGBA{}
 			if p.a > 0 {
-				c = color.NRGBA{byteOf(p.r / p.a / 255), byteOf(p.g / p.a / 255), byteOf(p.b / p.a / 255), byteOf(p.a / 255)}
+				c = color.NRGBA{round(p.r, p.a), round(p.g, p.a), round(p.b, p.a), round(p.a, area)}
 				if c.A == 0 {
 					c = color.NRGBA{}
 				}

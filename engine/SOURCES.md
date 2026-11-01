@@ -39,7 +39,11 @@ source-pixel coverage in each output footprint, using premultiplied alpha. It
 reduces aliasing when shrinking fine patterns. On enlarged axes, box coverage
 produces piecewise constant regions with blended boundary pixels. Mixed-axis
 resizing uses the same rule independently on each axis. Area sampling uses
-display-space RGB, not linear-light averaging. Bilinear remains the default.
+display-space RGB, not linear-light averaging. Integer coverage and premultiplied
+channel totals remain exact until the final 8-bit conversion, where half-integer
+ties round upward. Two scanline buffers bound intermediate storage. With admitted
+source geometry, each total is at most `MaxPixels * 255 * 255`, within `uint64`.
+Bilinear remains the default.
 No filter uses Lanczos resampling.
 
 Neutral brightness is 0. Neutral contrast, saturation, gamma, and strength are

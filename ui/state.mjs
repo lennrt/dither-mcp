@@ -159,6 +159,8 @@ export class StudioState {
     this.pending = null;
     this.validPreview = false;
     this.hostPending = null;
+    this.inputEpoch = 0;
+    this.acceptedInputEpoch = null;
     this.canCallTools = false;
     this.favorites = [];
     this.favoritesUnavailable = 0;
@@ -180,7 +182,11 @@ export class StudioState {
   get canRandom() { return this.canCallTools && !!this.draft && !this.saving; }
   get canPreview() { return this.canCallTools && !!this.draft && !this.busy; }
   get canSave() { return this.canCallTools && this.validPreview && !!this.rendered && !this.dirty && !this.busy; }
+  get canDiscard() { return !this.busy && !this.hostPending && !!this.rendered && this.acceptedInputEpoch === this.inputEpoch && this.draft?.input === this.rendered.request.input; }
   setInput(value) {
+    // A repeated path may have different bytes or a different external mask.
+    this.inputEpoch++;
+    this.acceptedInputEpoch = null;
     this.favorites = []; this.favoritesUnavailable = 0;
     this.history = []; this.historyActive = null; this.historySequence = 0; this.undoIDs = []; this.redoIDs = [];
     this.pending = null;
@@ -204,7 +210,7 @@ export class StudioState {
     this.error = false;
   }
   discardEdits() {
-    if (this.busy || this.hostPending || !this.rendered || this.draft?.input !== this.rendered.request.input) return false;
+    if (!this.canDiscard) return false;
     this.draft = clone(this.rendered.request);
     this.revision++;
     this.status = this.validPreview ? 'Accepted settings restored.' : 'Accepted settings restored. Apply preview before saving.';
@@ -431,6 +437,7 @@ export class StudioState {
   accept(preview, replaceDraft, navigation) {
     this.remember(preview.request, navigation);
     this.rendered = preview;
+    this.acceptedInputEpoch = this.inputEpoch;
     this.validPreview = true;
     if (replaceDraft) { this.draft = clone(preview.request); this.revision++; }
     if (preview.algorithms.length) this.algorithms = preview.algorithms;

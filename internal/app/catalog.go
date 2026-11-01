@@ -168,6 +168,8 @@ func (s *Service) Catalog() CatalogResult {
 					{"svg", "image/svg+xml", "Vector paths preserve pixel runs with crisp edges. This stores raster coverage rather than smooth image tracing.", "Preserves full alpha."},
 					{"pbm", "image/x-portable-bitmap", "Binary P4 bilevel raster. Luminance below 0.5 becomes black.", "Composites against white."},
 					{"ascii", "text/plain", "Text uses one luminance symbol per pixel without terminal aspect-ratio correction.", "Composites against white."},
+					{"bmp", "image/bmp", "Uncompressed raster image with opaque 24-bit RGB.", "Composites against white."},
+					{"tiff", "image/tiff", "Uncompressed lossless raster image with unassociated 8-bit RGBA. The tif name is an alias.", "Preserves full alpha."},
 				},
 			},
 			Animation: AnimationCapabilities{

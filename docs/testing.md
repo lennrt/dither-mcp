@@ -44,16 +44,16 @@ The embedding example has separate tests for its eight-tool allowlist, selected 
 
 ## Formal checks
 
-There are 68 OpenSpec requirements across six capability specifications and fourteen
+There are 69 OpenSpec requirements across six capability specifications and fourteen
 implementation changes. Strict validation checks all twenty items for structure
 and scenario coverage. Eight Quint models cover artifact publication, quantization,
 palette discovery, normalization, MCP Apps interactions, guarded exports, look history,
 and persistent favorites:
 
-- Eight typechecks and 155 concrete model tests.
+- Eight typechecks and 160 concrete model tests.
 - 80,000 seeded safety traces, each with at most 30 transitions.
 - Eight completion schedules add 1,000 traces each, for 88,000 traces overall. Each requires a completion witness.
-- 42 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, bounded fresh-preview history navigation, and persistent favorites with exact preview authority. The tests must detect every mutation.
+- 43 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, bounded fresh-preview history navigation, and persistent favorites with exact preview authority. The tests must detect every mutation.
 
 The seed is 20261003. Exact command results, source hashes, durations, and limits
 are in [spec/verification.json](../spec/verification.json). The finite models do

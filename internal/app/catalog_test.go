@@ -5,10 +5,49 @@ import (
 	"encoding/json"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/lennrt/dither-mcp/engine"
 )
+
+func TestStillOutputFormatsHaveCompleteRoles(t *testing.T) {
+	svc, err := New(t.TempDir(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer svc.Close()
+	result, err := svc.Do(context.Background(), "dither_catalog", []byte("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	still := result.(CatalogResult).Media.Still
+	roles := make(map[string]FormatRole, len(still.FormatRoles))
+	for _, role := range still.FormatRoles {
+		if _, exists := roles[role.Format]; exists {
+			t.Errorf("duplicate format role: %s", role.Format)
+		}
+		if !slices.Contains(still.OutputFormats, role.Format) {
+			t.Errorf("role for unadvertised format: %s", role.Format)
+		}
+		if role.MIMEType == "" || role.Role == "" || role.Alpha == "" {
+			t.Errorf("incomplete format role: %+v", role)
+		}
+		roles[role.Format] = role
+	}
+	for _, format := range still.OutputFormats {
+		if _, exists := roles[format]; !exists {
+			t.Errorf("advertised output %s has no format role", format)
+		}
+	}
+	bmp, tiff := roles["bmp"], roles["tiff"]
+	if bmp.MIMEType != "image/bmp" || bmp.Alpha != "Composites against white." || !strings.Contains(bmp.Role, "24-bit") || !strings.Contains(strings.ToLower(bmp.Role), "uncompressed") {
+		t.Errorf("BMP discovery must describe opaque white-composited RGB: %+v", bmp)
+	}
+	if tiff.MIMEType != "image/tiff" || tiff.Alpha != "Preserves full alpha." || !strings.Contains(tiff.Role, "unassociated 8-bit RGBA") || !strings.Contains(strings.ToLower(tiff.Role), "uncompressed") {
+		t.Errorf("TIFF discovery must describe preserved unassociated RGBA: %+v", tiff)
+	}
+}
 
 func TestCatalogMediaCapabilities(t *testing.T) {
 	for _, enabled := range []bool{false, true} {

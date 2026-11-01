@@ -32,6 +32,12 @@ The service normalizes supported orientation and color metadata before cropping,
 
 The service does not encode WebP. An explicit `format` overrides the output extension without renaming the path. Use a new destination for every output. Existing destinations always cause an error.
 
+Comparison cell recipes reproduce processing pixels before output encoding.
+JPEG blocks can cross cell boundaries, and GIF selects one palette for the
+entire sheet. Separately encoding a cell may therefore differ from the decoded
+sheet crop even with the same format. BMP composites alpha against white. Use
+PNG or TIFF for lossless pixel comparisons that retain full alpha.
+
 Uncompressed BMP and TIFF exports can exceed the 32 MiB artifact limit at
 otherwise valid dimensions. Oversized encoding fails without publishing an
 artifact. TIFF uses the codec's default 72 DPI tags. Custom DPI remains PNG-only.

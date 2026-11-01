@@ -1,5 +1,5 @@
 {
-  "scope": "Strict OpenSpec validation, finite Quint run tests, seeded bounded simulation, and 42 negative mutation checks. Not exhaustive verification or a proof of Go or UI refinement.",
+  "scope": "Strict OpenSpec validation, finite Quint run tests, seeded bounded simulation, and 43 negative mutation checks. Not exhaustive verification or a proof of Go or UI refinement.",
   "versions": {
     "openspec": "1.14.0",
     "quint": "0.33.0"
@@ -10,7 +10,7 @@
     "quantization.qnt": "571bbcf2c71b72e3e465abbfe27cf290e4b5957dfd9a0f7203bfaed1952af362",
     "palette_discovery.qnt": "54697f37b5d3d3ebbc3bc5e68f94ef9c5dc970e23238251db5e46a36fe512efd",
     "normalization.qnt": "911018c49955f50c37af5d8278f1a1482245b68c869040de352c0f8eacf58d57",
-    "mcp_apps.qnt": "761381cccf312afac1ae45dc9ca7ffe0099698d765baa9a095e55ea18dce4082",
+    "mcp_apps.qnt": "85597b45fe10b790a521685b991df488eac923e9eb18af69bde13cd7775c6efe",
     "studio_export.qnt": "8bd70e9f542f6428e236efe7fa9ff8a1b855c70e78d56f34f83c76a67e6bba6b",
     "style_history.qnt": "1ae7b890492f52a34d52a1446ddb79ca44044d61e1906947c160e7a7c06641f1",
     "favorites.qnt": "425ccb7cd24acebd0bdc42b808642d35828b39b3b60387ae3d1a3d7e5fd77143"
@@ -27,7 +27,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 754,
+      "duration_ms": 657,
       "passed": 20
     },
     {
@@ -38,7 +38,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1224
+      "duration_ms": 1246
     },
     {
       "tool": "quint",
@@ -49,7 +49,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1147,
+      "duration_ms": 1417,
       "passed": 14
     },
     {
@@ -70,7 +70,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 20107,
+      "duration_ms": 34175,
       "witnesses": [
         {
           "name": "completed",
@@ -97,7 +97,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 736
+      "duration_ms": 1427
     },
     {
       "tool": "quint",
@@ -108,7 +108,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 796,
+      "duration_ms": 1319,
       "passed": 16
     },
     {
@@ -128,7 +128,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 10501,
+      "duration_ms": 12427,
       "witnesses": [
         {
           "name": "bothComplete",
@@ -150,7 +150,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 862
+      "duration_ms": 1338
     },
     {
       "tool": "quint",
@@ -161,7 +161,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 688,
+      "duration_ms": 1583,
       "passed": 13
     },
     {
@@ -183,7 +183,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 16611,
+      "duration_ms": 20706,
       "witnesses": [
         {
           "name": "filteredNonempty",
@@ -215,7 +215,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 920
+      "duration_ms": 790
     },
     {
       "tool": "quint",
@@ -226,7 +226,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 726,
+      "duration_ms": 836,
       "passed": 16
     },
     {
@@ -248,7 +248,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 26552,
+      "duration_ms": 26618,
       "witnesses": [
         {
           "name": "normalizedComplete",
@@ -280,7 +280,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 903
+      "duration_ms": 1429
     },
     {
       "tool": "quint",
@@ -291,8 +291,8 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 886,
-      "passed": 47
+      "duration_ms": 1203,
+      "passed": 52
     },
     {
       "tool": "quint",
@@ -316,41 +316,41 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 27371,
+      "duration_ms": 26954,
       "witnesses": [
         {
           "name": "previewAccepted",
-          "count": 230,
+          "count": 222,
           "samples": 10000
         },
         {
           "name": "staleDiscarded",
-          "count": 4138,
+          "count": 4057,
           "samples": 10000
         },
         {
           "name": "canceledRequest",
-          "count": 4476,
+          "count": 4350,
           "samples": 10000
         },
         {
           "name": "savedCurrent",
-          "count": 20,
+          "count": 17,
           "samples": 10000
         },
         {
           "name": "paletteExtracted",
-          "count": 129,
+          "count": 151,
           "samples": 10000
         },
         {
           "name": "recipeSaved",
-          "count": 5,
+          "count": 4,
           "samples": 10000
         },
         {
           "name": "randomAccepted",
-          "count": 38,
+          "count": 25,
           "samples": 10000
         }
       ]
@@ -363,7 +363,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 794
+      "duration_ms": 932
     },
     {
       "tool": "quint",
@@ -374,7 +374,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 645,
+      "duration_ms": 742,
       "passed": 17
     },
     {
@@ -396,7 +396,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 27524,
+      "duration_ms": 23034,
       "witnesses": [
         {
           "name": "sourceSizedExport",
@@ -428,7 +428,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 5331
+      "duration_ms": 947
     },
     {
       "tool": "quint",
@@ -439,7 +439,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1589,
+      "duration_ms": 920,
       "passed": 14
     },
     {
@@ -461,7 +461,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 33224,
+      "duration_ms": 19233,
       "witnesses": [
         {
           "name": "hasHistory",
@@ -493,7 +493,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1109
+      "duration_ms": 887
     },
     {
       "tool": "quint",
@@ -504,7 +504,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1006,
+      "duration_ms": 818,
       "passed": 18
     },
     {
@@ -526,7 +526,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 21876,
+      "duration_ms": 23031,
       "witnesses": [
         {
           "name": "persistent",
@@ -567,7 +567,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 2065,
+      "duration_ms": 1890,
       "witnesses": [
         {
           "name": "bothComplete",
@@ -594,7 +594,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1546,
+      "duration_ms": 1728,
       "witnesses": [
         {
           "name": "completeTraversal",
@@ -621,7 +621,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 2465,
+      "duration_ms": 1913,
       "witnesses": [
         {
           "name": "normalizedComplete",
@@ -648,7 +648,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 2406,
+      "duration_ms": 1823,
       "witnesses": [
         {
           "name": "savedCurrent",
@@ -675,7 +675,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1749,
+      "duration_ms": 1855,
       "witnesses": [
         {
           "name": "recipeSaved",
@@ -703,7 +703,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1493,
+      "duration_ms": 1520,
       "witnesses": [
         {
           "name": "sourceSizedExport",
@@ -735,7 +735,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 2283,
+      "duration_ms": 2048,
       "witnesses": [
         {
           "name": "historySaved",
@@ -762,7 +762,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1576,
+      "duration_ms": 1268,
       "witnesses": [
         {
           "name": "favoriteLoaded",
@@ -780,7 +780,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 942
+      "duration_ms": 827
     },
     {
       "tool": "quint",
@@ -791,7 +791,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 816
+      "duration_ms": 797
     },
     {
       "tool": "quint",
@@ -802,13 +802,211 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 1065
+      "duration_ms": 766
     },
     {
       "tool": "quint",
       "args": [
         "test",
         "<temporary mutation of favorites.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 825
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of favorites.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 844
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of favorites.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 826
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of favorites.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 811
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of favorites.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 858
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 903
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 853
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 896
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 914
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 880
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 899
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 923
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of publication.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 684
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of publication.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 714
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of quantization.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 839
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of quantization.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 771
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of quantization.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 781
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of quantization.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 737
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of quantization.qnt>",
         "--backend=typescript"
       ],
       "status": 1,
@@ -819,210 +1017,12 @@
       "tool": "quint",
       "args": [
         "test",
-        "<temporary mutation of favorites.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 768
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of favorites.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 741
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of favorites.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 730
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of favorites.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 704
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 816
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 793
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 790
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 893
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 827
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 963
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 897
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of publication.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 710
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of publication.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 624
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of quantization.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 684
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of quantization.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 710
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of quantization.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 690
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of quantization.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 688
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of quantization.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 681
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
         "<temporary mutation of palette_discovery.qnt>",
         "--backend=typescript"
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 622
+      "duration_ms": 736
     },
     {
       "tool": "quint",
@@ -1033,7 +1033,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 684
+      "duration_ms": 717
     },
     {
       "tool": "quint",
@@ -1044,84 +1044,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 1168
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 1284
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 983
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 2157
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 2842
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 1227
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 1224
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of mcp_apps.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 998
+      "duration_ms": 1125
     },
     {
       "tool": "quint",
@@ -1143,7 +1066,95 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 1018
+      "duration_ms": 1144
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1395
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1721
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 2439
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1397
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1356
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1782
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1428
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of mcp_apps.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 1259
     },
     {
       "tool": "quint",
@@ -1154,7 +1165,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 657
+      "duration_ms": 862
     },
     {
       "tool": "quint",
@@ -1165,7 +1176,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 661
+      "duration_ms": 1110
     },
     {
       "tool": "quint",
@@ -1176,7 +1187,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 669
+      "duration_ms": 1071
     },
     {
       "tool": "quint",
@@ -1187,7 +1198,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 656
+      "duration_ms": 918
     },
     {
       "tool": "quint",
@@ -1198,7 +1209,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 594
+      "duration_ms": 846
     },
     {
       "tool": "quint",
@@ -1209,7 +1220,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 603
+      "duration_ms": 701
     },
     {
       "tool": "quint",
@@ -1220,7 +1231,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 607
+      "duration_ms": 749
     },
     {
       "tool": "quint",
@@ -1231,14 +1242,14 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 592
+      "duration_ms": 772
     }
   ],
   "totals": {
     "openspec_items": 20,
     "quint_models": 8,
-    "quint_run_tests": 155,
+    "quint_run_tests": 160,
     "simulation_traces": 88000,
-    "mutation_checks": 42
+    "mutation_checks": 43
   }
 }

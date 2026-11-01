@@ -219,7 +219,7 @@ func process(ctx context.Context, img image.Image, cfg Config) (*image.NRGBA, er
 	return out, err
 }
 
-// resample uses alpha-correct bilinear, nearest, or area sampling.
+// resample uses alpha-correct bilinear interpolation or nearest sampling.
 // Coordinates refer to pixel centers. All results have Bounds.Min=(0,0).
 func resample(ctx context.Context, src image.Image, r image.Rectangle, w, h int, nearest bool) (*image.NRGBA, error) {
 	out := image.NewNRGBA(image.Rect(0, 0, w, h))

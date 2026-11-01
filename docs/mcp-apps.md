@@ -33,7 +33,7 @@ merges into those options. Hidden settings remain intact. Invalid JSON stays
 visible and must be corrected before a control can change those options or Apply
 can submit them. Options must be a JSON object; `null` does not reset defaults.
 
-Use **Discard edits** to restore the last accepted settings and clear unfinished JSON or custom colors without another tool call. The displayed image, history, output paths, and export choices stay intact. Pending operations disable this action. If an earlier failure invalidated the preview, apply a fresh preview before saving.
+Use **Discard edits** to restore the last accepted settings for the current host input and clear unfinished JSON or custom colors without another tool call. The displayed image, history, output paths, and export choices stay intact. Pending operations disable this action. New host input disables it until that input has a successful preview, even when it reuses the same source path. If an earlier failure invalidated the preview, apply a fresh preview before saving.
 
 Press **Ctrl+Enter** or **Cmd+Enter** in either multiline editor to apply the draft. Ordinary Enter inserts a newline. Clicking the selected palette mode preserves your current colors and unfinished text.
 
@@ -203,6 +203,12 @@ The public resource returns a complete HTML document through `resources/read`. E
 Scripts, styles, and the SDK are embedded in the Go binary. The running studio uses the host bridge and in-memory PNG data. It needs no CDN, HTTP listener, or external network access.
 
 The UI registers lifecycle handlers before connecting. It handles input, result, cancellation, and theme changes. Hosts must advertise `serverTools` to enable random styles, interactive preview, extraction, image saving, and recipe saving. Without that capability, the UI can show its supplied result and explains the unavailable controls.
+
+Hosts must pair the initial result notification with the current tool input.
+Those notifications carry no request identity, so overlapping host calls with
+identical arguments cannot be distinguished by the app. Apply preview makes a
+new app-initiated call with a correlated response. Image saves still check the
+accepted source and mask fingerprints against the bytes read for rendering.
 
 For supporting clients, result `_meta.dither` supplies the canonical request and the algorithm/palette catalogs. The normal result still contains structured metadata, serialized JSON text, and native PNG image content. The server omits UI linkage and presentation metadata when the client does not advertise the supported MIME type.
 

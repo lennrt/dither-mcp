@@ -4,6 +4,14 @@ Cell recipes copy resolved reusable settings, then substitute the candidate
 algorithm or palette and actual rendered dimensions. They never include image
 bytes or source, mask, or output paths. Image masks retain their external-mask
 requirement. The shared artifact recipe remains compatible with existing callers.
+Recipes reproduce processing pixels before encoding. JPEG blocks can cross cell
+boundaries, GIF selects a palette for the complete sheet, and BMP composites alpha
+against white. Separately encoding one cell need not reproduce a decoded sheet
+crop. PNG and TIFF preserve the processing pixels for pixel comparisons.
+
+Still output discovery includes one format role per advertised format. BMP
+describes white compositing and opaque RGB. TIFF describes uncompressed
+unassociated RGBA with full alpha.
 
 CLI conflict detection uses JSON engine keys and explicit flag presence. Explicit
 zero and false values count. Matching follows Go's case-insensitive field matching.

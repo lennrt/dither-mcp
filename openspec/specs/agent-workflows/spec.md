@@ -469,12 +469,18 @@ The studio SHALL discover saved favorites, offer refresh, and save the exact acc
 - **AND** Random style may supersede favorite reads but cannot interrupt a favorite write
 
 ### Requirement: Studio draft recovery and input preservation
-The studio SHALL offer local draft restoration from its last accepted preview. Restoration SHALL preserve preview bytes, preview validity, history, source identity, and export choices. It SHALL make no tool call and SHALL remain unavailable during pending work or before the current source has an accepted preview. Selecting the active palette mode SHALL preserve draft settings and pending editor text.
+The studio SHALL offer local draft restoration from its last accepted preview for the current host input. Restoration SHALL preserve preview bytes, preview validity, history, source and mask identity, and export choices. It SHALL make no tool call and SHALL remain unavailable during pending work or before the current host input has an accepted preview. Every new host input SHALL revoke draft-restoration authority before validation, including when its source and mask paths match an earlier input. Selecting the active palette mode SHALL preserve draft settings and pending editor text.
 
 #### Scenario: Discard invalid editor text
 - **WHEN** a user discards malformed JSON or unfinished custom colors
 - **THEN** the studio restores accepted controls and editor text without a tool call
 - **AND** an invalidated preview still requires a successful new preview before saving
+
+#### Scenario: Reject restoration across host inputs
+- **WHEN** a new host input reuses an earlier source path and its initial preview fails, is canceled, or its arguments are invalid
+- **THEN** Discard edits remains unavailable until a preview succeeds for the new host input
+- **AND** the earlier visible preview cannot restore its source, mask, or settings into the new input
+- **AND** after a new preview succeeds, Discard edits restores only that preview's settings without a tool call
 
 #### Scenario: Preserve custom draft colors
 - **WHEN** a user selects the already active custom-color mode
@@ -496,12 +502,27 @@ On first selecting custom export size for each host input, the studio SHALL init
 
 ### Requirement: Reusable comparison cell recipes
 
-Every comparison cell SHALL include a valid version-1 recipe with its effective palette, algorithm, reusable options, and exact rendered dimensions. Recipes SHALL omit source, output, and mask paths. Image-mask recipes SHALL retain the external-mask requirement. Shared artifact recipe behavior SHALL remain compatible.
+Every comparison cell SHALL include a valid version-1 recipe with its effective palette, algorithm, reusable options, and exact rendered dimensions. Recipes SHALL describe the cell's processing pixels before contact-sheet encoding. Output-format transformations SHALL remain separate from the reusable recipe. Recipes SHALL omit source, output, and mask paths. Image-mask recipes SHALL retain the external-mask requirement. Shared artifact recipe behavior SHALL remain compatible.
 
 #### Scenario: Replay a selected comparison cell
 
 - **WHEN** an agent saves a cell recipe from an algorithm or palette comparison and renders it with the same source and required mask
-- **THEN** the render reproduces the cell pixels, including default comparison dimensions and advanced options
+- **THEN** the render reproduces the cell's processing pixels before output encoding, including default comparison dimensions and advanced options
+
+#### Scenario: Encode a comparison sheet
+
+- **WHEN** a comparison uses JPEG, GIF, or another output with color or alpha transformations
+- **THEN** the cell recipe retains its processing settings without promising identical decoded pixels after sheet encoding and separate cell encoding
+- **AND** documentation identifies PNG and TIFF as lossless formats for pixel comparisons, JPEG block loss, GIF sheet-wide palette selection, and BMP white compositing
+
+### Requirement: Complete still-format discovery
+
+Every advertised still-image output format SHALL have exactly one catalog format role with its MIME type, representation, and alpha behavior. BMP SHALL report opaque RGB composited against white. TIFF SHALL report uncompressed unassociated RGBA preserving full alpha.
+
+#### Scenario: Discover interchange output semantics
+
+- **WHEN** an agent discovers BMP and TIFF in the still-image output formats
+- **THEN** the corresponding format roles describe their MIME types and distinct alpha behavior
 
 ### Requirement: Unambiguous advanced CLI options
 

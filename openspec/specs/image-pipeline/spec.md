@@ -202,7 +202,7 @@ Palette extraction SHALL inspect every admitted source pixel and include every n
 
 ### Requirement: Explicit area resizing
 
-The engine SHALL accept `area` as a resize filter while retaining bilinear as the default. Area sampling SHALL average exact source-pixel coverage using premultiplied alpha in display-space RGB. Crop coordinates SHALL remain relative to source bounds. Each enlarged or reduced axis SHALL use box footprints. Fully transparent output pixels SHALL become transparent black. Sampling SHALL observe cancellation and use bounded scanline storage.
+The engine SHALL accept `area` as a resize filter while retaining bilinear as the default. Area sampling SHALL average exact source-pixel coverage using premultiplied alpha in display-space RGB. Coverage-weighted alpha and RGB numerators SHALL remain exact integers until final conversion to 8-bit values, with half-integer ties rounded upward. Crop coordinates SHALL remain relative to source bounds. Each enlarged or reduced axis SHALL use box footprints. Fully transparent output pixels SHALL become transparent black. Sampling SHALL observe cancellation and use bounded scanline storage. Integer accumulation SHALL remain within uint64 for every admitted image geometry.
 
 #### Scenario: Reduce fine stripes
 - **WHEN** six opaque white pixels and two opaque black pixels reduce to one pixel with area sampling
@@ -215,6 +215,11 @@ The engine SHALL accept `area` as a resize filter while retaining bilinear as th
 #### Scenario: Enlarge one axis and reduce another
 - **WHEN** area sampling enlarges width and reduces height
 - **THEN** each axis follows exact box coverage, including blended fractional boundary pixels
+
+#### Scenario: Preserve the GIF alpha threshold
+- **WHEN** exact source coverage produces alpha 127.5 before 8-bit conversion
+- **THEN** area sampling produces alpha 128, including when the separable axis order is transposed
+- **AND** GIF export treats that output pixel as opaque
 
 #### Scenario: Cancel area work
 - **WHEN** cancellation occurs during source integration

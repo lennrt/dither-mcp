@@ -528,3 +528,31 @@ test('discard cannot authorize invalidated previews or restore another source or
   state.cancel(); assert.equal(state.finishPreview(pending, result()), false);
   state.setInput({ input: 'other.png', options: {} }); assert.equal(state.discardEdits(), false);
 });
+test('discard requires acceptance in each new host input even with identical paths', () => {
+  for (const source of ['same', 'new-mask', 'no-mask', 'new-input']) {
+    for (const outcome of ['pending', 'error', 'cancel']) {
+      const state = ready(); const displayed = state.rendered;
+      const next = clone(request);
+      if (source === 'new-mask') next.mask_input = 'replacement-mask.png';
+      if (source === 'no-mask') { delete next.mask_input; delete next.options.mask; }
+      if (source === 'new-input') next.input = 'replacement.png';
+      state.setInput(next);
+      if (outcome === 'error') state.hostResult({ isError: true, content: [{ type: 'text', text: 'Source unavailable' }] });
+      if (outcome === 'cancel') state.cancel();
+      assert.equal(state.discardEdits(), false, `${source}: ${outcome} must not restore an earlier host input`);
+      assert.deepEqual(state.draft, next); assert.equal(state.rendered, displayed);
+      assert.equal(state.canSave, false); assert.equal(state.history.length, 0);
+    }
+  }
+});
+test('invalid host input revokes discard authority before validation and a new acceptance restores it', () => {
+  const state = ready(); const displayed = state.rendered;
+  assert.throws(() => state.setInput({ input: request.input, options: null }), /JSON object/);
+  assert.equal(state.discardEdits(), false); assert.equal(state.rendered, displayed);
+  const next = { ...clone(request), mask_input: 'replacement-mask.png', palette: 'mono' };
+  state.setInput(next); assert.equal(state.hostResult(result(next)), true);
+  const accepted = state.rendered; const history = clone(state.history);
+  state.edit({ ...clone(next), palette: 'gameboy' });
+  assert.equal(state.discardEdits(), true); assert.deepEqual(state.draft, next);
+  assert.equal(state.rendered, accepted); assert.deepEqual(state.history, history); assert.equal(state.canSave, true);
+});

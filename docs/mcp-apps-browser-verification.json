@@ -3,6 +3,7 @@
   "browser": "151.0.7922.34",
   "checks": [
     "Initial preview, complete catalogs, and explicit save gating",
+    "New host input revokes local discard across same-path mask changes, errors, cancellation and invalid arguments; real new acceptance renews recovery",
     "Locked custom export follows new accepted geometry while invalid and unlocked dimensions stay intact",
     "Local invalid-draft recovery, active palette-mode preservation, and multiline preview shortcuts",
     "Custom export initializes from preview, locks either axis, enforces bounds, and permits unlocked dimensions",
@@ -30,6 +31,7 @@
   "externalRequests": [],
   "failedRequests": [],
   "screenshots": [
+    "studio-host-input-failure.png",
     "studio-desktop.png",
     "studio-dark.png",
     "studio-narrow-dark.png",
@@ -42,6 +44,7 @@
   "published_screenshot_sha256": {
     "assets/mcp-app-studio.png": "435046d24ff2315fcc93513b7f6067120902626dfbd9850cdca82f933795e273",
     "assets/mcp-app-studio-mobile.png": "86a1434d7792212ebf68cbbdd3ade194ee73d90ebde508c4ada998a995f5886a",
-    "assets/mcp-app-studio-dark.png": "c4e27f22168b9c6f004b0434b9780deb628526d2ea50e8166dfa818996ae61d4"
+    "assets/mcp-app-studio-dark.png": "c4e27f22168b9c6f004b0434b9780deb628526d2ea50e8166dfa818996ae61d4",
+    "assets/mcp-app-studio-input-error.png": "01247116497a9c3f15b29ddbaa0e85865704a162f613446619721abb73694670"
   }
 }

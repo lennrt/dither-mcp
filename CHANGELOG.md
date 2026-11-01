@@ -1,5 +1,15 @@
 # Changes
 
+## PR #2 adversarial review
+
+- Keep area coverage sums exact until final rounding. Preserve alpha 128 at
+  GIF's transparency boundary instead of rounding a half value down to 127.
+- Limit Discard edits to settings accepted for the current studio input,
+  including repeated paths with a replacement mask or failed initial preview.
+- Describe BMP and TIFF MIME types, alpha, and format roles in the catalog.
+- Clarify comparison recipes before output encoding. JPEG compression and
+  sheet-wide GIF quantization can change decoded comparison pixels.
+
 ## Creative workflow handoffs and export controls
 
 - Return a complete recipe for each comparison cell, including actual dimensions.

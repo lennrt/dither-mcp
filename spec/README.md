@@ -19,10 +19,10 @@ The command performs:
 
 1. Strict validation of six baseline OpenSpec capabilities and fourteen changes.
 2. Typechecking of all eight Quint modules.
-3. 155 executable run tests, including negative precondition scenarios.
+3. 160 executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
 5. 1,000 additional traces for eight completion schedules: quantization, catalog browsing, normalization, image saves, recipe saves, guarded exports, restored-look saves, and favorite reload after restart.
-6. 42 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, guarded exports, bounded current-look navigation, and persistent favorite authority. Each mutation must fail a regression test.
+6. 43 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, guarded exports, bounded current-look navigation, and persistent favorite authority. Each mutation must fail a regression test.
 
 The harness writes a machine-readable report to `.spec-results/latest.json`. It includes model SHA-256 hashes, commands, versions, seed, return codes, durations, witness counts, and derived check totals. [`verification.json`](verification.json) is the checked snapshot delivered with this version. Rerunning the command writes a fresh local report without silently updating that snapshot.
 
@@ -72,19 +72,26 @@ The [image-normalization change](../openspec/changes/image-normalization/proposa
 
 ## MCP Apps interaction model
 
-[`mcp_apps.qnt`](mcp_apps.qnt) represents user edits with four revision values and generated styles with separate identities. It permits three read operations and three save attempts. Each request keeps its identity and original revision, including after cancellation. Successful responses become current only while both identity and revision match.
+[`mcp_apps.qnt`](mcp_apps.qnt) represents user edits with four revision values, two host-input epochs, and generated styles with separate identities. It permits three read operations and three save attempts. Each request keeps its identity, original revision, and input epoch, including after cancellation. Successful responses become current only while all three match.
 
 The model separates preview requests from explicit save authorization and publication outcomes. Save requires host tool support, a destination, a current successful preview, and no pending operation. An authorization records the current revision, accepted preview, and replay recipe. Invariants check that these agree. Run tests cover edits during requests, cancellation, late results, failed replacements, missing destinations, and busy-state guards.
 
-Local discard restores the accepted settings identity while idle. Invalidated preview restoration has no save-authority effect and is abstracted as stutter. Concrete tests also check editor text, image bytes, and unchanged history.
+Local discard restores settings accepted in the current host-input epoch while idle. A new input retains the old visible look but revokes its restoration authority, including when concrete validation subsequently fails. Discard after an invalidated preview changes only draft settings and never renews save authority. Concrete state and Go-backed AppBridge browser tests check repeated source paths, changed mask bindings, initial failure/cancellation, invalid arguments, editor text, image bytes, and unchanged history. Epochs abstract each new host input independently of path or byte equality; the model has no host-delivery window or argument parser.
 
 Extraction actions share request identity and revision guards. Successful extraction updates a palette draft but cannot authorize saving until another preview succeeds. The model abstracts returned-color validity; controller and browser tests check malformed values and pending JSON.
 
 Random generation and its automatic preview share one operation identity. A new random action may supersede pending reads, but never explicit writes. Both stages reject stale identities and edit revisions. Accepted style identity is captured in save authorization. Separate image/recipe destinations and dimensions preserve recipe authority independently of export size. A publication may succeed despite a malformed receipt; only a matching receipt permits recipe success reporting.
 
-Ten studio mutations challenge dirty saves, stale preview/extraction/style results, preview writes, write supersession, wrong generated-style authority, missing recipe destinations, export-size leakage, and mismatched receipts. Separate completion schedules must witness image and recipe saves. These are coverage evidence rather than liveness proofs.
+Eleven studio mutations challenge dirty saves, cross-epoch discard, stale preview/extraction/style results, preview writes, write supersession, wrong generated-style authority, missing recipe destinations, export-size leakage, and mismatched receipts. Separate completion schedules must witness image and recipe saves. These are coverage evidence rather than liveness proofs.
 
 Edit revisions and generated-style identities together abstract settings. The model does not parse tool data, render controls, implement the host bridge, validate filesystem paths, or compare image pixels. Preview actions have no publication transition by design. Go tests must independently check that the actual preview service writes no files. Controller and browser tests must check that real events enforce the modeled guards. The model alone establishes no UI behavior or machine-checked refinement.
+
+Request identities in this model correspond to app-initiated calls with
+correlated responses. Anonymous initial host result notifications require the
+host to pair them with the current input; an old notification from an overlapping
+call with identical arguments cannot be distinguished by the concrete app.
+Input epochs bound local Discard authority but do not add correlation to those
+notifications. Explicit Apply preview obtains a correlated fresh result.
 
 The [MCP Apps change](../openspec/changes/mcp-apps/proposal.md) defines negotiated presentation and fallback. The [studio guide](../docs/mcp-apps.md) describes host requirements, saves, and the runtime boundary.
 

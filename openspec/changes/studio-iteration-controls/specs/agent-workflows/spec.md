@@ -1,12 +1,18 @@
 ## ADDED Requirements
 
 ### Requirement: Studio draft recovery and input preservation
-The studio SHALL offer local draft restoration from its last accepted preview. Restoration SHALL preserve preview bytes, preview validity, history, source identity, and export choices. It SHALL make no tool call and SHALL remain unavailable during pending work or before the current source has an accepted preview. Selecting the active palette mode SHALL preserve draft settings and pending editor text.
+The studio SHALL offer local draft restoration from its last accepted preview for the current host input. Restoration SHALL preserve preview bytes, preview validity, history, source and mask identity, and export choices. It SHALL make no tool call and SHALL remain unavailable during pending work or before the current host input has an accepted preview. Every new host input SHALL revoke draft-restoration authority before validation, including when its source and mask paths match an earlier input. Selecting the active palette mode SHALL preserve draft settings and pending editor text.
 
 #### Scenario: Discard invalid editor text
 - **WHEN** a user discards malformed JSON or unfinished custom colors
 - **THEN** the studio restores accepted controls and editor text without a tool call
 - **AND** an invalidated preview still requires a successful new preview before saving
+
+#### Scenario: Reject restoration across host inputs
+- **WHEN** a new host input reuses an earlier source path and its initial preview fails, is canceled, or its arguments are invalid
+- **THEN** Discard edits remains unavailable until a preview succeeds for the new host input
+- **AND** the earlier visible preview cannot restore its source, mask, or settings into the new input
+- **AND** after a new preview succeeds, Discard edits restores only that preview's settings without a tool call
 
 #### Scenario: Preserve custom draft colors
 - **WHEN** a user selects the already active custom-color mode
