@@ -27,7 +27,7 @@ type Config struct {
 	Width        int           `json:"width,omitempty" jsonschema:"Set output width from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when height is specified."`
 	Height       int           `json:"height,omitempty" jsonschema:"Set output height from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when width is specified."`
 	PixelScale   int           `json:"pixel_scale,omitempty" jsonschema:"Set grid scale from 0 through 256. Zero or one keeps the full grid. Larger values reduce the grid before dithering and enlarge it afterward."`
-	ResizeFilter string        `json:"resize_filter,omitempty" jsonschema:"Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."`
+	ResizeFilter string        `json:"resize_filter,omitempty" jsonschema:"Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."`
 	Brightness   float64       `json:"brightness,omitempty" jsonschema:"Add an sRGB channel offset from -1 through 1. The default is 0."`
 	Contrast     *float64      `json:"contrast,omitempty" jsonschema:"Set contrast from 0 through 4 around the channel midpoint 0.5. Omission selects 1. Zero produces a flat midpoint."`
 	Gamma        *float64      `json:"gamma,omitempty" jsonschema:"Set gamma from 0.1 through 8. The engine applies channel^(1/gamma). Omission selects 1."`

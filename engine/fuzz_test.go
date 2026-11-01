@@ -12,12 +12,14 @@ func FuzzProcess(f *testing.F) {
 	f.Add([]byte{0, 16, 16, 3, 1, 3, 4, 8, 42, 11, 17, 7})
 	f.Add([]byte{25, 1, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	f.Add([]byte{15, 31, 1, 2, 3, 4, 2, 1, 255, 2, 7, 4})
+	f.Add([]byte{0, 6, 1, 1, 0, 4, 4, 4, 42, 0, 4, 2})
 	f.Fuzz(func(t *testing.T, data []byte) {
 		if len(data) < 12 {
 			return
 		}
 		w, h := int(data[1]%32)+1, int(data[2]%32)+1
 		cfg := Config{Algorithm: catalog[int(data[0])%len(catalog)].ID, PixelScale: int(data[3]%8) + 1, Seed: int64(data[8]), Brightness: float64(data[4]%9)/16 - .25, Contrast: Float(float64(data[5]%8) / 4), Saturation: Float(float64(data[6]%8) / 4), Gamma: Float(.5 + float64(data[7]%8)/4), Serpentine: data[9]%2 == 1, Strength: Float(float64(data[10]%9) / 4)}
+		cfg.ResizeFilter = []string{"bilinear", "nearest", "area"}[data[11]%3]
 		if data[9]%3 == 0 {
 			cfg.ColorSpace = "linear-rgb"
 		}

@@ -52,7 +52,8 @@ On `compare`, `--algorithm` requires `--palettes`. To choose algorithms for an
 algorithm comparison, use `--algorithms` instead.
 
 The `render`, `compare`, `animate`, `video` and `separate` commands accept the
-common flags documented by `help`. Advanced JSON options merge into the configuration built from flags. JSON fields override flags with the same name. For fully explicit
+common flags documented by `help`. Advanced JSON options combine with distinct flag settings.
+If both supply the same engine setting, the CLI reports a conflict. For fully explicit
 requests, use `call`, whose arguments exactly match the MCP schemas:
 
 ```sh
@@ -130,3 +131,18 @@ Pass its palette/colors/options inline to render or studio calls. Favorite files
 are envelopes, so their paths are not portable recipe-file arguments. Names cannot
 be replaced. The [executable example](../examples/favorites.mjs) saves, discovers
 and reloads across separate CLI processes and verifies exact PNG replay.
+
+### Compose advanced options
+
+Use `--options` for engine settings that have no dedicated flag. You can combine
+it with distinct explicit flags. If both supply the same setting, the CLI rejects
+the request before opening the workspace. This rule includes explicit zero,
+false, and null values. Supply each setting once.
+
+```sh
+./bin/dither-mcp render --root . --input source.png --output adjusted.png \
+  --width 320 --options '{"algorithm":"atkinson","effects":{"scanlines":0.1}}'
+```
+
+Comparison results include `cells[].recipe`. Save the selected cell recipe with
+`dither_recipe_save`, then render it with the same source and any required mask.

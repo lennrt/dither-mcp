@@ -3110,18 +3110,28 @@
       ],
       "format": "esm"
     },
+    "ui/export-size.mjs": {
+      "bytes": 611,
+      "imports": [],
+      "format": "esm"
+    },
     "ui/state.mjs": {
-      "bytes": 31117,
+      "bytes": 31846,
       "imports": [],
       "format": "esm"
     },
     "ui/app.mjs": {
-      "bytes": 29225,
+      "bytes": 31219,
       "imports": [
         {
           "path": "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js",
           "kind": "import-statement",
           "original": "@modelcontextprotocol/ext-apps"
+        },
+        {
+          "path": "ui/export-size.mjs",
+          "kind": "import-statement",
+          "original": "./export-size.mjs"
         },
         {
           "path": "ui/state.mjs",
@@ -3447,14 +3457,17 @@
         "node_modules/.pnpm/@modelcontextprotocol+ext-apps@2.0.3_@modelcontextprotocol+client@2.3.1_@modelcontextprotocol+core@2.3.1_zod@4.6.5/node_modules/@modelcontextprotocol/ext-apps/dist/src/app.js": {
           "bytesInOutput": 30587
         },
+        "ui/export-size.mjs": {
+          "bytesInOutput": 313
+        },
         "ui/state.mjs": {
-          "bytesInOutput": 20930
+          "bytesInOutput": 21457
         },
         "ui/app.mjs": {
-          "bytesInOutput": 18665
+          "bytesInOutput": 19652
         }
       },
-      "bytes": 570248
+      "bytes": 572075
     }
   }
 }

@@ -107,7 +107,7 @@ func TestSupportedCommandFlagsRemainAvailable(t *testing.T) {
 		{"catalog", "--allow-video=false"},
 		{"palettes", "--query", "game boy", "--category", "retro", "--min-colors", "2", "--max-colors", "8", "--limit", "1", "--offset", "0"},
 		{"inspect", "--input", "source.png"},
-		{"render", "--input", "source.png", "--output", "render.png", "--algorithm", "atkinson", "--palette", "mono", "--width", "8", "--height", "6", "--pixel-scale", "1", "--seed", "0", "--serpentine=false", "--invert=false", "--grayscale=false", "--brightness", "0", "--contrast", "1", "--gamma", "1", "--saturation", "1", "--strength", "1", "--threshold", "0.5", "--format", "png", "--dpi", "72", "--options", `{"resize_filter":"nearest","brightness":0.1}`},
+		{"render", "--input", "source.png", "--output", "render.png", "--algorithm", "atkinson", "--palette", "mono", "--width", "8", "--height", "6", "--pixel-scale", "1", "--seed", "0", "--serpentine=false", "--invert=false", "--grayscale=false", "--brightness", "0", "--contrast", "1", "--gamma", "1", "--saturation", "1", "--strength", "1", "--threshold", "0.5", "--format", "png", "--dpi", "72", "--options", `{"resize_filter":"nearest","effects":{"scanlines":0.1}}`},
 		{"call", "dither_recipe_save", `{"output":"style.json","recipe":{"version":1,"palette":"gameboy","options":{"algorithm":"atkinson"}}}`},
 		{"render", "--input", "source.png", "--output", "recipe.png", "--recipe", "style.json", "--mask-input", "source.png"},
 		{"separate", "--input", "source.png", "--output", "plates.zip", "--colors", "#000,#fff", "--algorithm", "threshold", "--format", "zip", "--dpi", "72"},
@@ -130,7 +130,7 @@ func TestSupportedCommandFlagsRemainAvailable(t *testing.T) {
 				if err := json.Unmarshal(out.Bytes(), &result); err != nil {
 					t.Fatal(err)
 				}
-				if result.Recipe.Options.Brightness != .1 || result.Recipe.Options.Contrast == nil || *result.Recipe.Options.Contrast != 1 || result.Recipe.Options.ResizeFilter != "nearest" {
+				if result.Recipe.Options.Brightness != 0 || result.Recipe.Options.Effects.Scanlines != .1 || result.Recipe.Options.Contrast == nil || *result.Recipe.Options.Contrast != 1 || result.Recipe.Options.ResizeFilter != "nearest" {
 					t.Fatalf("advanced options merge changed: %+v", result.Recipe.Options)
 				}
 			}

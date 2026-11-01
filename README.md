@@ -12,7 +12,7 @@ dither-mcp is a local-first [Model Context Protocol](https://modelcontextprotoco
 
 [Try random styles](#try-a-random-style) · [Open the studio](#an-image-studio-inside-your-chat) · [Connect your agent](#connect-your-agent) · [Explore the showcase](#explore-the-gallery) · [Watch the demos](#see-it-run) · [Read the specifications](#specified-and-verified)
 
-[Website](http://ka2a.dev/dither-mcp-site/) · [MCP Apps guide](docs/mcp-apps.md) · [Source code](https://github.com/lennrt/dither-mcp) · [Website source](https://github.com/k-a2a/dither-mcp-site)
+[Website](http://ka2a.dev/dither-mcp-site/) · [MCP Apps guide](docs/mcp-apps.md) · [Source code](https://github.com/lennrt/dither-mcp)
 
 ## What your agent can do
 
@@ -145,6 +145,37 @@ an external mask file; source and mask paths are not stored.
 
 The Go binary bundles the complete app and official MCP Apps SDK. It keeps the stdio setup and needs no runtime Node.js process, CDN, or external asset service. Hosts without Apps support receive the PNG preview and structured JSON.
 
+Use **Discard edits** to restore your last accepted settings locally, including
+after an invalid advanced JSON edit. In the custom-colors and advanced-options
+textareas, **Ctrl+Enter** or **Cmd+Enter** applies a preview. Selecting the active
+Custom colors tab preserves your edits.
+
+Discard applies to the current studio input. A new input needs a successful
+preview before settings can be restored, even when its path is unchanged.
+A failed or canceled replacement preview keeps your new settings and mask.
+
+<details>
+<summary>Example: a replacement input needs a valid preview</summary>
+
+![Studio retaining the old image while the new input's mask is unavailable; Discard edits and Save image stay disabled](docs/assets/mcp-app-studio-input-error.png)
+
+*Actual bundled studio in the local test host, with a simulated host mask error.
+The old image remains visible. Correct the new input, then apply a preview before
+restoring its settings or saving.*
+
+</details>
+
+Custom exports start with the accepted preview dimensions. Keep **Keep preview
+aspect ratio** enabled to change either axis proportionally. Unlock it for a different
+shape. Export sizing leaves your saved recipe unchanged.
+
+For small outputs, choose the **Area** resize filter to average source-pixel
+coverage before dithering. This helps retain repeating detail that point samples
+can miss. Integer coverage sums round half values up, including alpha at GIF's
+transparency cutoff. The default remains bilinear. BMP exports flatten transparency onto
+white; lossless TIFF exports retain RGBA values.
+The catalog describes each output's MIME type, representation, and alpha behavior.
+
 The studio is verified in MCP Inspector 2.10.1 and the included embedding host. The host guide records the exact checks and versions. Read the [MCP Apps guide](docs/mcp-apps.md) and [host setup and compatibility](docs/hosts.md).
 
 To embed the studio in your own application, use the supported [AppBridge example](docs/embedding.md). It connects a browser view to the local Go server over stdio. GitHub Pages serves the separate showcase; interactive local processing needs a host and backend.
@@ -153,7 +184,7 @@ To embed the studio in your own application, use the supported [AppBridge exampl
 
 | Workflow | Input | Output |
 |---|---|---|
-| Still images | PNG, JPEG, GIF, WebP, BMP, and TIFF | PNG, JPEG, GIF, SVG, PBM, and ASCII |
+| Still images | PNG, JPEG, GIF, WebP, BMP, and TIFF | PNG, JPEG, GIF, SVG, PBM, ASCII, BMP, and TIFF |
 | Generated animation | One supported still image | Animated GIF or a PNG sprite sheet |
 | GIF animation | Animated GIF | Animated GIF or a PNG sprite sheet |
 | Video | MP4, MOV, WebM, Matroska, and AVI | MP4 (H.264), WebM (VP9), GIF, or a PNG sprite sheet |
@@ -273,7 +304,7 @@ Use a preset or supply **2–256 unique hex colors**. Custom palettes are explic
 
 *Wave / 24 frames / 12 fps. [Reproduce the artwork and recipes](docs/showcase.md).*
 
-Explore the [dither-mcp website](http://ka2a.dev/dither-mcp-site/) for the MCP Apps studio, a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos. The [website source](https://github.com/k-a2a/dither-mcp-site) lives in a separate repository and supports GitHub Pages.
+Explore the [dither-mcp website](http://ka2a.dev/dither-mcp-site/) for the MCP Apps studio, a keyboard-accessible comparison slider, actual algorithm previews, a searchable palette explorer, palette studies, and recorded demos.
 
 ## Make a reproducible recipe
 
@@ -306,6 +337,27 @@ To compare colors with the same texture, use a palette shortlist:
 Compare either palettes or algorithms, with at most 12 candidates. Palette mode
 uses shared inline options and excludes a common palette, custom colors, and
 saved recipes. Each candidate can then be rendered separately.
+
+Each result cell includes a complete `recipe` with its algorithm, palette, and
+rendered dimensions. Save that cell's recipe with `dither_recipe_save` to replay
+the selected treatment, including comparison defaults. Supply the current mask
+file again when the recipe uses an image mask.
+
+Cell recipes describe the processing settings before the sheet is encoded.
+Use PNG or TIFF for pixel comparisons. JPEG compression, GIF palette and alpha
+reduction, and formats that flatten transparency can change saved pixels.
+
+CLI flags and `--options` may set different engine fields. If both set the same
+field, the command reports the conflict, including explicit zero and false values:
+
+```sh
+./bin/dither-mcp render --root . \
+  --input docs/assets/source/moon-garden.png --output small-print.tiff \
+  --width 320 --options '{"resize_filter":"area"}'
+```
+
+Batch results retain one indexed entry for every item after mid-run cancellation.
+Earlier successful outputs remain available; remaining items report cancellation.
 
 Save the settings in a versioned recipe. Use that recipe to render the image:
 
@@ -345,7 +397,7 @@ A new output path preserves your earlier work. Give each variation a separate na
 | Image controls | Resize, crop, crisp pixel scale, brightness, contrast, gamma, saturation, threshold, strength, grayscale, invert, and serpentine diffusion |
 | Selection | Rectangular, circular, inverted, and local image masks |
 | Retro effects | Scanlines, CRT shading, seeded noise, row glitch, and pixel sorting |
-| Still exports | PNG, JPEG, GIF, SVG, PBM, and ASCII |
+| Still exports | PNG, JPEG, GIF, SVG, PBM, ASCII, BMP, and TIFF |
 | Print workflows | PNG resolution metadata and spot-color separation plates in a ZIP |
 | Motion | Source GIF frames, generated GIF loops, sprite sheets, and bounded local video processing with FFmpeg |
 | Agent workflows | Inspect, discover, compare, batch, save, and reload recipes |

@@ -1,4 +1,8 @@
 // Revisions abstract user edits to source, palette, options, and mask settings.
+// Two host-input epochs distinguish repeated paths and retain the old visible look.
+// Local discard restores settings accepted in the current epoch only while idle.
+// It never restores invalidated save authority. Paths, bytes, and editor text
+// remain abstract; browser/state tests check those concrete boundaries.
 // Generated style identity is recorded separately in accepted save authority.
 // Requests may finish after cancellation or an edit. Only current results count.
 // Publication details belong to publication.qnt and concrete service tests.
@@ -15,20 +19,20 @@ module mcp_apps {
     random: bool, previewId: int, style: int
   }
   type State = {
-    revision: int, connected: bool, tools: bool, output: bool, recipeOutput: bool, exportWidth: int,
-    next: int, pending: int, inFlight: Set[int], requested: int -> int,
+    revision: int, epoch: int, connected: bool, tools: bool, output: bool, recipeOutput: bool, exportWidth: int,
+    next: int, pending: int, inFlight: Set[int], requested: int -> int, requestEpoch: int -> int,
     extractions: Set[int], palette: int, styles: Set[int], generated: Set[int], style: int,
-    accepted: int, acceptedRevision: int, recipe: int,
+    accepted: int, acceptedRevision: int, recipe: int, renderedRevision: int, renderedEpoch: int, crossEpochDiscard: bool,
     saving: bool, saveKind: str, authorizations: List[Authorization], writes: int, recipeWrites: int, recipeReports: int,
     discarded: int, cancellations: int, failures: int
   }
   var s: State
   action init = s' = {
-    revision: 0, connected: false, tools: false, output: false, recipeOutput: false, exportWidth: 2,
+    revision: 0, epoch: 0, connected: false, tools: false, output: false, recipeOutput: false, exportWidth: 2,
     next: 0, pending: -1, inFlight: Set(),
     extractions: Set(), palette: -1, styles: Set(), generated: Set(), style: -1,
-    requested: Map(0 -> -1, 1 -> -1, 2 -> -1),
-    accepted: -1, acceptedRevision: -1, recipe: -1,
+    requested: Map(0 -> -1, 1 -> -1, 2 -> -1), requestEpoch: Map(0 -> -1, 1 -> -1, 2 -> -1),
+    accepted: -1, acceptedRevision: -1, recipe: -1, renderedRevision: -1, renderedEpoch: -1, crossEpochDiscard: false,
     saving: false, saveKind: "", authorizations: List(), writes: 0, recipeWrites: 0, recipeReports: 0,
     discarded: 0, cancellations: 0, failures: 0
   }
@@ -38,6 +42,18 @@ module mcp_apps {
   action edit = all {
     not(s.saving), s.revision < 3,
     s' = { revision: s.revision + 1, ...s }
+  }
+  action discardDraft = all {
+    s.pending == -1, not(s.saving), s.renderedRevision >= 0,
+    s.renderedEpoch == s.epoch,
+    s' = { revision: s.renderedRevision,
+      crossEpochDiscard: s.crossEpochDiscard or s.renderedEpoch != s.epoch, ...s }
+  }
+  // Includes invalid new input: revocation precedes concrete argument validation.
+  action hostInput = all {
+    not(s.saving), s.epoch < 1,
+    s' = { epoch: s.epoch + 1, revision: 0, pending: -1,
+      accepted: -1, acceptedRevision: -1, recipe: -1, ...s }
   }
   action enterOutput(present) = all {
     not(s.saving), s' = { output: present, ...s }
@@ -54,11 +70,12 @@ module mcp_apps {
       pending: s.next, next: s.next + 1,
       inFlight: s.inFlight.union(Set(s.next)),
       requested: s.requested.set(s.next, s.revision),
+      requestEpoch: s.requestEpoch.set(s.next, s.epoch),
       accepted: -1, acceptedRevision: -1, recipe: -1, ...s
     }
   }
   action receive(id, success) = {
-    val current = id == s.pending and s.requested.get(id) == s.revision
+    val current = id == s.pending and s.requested.get(id) == s.revision and s.requestEpoch.get(id) == s.epoch
     val accept = current and success
     all {
       s.inFlight.contains(id), not(s.extractions.contains(id)),
@@ -69,6 +86,8 @@ module mcp_apps {
         accepted: if (accept) id else s.accepted,
         acceptedRevision: if (accept) s.requested.get(id) else s.acceptedRevision,
         recipe: if (accept) s.requested.get(id) else s.recipe,
+        renderedRevision: if (accept) s.requested.get(id) else s.renderedRevision,
+        renderedEpoch: if (accept) s.requestEpoch.get(id) else s.renderedEpoch,
         style: if (accept and s.styles.contains(id)) id else s.style,
         discarded: s.discarded + (if (not(current)) 1 else 0),
         failures: s.failures + (if (current and not(success)) 1 else 0),
@@ -84,11 +103,12 @@ module mcp_apps {
       inFlight: s.inFlight.union(Set(s.next)),
       extractions: s.extractions.union(Set(s.next)),
       requested: s.requested.set(s.next, s.revision),
+      requestEpoch: s.requestEpoch.set(s.next, s.epoch),
       accepted: -1, acceptedRevision: -1, recipe: -1, ...s
     }
   }
   action receiveExtraction(id, success) = {
-    val extractionCurrent = id == s.pending and s.requested.get(id) == s.revision
+    val extractionCurrent = id == s.pending and s.requested.get(id) == s.revision and s.requestEpoch.get(id) == s.epoch
     val adopt = extractionCurrent and success
     all {
       s.inFlight.contains(id), s.extractions.contains(id),
@@ -110,11 +130,12 @@ module mcp_apps {
       inFlight: s.inFlight.union(Set(s.next)),
       styles: s.styles.union(Set(s.next)),
       requested: s.requested.set(s.next, s.revision),
+      requestEpoch: s.requestEpoch.set(s.next, s.epoch),
       accepted: -1, acceptedRevision: -1, recipe: -1, ...s
     }
   }
   action receiveStyle(id, success) = {
-    val styleCurrent = id == s.pending and s.requested.get(id) == s.revision
+    val styleCurrent = id == s.pending and s.requested.get(id) == s.revision and s.requestEpoch.get(id) == s.epoch
     val ready = styleCurrent and success
     all {
       s.inFlight.contains(id), s.styles.contains(id), not(s.generated.contains(id)),
@@ -177,7 +198,7 @@ module mcp_apps {
     nondet id = Requests.oneOf()
     nondet flag = Set(false, true).oneOf()
     any {
-      connect(flag), edit, enterOutput(flag), enterRecipeOutput(flag), chooseExportWidth(id + 1), preview, receive(id, flag),
+      connect(flag), edit, hostInput, discardDraft, enterOutput(flag), enterRecipeOutput(flag), chooseExportWidth(id + 1), preview, receive(id, flag),
       extract, receiveExtraction(id, flag), random, receiveStyle(id, flag),
       cancel, save(flag), saveRecipe(flag), finishSave(flag), finishRecipeSave(flag, true), finishRecipeSave(flag, false), stutter
     }
@@ -205,6 +226,7 @@ module mcp_apps {
     not(s.extractions.contains(s.accepted)),
     s.styles.contains(s.accepted) implies (s.generated.contains(s.accepted) and s.style == s.accepted),
     s.acceptedRevision == s.requested.get(s.accepted),
+    s.requestEpoch.get(s.accepted) == s.epoch,
     s.recipe == s.acceptedRevision
   }
   val explicitCurrentSaves = s.authorizations.indices().forall(i => {
@@ -218,6 +240,7 @@ module mcp_apps {
   val dirtyCannotSave = s.acceptedRevision != s.revision implies (not(canSave) and not(canSaveRecipe))
   val safety = all {
     s.revision >= 0, s.revision <= 3, s.next >= 0, s.next <= 3,
+    s.epoch >= 0, s.epoch <= 1, not(s.crossEpochDiscard),
     s.authorizations.length() <= 3, s.recipeReports <= s.recipeWrites, s.recipeWrites <= s.writes,
     s.inFlight.subseteq(Requests),
     s.pending >= 0 implies s.inFlight.contains(s.pending),
@@ -241,6 +264,24 @@ module mcp_apps {
   run cannotSaveWithoutDestinationTest = init.then(connect(true)).then(preview).then(receive(0, true))
     .then(save(true).fail())
   run cannotSaveBeforePreviewTest = initSave.then(save(true).fail())
+  run discardDraftRestoresAcceptedSettingsTest = initSave.then(preview).then(receive(0, true))
+    .then(edit).expect(safety and not(canSave)).then(discardDraft).expect(safety and canSave)
+  run discardCannotRestoreInvalidatedPreviewTest = initSave.then(preview).then(receive(0, true))
+    .then(preview).then(receive(1, false)).expect(safety and not(canSave)).then(discardDraft).expect(safety and not(canSave))
+  run discardCannotInterruptPendingWorkTest = initSave.then(preview).then(receive(0, true))
+    .then(preview).then(discardDraft.fail())
+  run newHostInputCannotDiscardOldLookTest = initSave.then(preview).then(receive(0, true))
+    .then(hostInput).expect(safety and s.renderedEpoch == 0 and s.epoch == 1).then(discardDraft.fail())
+  run failedNewInputCannotDiscardOldLookTest = initSave.then(preview).then(receive(0, true))
+    .then(hostInput).then(preview).then(receive(1, false)).expect(safety and not(canSave)).then(discardDraft.fail())
+  run canceledNewInputCannotDiscardOldLookTest = initSave.then(preview).then(receive(0, true))
+    .then(hostInput).then(preview).then(cancel).expect(safety and not(canSave)).then(discardDraft.fail())
+  run newInputAcceptanceRenewsDiscardTest = initSave.then(preview).then(receive(0, true))
+    .then(hostInput).then(preview).then(receive(1, true)).then(edit).then(discardDraft)
+    .expect(safety and canSave and s.renderedEpoch == 1)
+  run oldEpochResponseCannotAcceptNewInputTest = initSave.then(preview).then(hostInput).then(preview)
+    .then(receive(0, true)).expect(safety and not(canSave) and s.renderedEpoch == -1)
+    .then(receive(1, true)).expect(safety and canSave and s.renderedEpoch == 1)
   run cannotSaveDirtyControlsTest = initSave.then(preview).then(receive(0, true)).then(edit)
     .expect(safety and not(canSave)).then(save(true).fail())
   run editDuringPreviewDiscardsResultTest = initSave.then(preview).then(edit).then(receive(0, true))

@@ -73,13 +73,19 @@ Compare 1–12 named palettes with one shared algorithm:
 Palette mode rejects `algorithms`, a common `palette`, `colors`, and `recipe`.
 Each cell records its palette and effective algorithm in request order. The
 artifact retains submitted parameters and omits a single shared recipe, which
-cannot describe multiple palettes. To replay a cell, use its palette and
-algorithm, set `options.width` and `options.height` to the cell dimensions, and
-retain the other original options and mask. Comparison defaults to width 320
-when dimensions are omitted; a standalone render otherwise uses source size.
-Algorithm comparisons retain
-their existing shared palette and recipe behavior. Both modes enforce the
-same geometry, source guards, and output limits.
+cannot describe multiple palettes. Each cell includes a complete version-1 `recipe`
+with its palette, algorithm, adjustments, and rendered dimensions. Save that
+recipe with `dither_recipe_save`, then render it with the same source and mask.
+Image-mask recipes retain the mask requirement but omit the mask path.
+Comparison defaults to width 320 when dimensions are omitted. Cell recipes
+retain these dimensions when a standalone render otherwise uses source size.
+Algorithm comparisons retain their existing shared artifact recipe for
+compatibility. Use the cell recipe to reproduce a selected candidate's processing
+pixels before output encoding. JPEG blocks can cross cell boundaries, and GIF
+selects a palette for the entire sheet. Separately encoding a cell can therefore
+change decoded pixels even with the same output format. BMP composites alpha
+against white. Use PNG or TIFF for lossless pixel comparisons with full alpha.
+Both modes enforce the same geometry, source guards, and output limits.
 
 Palette extraction scans the complete normalized source, before crop, masks,
 and tone changes. Each visible pixel contributes its alpha weight. The histogram
@@ -378,7 +384,9 @@ Tool failures are MCP `isError` results, allowing the agent to correct the
 request. The protocol session survives ordinary tool errors. Oversized MCP
 messages terminate the session.
 
-A batch commits per item and reports errors. A timeout can end the returned list early. Successful earlier items remain.
+A batch commits per item and reports errors. After admission, cancellation or timeout produces an error for every remaining item.
+The result retains one indexed outcome per submitted item. Successful earlier items remain.
+Cancellation before admission fails the whole call without item results.
 There are no overwrite, delete, upload, or network-import tools.
 
 ## Resources and prompts

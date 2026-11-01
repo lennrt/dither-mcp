@@ -467,3 +467,83 @@ The studio SHALL discover saved favorites, offer refresh, and save the exact acc
 - **WHEN** the embedding app calls a favorite tool
 - **THEN** list and load access only the fixed named library and save accepts only the host's latest accepted recipe
 - **AND** Random style may supersede favorite reads but cannot interrupt a favorite write
+
+### Requirement: Studio draft recovery and input preservation
+The studio SHALL offer local draft restoration from its last accepted preview for the current host input. Restoration SHALL preserve preview bytes, preview validity, history, source and mask identity, and export choices. It SHALL make no tool call and SHALL remain unavailable during pending work or before the current host input has an accepted preview. Every new host input SHALL revoke draft-restoration authority before validation, including when its source and mask paths match an earlier input. Selecting the active palette mode SHALL preserve draft settings and pending editor text.
+
+#### Scenario: Discard invalid editor text
+- **WHEN** a user discards malformed JSON or unfinished custom colors
+- **THEN** the studio restores accepted controls and editor text without a tool call
+- **AND** an invalidated preview still requires a successful new preview before saving
+
+#### Scenario: Reject restoration across host inputs
+- **WHEN** a new host input reuses an earlier source path and its initial preview fails, is canceled, or its arguments are invalid
+- **THEN** Discard edits remains unavailable until a preview succeeds for the new host input
+- **AND** the earlier visible preview cannot restore its source, mask, or settings into the new input
+- **AND** after a new preview succeeds, Discard edits restores only that preview's settings without a tool call
+
+#### Scenario: Preserve custom draft colors
+- **WHEN** a user selects the already active custom-color mode
+- **THEN** the studio retains the custom colors and pending editor text
+
+### Requirement: Studio multiline preview shortcut
+Ctrl+Enter and Cmd+Enter in the advanced JSON and custom-color editors SHALL invoke the same explicit preview action as Apply preview. Ordinary Enter SHALL remain available for newlines. The shortcut SHALL preserve all existing validation and pending-operation checks.
+
+#### Scenario: Apply advanced JSON from the keyboard
+- **WHEN** a user presses Ctrl+Enter or Cmd+Enter in a multiline editor
+- **THEN** the studio validates and previews the complete draft through the normal Apply action
+
+### Requirement: Studio custom export aspect ratio
+On first selecting custom export size for each host input, the studio SHALL initialize dimensions from the accepted preview. Later mode changes SHALL preserve intentionally empty or invalid fields. It SHALL offer an aspect-ratio lock based on that preview. With the lock enabled, editing either positive integer dimension SHALL update the other dimension using nearest-integer rounding with a minimum of one pixel. When accepted preview geometry changes, a locked valid custom export SHALL retain its width and recalculate its height using the new ratio. Invalid or unlocked custom dimensions SHALL remain unchanged. Existing export limits SHALL still disable invalid exports. Export changes SHALL not change preview settings.
+
+#### Scenario: Resize a custom export proportionally
+- **WHEN** the user edits one valid custom dimension with the aspect-ratio lock enabled
+- **THEN** the other dimension follows the accepted preview ratio and export bounds remain enforced
+
+### Requirement: Reusable comparison cell recipes
+
+Every comparison cell SHALL include a valid version-1 recipe with its effective palette, algorithm, reusable options, and exact rendered dimensions. Recipes SHALL describe the cell's processing pixels before contact-sheet encoding. Output-format transformations SHALL remain separate from the reusable recipe. Recipes SHALL omit source, output, and mask paths. Image-mask recipes SHALL retain the external-mask requirement. Shared artifact recipe behavior SHALL remain compatible.
+
+#### Scenario: Replay a selected comparison cell
+
+- **WHEN** an agent saves a cell recipe from an algorithm or palette comparison and renders it with the same source and required mask
+- **THEN** the render reproduces the cell's processing pixels before output encoding, including default comparison dimensions and advanced options
+
+#### Scenario: Encode a comparison sheet
+
+- **WHEN** a comparison uses JPEG, GIF, or another output with color or alpha transformations
+- **THEN** the cell recipe retains its processing settings without promising identical decoded pixels after sheet encoding and separate cell encoding
+- **AND** documentation identifies PNG and TIFF as lossless formats for pixel comparisons, JPEG block loss, GIF sheet-wide palette selection, and BMP white compositing
+
+### Requirement: Complete still-format discovery
+
+Every advertised still-image output format SHALL have exactly one catalog format role with its MIME type, representation, and alpha behavior. BMP SHALL report opaque RGB composited against white. TIFF SHALL report uncompressed unassociated RGBA preserving full alpha.
+
+#### Scenario: Discover interchange output semantics
+
+- **WHEN** an agent discovers BMP and TIFF in the still-image output formats
+- **THEN** the corresponding format roles describe their MIME types and distinct alpha behavior
+
+### Requirement: Unambiguous advanced CLI options
+
+The CLI SHALL reject an engine setting supplied in both `--options` and an explicit dedicated flag before opening the workspace. Explicit zero and false flags and null JSON values SHALL count as supplied settings. Distinct settings SHALL combine.
+
+#### Scenario: Reject duplicate geometry settings
+
+- **WHEN** a render command supplies `--width 0` and `--options '{"width":320}'`
+- **THEN** the CLI reports the conflicting flag and JSON option without workspace access or publication
+
+#### Scenario: Combine distinct settings
+
+- **WHEN** a command supplies `--width 320` and advanced JSON with algorithm and effects settings
+- **THEN** the shared service receives all those settings
+
+### Requirement: Complete admitted batch outcomes
+
+An admitted batch SHALL return one indexed outcome per submitted item in input order. Cancellation observed during the batch SHALL produce errors for every unstarted item and preserve earlier published artifacts. Cancellation before admission MAY fail the call without item outcomes.
+
+#### Scenario: Cancel after one published item
+
+- **WHEN** a batch publishes its first item and observes cancellation before its remaining items publish
+- **THEN** the response retains the first artifact and reports cancellation errors for all remaining indices
+- **AND** canceled items create no artifacts

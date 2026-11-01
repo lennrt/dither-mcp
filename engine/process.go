@@ -87,7 +87,7 @@ func validate(cfg Config, requireMaskImage bool) error {
 	if cfg.PixelScale < 0 || cfg.PixelScale > 256 {
 		return fmt.Errorf("pixel_scale must be in [0,256]")
 	}
-	if cfg.ResizeFilter != "" && cfg.ResizeFilter != "nearest" && cfg.ResizeFilter != "bilinear" {
+	if cfg.ResizeFilter != "" && cfg.ResizeFilter != "nearest" && cfg.ResizeFilter != "bilinear" && cfg.ResizeFilter != "area" {
 		return fmt.Errorf("unknown resize_filter %q", cfg.ResizeFilter)
 	}
 	if cfg.ColorSpace != "" && cfg.ColorSpace != "srgb" && cfg.ColorSpace != "linear-rgb" {
@@ -177,7 +177,13 @@ func process(ctx context.Context, img image.Image, cfg Config) (*image.NRGBA, er
 	}
 	scale := max(1, cfg.PixelScale)
 	gw, gh := (w+scale-1)/scale, (h+scale-1)/scale
-	out, err := resample(ctx, img, src, gw, gh, cfg.ResizeFilter == "nearest")
+	var out *image.NRGBA
+	var err error
+	if cfg.ResizeFilter == "area" {
+		out, err = resampleArea(ctx, img, src, gw, gh)
+	} else {
+		out, err = resample(ctx, img, src, gw, gh, cfg.ResizeFilter == "nearest")
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,160 @@
+{
+  "status": "local-checks-passed-with-documented-limitations",
+  "date": "2026-11-01",
+  "environment": {
+    "go": "go version go1.27.3 darwin/arm64",
+    "node": "v22.23.4",
+    "os": "darwin",
+    "arch": "arm64",
+    "pnpm": "11.25.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "openspec": "1.14.0",
+    "quint": "0.33.0"
+  },
+  "scope": "Ten distinct creative iteration, comparison handoff, reliability, and interchange improvements in the public tool. Separate private website excluded.",
+  "improvements": [
+    {
+      "id": 1,
+      "outcome": "Exact comparison-cell recipes",
+      "evidence": "Portable recipes across all eight sheet encoders replay as PNG against the pre-encoding processing reference. JPEG cross-cell blocks and sheet-wide GIF quantization may change decoded pixels."
+    },
+    {
+      "id": 2,
+      "outcome": "Area resize filter",
+      "evidence": "Exact integer coverage: half-alpha GIF boundary on both axes, 625 exact lattice geometries, crop/mask/pixel-scale integration and maximum numerator. Independent 1500-case rational oracle now has zero differences; original sampler fails new regressions."
+    },
+    {
+      "id": 3,
+      "outcome": "BMP export",
+      "evidence": "Decoded white-matte pixels, nonzero origins, bounded writer, cancellation, catalog discovery and no-clobber publication."
+    },
+    {
+      "id": 4,
+      "outcome": "Lossless TIFF export",
+      "evidence": "Exact decoded straight 8-bit RGBA, tif aliases, nonzero origins, byte limits, cancellation and PNG-only custom DPI."
+    },
+    {
+      "id": 5,
+      "outcome": "CLI option conflict rejection",
+      "evidence": "TestOptionsRejectExplicitFlagOverlap and TestOptionsComposeWithDistinctExplicitFlags; original overlap behavior fails regressions."
+    },
+    {
+      "id": 6,
+      "outcome": "Complete batch cancellation outcomes",
+      "evidence": "Private and public service tests preserve all indices and earlier artifacts; public regression passed 100 repetitions; old truncated-loop overlay fails."
+    },
+    {
+      "id": 7,
+      "outcome": "Discard studio edits",
+      "evidence": "Current host-input acceptance gates local restoration. Repeated paths, replacement/removed masks, host errors/cancellation, invalid arguments and fresh acceptance are checked through state and actual Go-backed AppBridge browser tests."
+    },
+    {
+      "id": 8,
+      "outcome": "Proportional custom exports",
+      "evidence": "Both axes, rounding, first-use initialization, hidden fields, changed accepted ratio, invalid blanks, mode reentry, unlocked values, host reset and export limits."
+    },
+    {
+      "id": 9,
+      "outcome": "Multiline preview shortcuts",
+      "evidence": "Ctrl/Cmd+Enter from custom colors and advanced JSON; invalid, pending and unsupported-host gating."
+    },
+    {
+      "id": 10,
+      "outcome": "Preserve active palette mode",
+      "evidence": "Actual browser case retains typed custom colors and advanced options when the selected tab is clicked."
+    }
+  ],
+  "commands_passed": [
+    "make spec-install",
+    "make verify",
+    "make fuzz",
+    "make spec-check",
+    "make ui-browser",
+    "make embedding-browser",
+    "openspec validate --all --strict --no-interactive --json"
+  ],
+  "counts": {
+    "ui_tests": 65,
+    "embedding_tests": 8,
+    "studio_browser_workflows": 24,
+    "embedding_browser_workflows": 12,
+    "openspec_items": 20,
+    "quint_models": 8,
+    "quint_run_tests": 160,
+    "simulation_traces": 88000,
+    "mutation_checks": 43
+  },
+  "independent_review": {
+    "participants_total": 10,
+    "worker_contexts": 9,
+    "worker_model_requested": "gpt-6.1-sol",
+    "coordinator_model": "fixed by harness; not changed by prompt",
+    "structure": "Three implementation contexts and six independent verification/review contexts; scheduled within three-worker concurrency limit.",
+    "repair": "One repair phase corrected stale docs and the ratio-lock lifecycle defect; independent browser checks confirmed the final fix.",
+    "follow_up": "Three new independent gpt-6.1-sol ultra contexts performed the requested adversarial audit, implemented scoped supported fixes, and reviewed each other\u2019s fixes."
+  },
+  "limits": [
+    "Local macOS arm64 and Chromium evidence; no hosted CI, native Safari/Firefox, screen-reader, all-host, release or deployment verification.",
+    "Area sampling uses display-space RGB from the existing 8-bit pipeline. Integer sums and half-up rounding are exact within admitted geometry; default bilinear output remains unchanged. Tests are not a universal refinement proof.",
+    "BMP flattens onto white. TIFF uses uncompressed straight 8-bit RGBA and codec-default72DPI. Custom DPI is PNG-only;32MiB artifact limit remains.",
+    "Recipes describe processing before output encoding; JPEG blocks and sheet-wide GIF quantization can change decoded sheet pixels relative to separately encoded cells.",
+    "Anonymous initial host notifications have no correlation ID. Hosts must pair them with the current input; overlapping identical arguments cannot be disambiguated. Explicit Apply obtains a correlated preview; source/mask hashes still guard image exports.",
+    "Finite models abstract paths, byte hashing, pixels, codecs and UI events; passing them does not prove machine-checked Go/UI refinement."
+  ],
+  "source_sha256": {
+    "docs/tool-schemas.json": "a2d2d2b515b837aa153e17be2eb0cbb98fb05005922cf1816664ddda67998b02",
+    "engine/encode.go": "f6e85f2c3d332acc4029a29c3389a9977da89517c302557a2d3699a5819c09d3",
+    "engine/fuzz_test.go": "db30a8c8d60e4909f951a09cecf07d61685029596ae7ee1fe0ca83d63c3077ec",
+    "engine/process.go": "40f04f07d3d34fb56b6ed2eb9e3f4b2e1adc2b21328b1ec825d46c0049ec99f4",
+    "engine/resample_area.go": "75d0aa4789fb98ff492582b7f6e007ce37b0104c32dfc67659dae6d05eb40c95",
+    "engine/resample_area_test.go": "0927427e8d095160e5f229ffe4eb23d8da1b6028d0e7773f8c3387801fc39e0c",
+    "internal/app/catalog.go": "4ccfab3cd95199d1974213196a5a1f9384cf0afca95f35493ddeb997605bf2c0",
+    "internal/app/service.go": "deab8802e4175985d4c1e35ea206313f967c2a4cc485c452ecbbdcd5c6431a6b",
+    "internal/cli/cli.go": "ce3f18fcbf703f80e11bf20c794cefd247fc545cd8f34f4b1f39d6b6d358199c",
+    "internal/mcpapp/studio.html": "4f63b681351ff4352ac616c0fa24eb4c11b4c3fb7c1aeb575c9482708f755dd1",
+    "spec/check.mjs": "bd2eac1c22637fce1a33b346df8bd2fc4410d2a97e0fb5c2b44b61d2e69238c2",
+    "ui/app.mjs": "cdf0306c9c7b396eb4879c8208b1aca6e9656cee58065c1d38b754f8565334a1",
+    "ui/browser-check.mjs": "3c083558080ceb28f5f4b900c84ae90af68c28e77c03a58dcd19c145d89cf379",
+    "ui/export-size.mjs": "8f64714a98b96daa28dbe51e1df04ba62df523d41bae4a233cd56af7909cfa1a",
+    "ui/state.mjs": "e9aeb623e3ab8b8923e81c7293894ca24ff8a801460e026846496cda72a3fd8e",
+    "ui/state.test.mjs": "8b6351c46f73a5f9476e92bc3bd8900f06e19a4835a2ecaffc7d58cb1888aa3a"
+  },
+  "adversarial_review": {
+    "reviewed_head": "bbacc54f1abf81e506bd6843366309aa7581bdb0",
+    "workers": 3,
+    "worker_model_requested": "gpt-6.1-sol",
+    "reasoning_requested": "ultra",
+    "findings": [
+      {
+        "severity": "P2",
+        "problem": "Floating area totals rounded exact alpha127.5 down to127 and erased the corresponding GIF pixel.",
+        "fix": "Bounded uint64 coverage and premultiplied totals, rounded half-up only at final byte conversion.",
+        "original_failure": "7x2 white source alpha rows [0,0,160,114,162,0,0] and [0,0,160,114,163,0,0], resized5x1: old alpha127/GIFtransparent; fixed alpha128/GIFopaque."
+      },
+      {
+        "severity": "P2",
+        "problem": "Discard after a repeated source path with a failed/canceled new host input could restore the prior input mask and settings.",
+        "fix": "Revoke restoration authority before every new input validation; require a preview accepted in the current input epoch through one shared state/UI predicate."
+      },
+      {
+        "severity": "P2",
+        "problem": "BMP/TIFF were advertised as outputs but missing MIME/alpha/representation roles.",
+        "fix": "Complete roles for both formats, preserving the original role order; enforce one nonempty role for every advertised output."
+      },
+      {
+        "severity": "documentation",
+        "problem": "Unqualified exact cell-pixel replay was broader than JPEG/GIF encoders can guarantee.",
+        "fix": "Specify pre-encoding processing recipes; recommend PNG/TIFF for full-alpha pixel comparisons; document JPEG blocks, GIF sheet palette and BMP matting."
+      }
+    ],
+    "independent_checks": [
+      "Before-fix Go overlays fail alpha/GIF and catalog regressions.",
+      "Original bundled AppBridge/Go browser reproduces old mask restoration; fixed failure and recovery controls verified.",
+      "Non-author engine/workflow/UI cross-reviews found no remaining supported finding in repaired scope.",
+      "Real stdio batch cancellation retains every index and prior committed artifact and leaves connection healthy.",
+      "Independent baseline-versus-current experiment confirms anonymous overlapping identical host results are a preexisting SDK correlation limitation."
+    ],
+    "screenshot": "assets/mcp-app-studio-input-error.png"
+  }
+}
