@@ -22,7 +22,7 @@ the current repository scope.
 
 ## Test coverage
 
-- Engine tests cover all 41 algorithms, deterministic seeds, palette membership, source alpha, and distinct pattern fingerprints. They check reference diffusion pixels, Bayer ranks, blue-noise ranks, and Hilbert traversal. They also check adjustment validation, mask/transparent diffusion barriers, cancellation, six encoder formats, and GIF palette fidelity. Sparse visible-pixel tests challenge missed extraction samples. Context-aware encoder tests cancel during scanning, training, mapping, and writes; six baseline hashes check unchanged successful output bytes.
+- Engine tests cover all 41 algorithms, deterministic seeds, palette membership, source alpha, and distinct pattern fingerprints. They check reference diffusion pixels, Bayer ranks, blue-noise ranks, and Hilbert traversal. They also check adjustment validation, mask/transparent diffusion barriers, cancellation, eight encoder formats, and GIF palette fidelity. Sparse visible-pixel tests challenge missed extraction samples. Context-aware encoder tests cancel during scanning, training, mapping, and writes; six baseline hashes check unchanged successful output bytes.
 - Filesystem and service tests cover traversal and URL rejection, symlink escapes, and named special files. They check two independent services that race for one destination, immutable destinations, and temporary-file cleanup. They also check argument validation, input/output budgets, canceled writes, and portable recipes with external masks.
 - Workflow tests cover algorithm and palette comparison cell pixels and metadata, partial batch success, versioned recipe replay, print plates, and PNG DPI CRCs. They check animation determinism, sheet frames, source-GIF background/disposal/timing/loop, and 12 fps timing quantization. They also check rendering with extracted palettes and bounded previews.
 - Favorites tests save and replay complete recipes across service and stdio sessions, race independent same-name saves, and reject invalid Unicode names, IDs, envelopes, symlinks, special files, oversized records and full directory scans. Discovery counts unavailable entries; direct loading remains available above its scan limit. State and browser tests check new-session discovery, masked/default recipe loading, malformed receipts, stale reads/previews and exclusive writes.
@@ -44,13 +44,13 @@ The embedding example has separate tests for its eight-tool allowlist, selected 
 
 ## Formal checks
 
-There are 59 OpenSpec requirements across six capability specifications and eleven
-implementation changes. Strict validation checks all seventeen items for structure
+There are 68 OpenSpec requirements across six capability specifications and fourteen
+implementation changes. Strict validation checks all twenty items for structure
 and scenario coverage. Eight Quint models cover artifact publication, quantization,
 palette discovery, normalization, MCP Apps interactions, guarded exports, look history,
 and persistent favorites:
 
-- Eight typechecks and 151 concrete model tests.
+- Eight typechecks and 155 concrete model tests.
 - 80,000 seeded safety traces, each with at most 30 transitions.
 - Eight completion schedules add 1,000 traces each, for 88,000 traces overall. Each requires a completion witness.
 - 42 mutations challenge output collisions, cancellation, histogram coverage/bounds/weighted sums, palette identity, pagination, normalization, stale previews/styles, explicit save authority, receipt validation, guarded export behavior, bounded fresh-preview history navigation, and persistent favorites with exact preview authority. The tests must detect every mutation.
@@ -67,6 +67,8 @@ Read [the model guide](../spec/README.md) for mappings between model requirement
 and Go regression tests.
 
 ## Local evidence
+
+[verification-2026-11-01.json](verification-2026-11-01.json) records the ten creative-workflow and export improvements, their checks, current source hashes, and limits. It includes comparison replay, area sampling, BMP/TIFF interchange, CLI conflicts, batch cancellation, and studio editing/export controls.
 
 [verification-2026-10-18.json](verification-2026-10-18.json) records named favorites, random styles, studio recipes, full-source color extraction, and earlier request-reliability verification outcomes. It includes the environment and performance tradeoffs. The earlier [verification.json](verification.json) retains historical host and showcase checks. These are local snapshots, not assertions that a hosted CI system passed. Rerun the commands on your deployment platform before release.
 

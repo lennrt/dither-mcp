@@ -23,12 +23,18 @@ The service normalizes supported orientation and color metadata before cropping,
 |---|---|---|
 | PNG | `png` | Preserve partial alpha. Optional PNG DPI metadata does not change pixel dimensions. |
 | JPEG | `jpeg` or `jpg` | Composite against white. JPEG is lossy. |
+| BMP | `bmp` | Composite against white. Store opaque 24-bit RGB without compression. |
+| TIFF | `tiff` or `tif` | Preserve unassociated 8-bit RGBA without compression. |
 | GIF | `gif` | Use binary alpha and at most 256 palette entries. Alpha below 128 becomes transparent. |
 | SVG | `svg` | Preserve partial alpha in generated raster-derived pixel geometry. |
 | PBM | `pbm` | Composite against white and convert to monochrome. |
 | ASCII | `ascii` or `txt` | Composite against white and convert luminance to a character ramp. |
 
-The service does not encode WebP, BMP, or TIFF. An explicit `format` overrides the output extension without renaming the path. Use a new destination for every output. Existing destinations always cause an error.
+The service does not encode WebP. An explicit `format` overrides the output extension without renaming the path. Use a new destination for every output. Existing destinations always cause an error.
+
+Uncompressed BMP and TIFF exports can exceed the 32 MiB artifact limit at
+otherwise valid dimensions. Oversized encoding fails without publishing an
+artifact. TIFF uses the codec's default 72 DPI tags. Custom DPI remains PNG-only.
 
 ```sh
 ./bin/dither-mcp render --root /absolute/path/to/images \

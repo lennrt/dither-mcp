@@ -134,7 +134,7 @@ type PrintCapabilities struct {
 
 func (s *Service) Catalog() CatalogResult {
 	input := []string{"png", "jpeg", "gif", "webp", "bmp", "tiff"}
-	output := []string{"png", "jpeg", "gif", "svg", "pbm", "ascii"}
+	output := engine.Formats()
 	effects := []string{"source", "wave", "orbit", "pulse", "noise", "palette-cycle"}
 	palettes := engine.Palettes()
 	return CatalogResult{

@@ -35,7 +35,7 @@ func TestEncodeContextPreservesBytes(t *testing.T) {
 		"pbm":   "7b8e2a7472e1af668bbb65b9e7bc217bef943e938c15cc2ee52867b44864f4b0",
 		"ascii": "1816780d139cb2914c40087eb288d380ad06e756950a4924c7fc5eb5f5c349cb",
 	}
-	for _, format := range Formats() {
+	for format := range want {
 		t.Run(format, func(t *testing.T) {
 			var old, current bytes.Buffer
 			if err := Encode(format, &old, encodingFixture()); err != nil {

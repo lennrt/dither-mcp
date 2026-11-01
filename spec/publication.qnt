@@ -128,6 +128,12 @@ module publication {
   run failedBatchItemKeepsEarlierOutputTest = init
     .then(admit(0, 1, true, true)).then(render(0)).then(encode(0)).then(publish(0))
     .then(admit(1, 0, false, true)).expect(safety and s.published == Set(0) and s.stage.get(1) == "failed")
+  // Receipt cardinality and index ordering are checked by Go service tests.
+  // This abstraction checks that canceling an unstarted batch item preserves a commit.
+  run canceledBatchKeepsEarlierOutputTest = init
+    .then(admit(0, 1, true, true)).then(render(0)).then(encode(0)).then(publish(0))
+    .then(cancel(1)).expect(safety and s.published == Set(0) and s.stage.get(1) == "cancelled")
+    .then(admit(1, 0, true, true).fail())
   run cancelPartialEncodeTest = init.then(admit(0, 1, true, true)).then(render(0))
     .then(beginEncode(0)).then(encodeRow(0)).then(cancel(0))
     .expect(safety and s.encodedRows.get(0) == 1 and not(s.completeBytes.contains(0)))

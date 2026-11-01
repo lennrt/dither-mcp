@@ -1,4 +1,6 @@
 // Revisions abstract user edits to source, palette, options, and mask settings.
+// Local discard restores the accepted settings identity only while idle.
+// Discard of an invalidated preview has no save-authority effect and is abstracted as stutter.
 // Generated style identity is recorded separately in accepted save authority.
 // Requests may finish after cancellation or an edit. Only current results count.
 // Publication details belong to publication.qnt and concrete service tests.
@@ -38,6 +40,10 @@ module mcp_apps {
   action edit = all {
     not(s.saving), s.revision < 3,
     s' = { revision: s.revision + 1, ...s }
+  }
+  action discardDraft = all {
+    s.pending == -1, not(s.saving), s.accepted >= 0,
+    s' = { revision: s.acceptedRevision, ...s }
   }
   action enterOutput(present) = all {
     not(s.saving), s' = { output: present, ...s }
@@ -177,7 +183,7 @@ module mcp_apps {
     nondet id = Requests.oneOf()
     nondet flag = Set(false, true).oneOf()
     any {
-      connect(flag), edit, enterOutput(flag), enterRecipeOutput(flag), chooseExportWidth(id + 1), preview, receive(id, flag),
+      connect(flag), edit, discardDraft, enterOutput(flag), enterRecipeOutput(flag), chooseExportWidth(id + 1), preview, receive(id, flag),
       extract, receiveExtraction(id, flag), random, receiveStyle(id, flag),
       cancel, save(flag), saveRecipe(flag), finishSave(flag), finishRecipeSave(flag, true), finishRecipeSave(flag, false), stutter
     }
@@ -241,6 +247,12 @@ module mcp_apps {
   run cannotSaveWithoutDestinationTest = init.then(connect(true)).then(preview).then(receive(0, true))
     .then(save(true).fail())
   run cannotSaveBeforePreviewTest = initSave.then(save(true).fail())
+  run discardDraftRestoresAcceptedSettingsTest = initSave.then(preview).then(receive(0, true))
+    .then(edit).expect(safety and not(canSave)).then(discardDraft).expect(safety and canSave)
+  run discardCannotRestoreInvalidatedPreviewTest = initSave.then(preview).then(receive(0, true))
+    .then(preview).then(receive(1, false)).expect(safety and not(canSave)).then(discardDraft.fail())
+  run discardCannotInterruptPendingWorkTest = initSave.then(preview).then(receive(0, true))
+    .then(preview).then(discardDraft.fail())
   run cannotSaveDirtyControlsTest = initSave.then(preview).then(receive(0, true)).then(edit)
     .expect(safety and not(canSave)).then(save(true).fail())
   run editDuringPreviewDiscardsResultTest = initSave.then(preview).then(edit).then(receive(0, true))

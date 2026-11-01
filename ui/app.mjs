@@ -1,4 +1,5 @@
 import { App, PostMessageTransport, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
+import { proportionalSize } from './export-size.mjs';
 import { StudioState, clone, editOption, exportDimensions, parseColors, studioRequest } from './state.mjs';
 
 const app = new App({ name: 'Dither studio', version: '0.1.0' }, {}, { autoResize: true });
@@ -13,6 +14,8 @@ let historyChoice = '';
 let lastHistoryActive = null;
 let favoritesAutoPending = true;
 let favoriteChoice = '';
+let exportPreviewGeometry = '';
+let customExportInitialized = false;
 
 const ranges = [
   ['strength', 'Dither', 0, 2, .05, 1], ['brightness', 'Brightness', -1, 1, .05, 0],
@@ -131,6 +134,7 @@ function render(sync = false) {
   renderHistory(); renderFavorites();
   $('settings').disabled = !state.draft || state.saving;
   $('apply').disabled = !state.canPreview;
+  $('discard').disabled = !state.rendered || !!state.hostPending || state.busy || state.draft?.input !== state.rendered.request.input || !(state.dirty || jsonDirty || customDirty);
   $('extract').disabled = !state.canPreview;
   $('random-style').disabled = !state.canRandom;
   const exportValid = renderExport();
@@ -167,6 +171,16 @@ function renderExport() {
   $('custom-size').hidden = $('export-size').value !== 'custom';
   if (state.rendered) {
     const value = state.rendered;
+    const geometry = `${value.width}x${value.height}`;
+    if (exportPreviewGeometry && geometry !== exportPreviewGeometry && $('export-lock').checked) {
+      // Preserve incomplete or invalid fields for correction instead of fixing them silently.
+      try {
+        const current = exportDimensions(value, { ...exportSelection(), mode: 'custom' });
+        const size = proportionalSize(value, 'width', current.width);
+        if (size) $('export-height').value = size.height;
+      } catch { /* Existing export validation reports the unchanged invalid inputs. */ }
+    }
+    exportPreviewGeometry = geometry;
     $('size-preview').textContent = `Preview · ${value.width} × ${value.height} px`;
     $('size-source').textContent = `Source · ${value.sourceWidth} × ${value.sourceHeight} px`;
     for (const axis of ['width', 'height']) $('export-' + axis).max = value.exportLimits['max_' + axis];
@@ -213,9 +227,13 @@ document.querySelectorAll('[data-option]').forEach((element) => element.addEvent
   } catch (error) { state.fail(error); syncControls(); }
   render();
 }));
+$('discard').addEventListener('click', () => {
+  if (state.discardEdits()) { jsonDirty = false; customDirty = false; render(true); }
+});
 $('palette-search').addEventListener('input', renderPalettes);
 $('palette').addEventListener('change', () => { updateDraft((draft) => { draft.palette = $('palette').value; delete draft.colors; }); renderSwatches(); });
 document.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => {
+  if (button.dataset.mode === paletteMode()) return;
   customDirty = false;
   updateDraft((draft) => {
     if (button.dataset.mode === 'custom') { draft.colors = state.palettes.find((palette) => palette.id === draft.palette)?.colors?.slice() ?? ['#000000', '#FFFFFF']; delete draft.palette; }
@@ -346,7 +364,23 @@ $('extract').addEventListener('click', async () => {
 $('cancel').addEventListener('click', () => { historyChoice = state.historyActive === null ? '' : String(state.historyActive); const kind = state.pending?.kind; abortController?.abort(); state.cancel(kind === 'favorites-list' ? 'Favorite refresh cancelled.' : kind === 'extract' ? 'Color extraction cancelled. Your settings were kept.' : kind === 'random' ? 'Random style cancelled. Your settings were kept.' : undefined); render(); });
 $('output').addEventListener('input', () => render());
 $('recipe-output').addEventListener('input', () => render());
-for (const id of ['export-size', 'export-width', 'export-height']) $(id).addEventListener('input', () => render());
+$('export-size').addEventListener('input', () => {
+  if ($('export-size').value === 'custom' && state.rendered && !customExportInitialized) {
+    for (const axis of ['width', 'height']) $('export-' + axis).value = state.rendered[axis];
+    customExportInitialized = true;
+  }
+  render();
+});
+for (const axis of ['width', 'height']) $('export-' + axis).addEventListener('input', () => {
+  if ($('export-lock').checked && state.rendered) {
+    const size = proportionalSize(state.rendered, axis, Number($('export-' + axis).value));
+    if (size) { const other = axis === 'width' ? 'height' : 'width'; $('export-' + other).value = size[other]; }
+  }
+  render();
+});
+$('export-lock').addEventListener('change', () => {
+  if ($('export-lock').checked) $('export-width').dispatchEvent(new Event('input'));
+});
 $('save').addEventListener('click', async (event) => {
   event.preventDefault();
   if (!state.canSave || jsonDirty || customDirty) return;
@@ -371,7 +405,10 @@ $('save-recipe').addEventListener('click', async () => {
 for (const [form, button] of [['controls', 'apply'], ['save-form', 'save'], ['recipe-form', 'save-recipe'], ['favorite-form', 'favorite-save']]) {
   $(form).addEventListener('submit', (event) => event.preventDefault());
   $(form).addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && ['options-json', 'custom-colors'].includes(event.target.id)) {
+      event.preventDefault();
+      $('apply').click();
+    } else if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
       event.preventDefault();
       $(event.target.id === 'extract-count' ? 'extract' : button).click();
     }
@@ -403,8 +440,8 @@ function applyContext(context) {
 
 // Lifecycle handlers are registered before connecting so initial data cannot race them.
 app.ontoolinput = ({ arguments: arguments_ }) => {
-  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null; favoriteChoice = ''; favoritesAutoPending = true;
-  $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = '';
+  abortController?.abort(); jsonDirty = false; customDirty = false; historyChoice = ''; lastHistoryActive = null; favoriteChoice = ''; favoritesAutoPending = true; exportPreviewGeometry = ''; customExportInitialized = false;
+  $('export-size').value = 'preview'; $('export-width').value = ''; $('export-height').value = ''; $('export-lock').checked = true;
   try { state.setInput(arguments_); } catch (error) { state.fail(error); }
   render(true);
 };

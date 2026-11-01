@@ -34,8 +34,13 @@ coordinates refer to the reduced grid. A crop must fit wholly within the input,
 relative to `Bounds().Min`.
 
 Default resizing uses bilinear interpolation that preserves alpha correctly.
-The `nearest` filter is also available. Bilinear downsampling balances speed and
-quality. It does not use area or Lanczos resampling.
+The `nearest` filter preserves hard pixel edges. The `area` filter averages exact
+source-pixel coverage in each output footprint, using premultiplied alpha. It
+reduces aliasing when shrinking fine patterns. On enlarged axes, box coverage
+produces piecewise constant regions with blended boundary pixels. Mixed-axis
+resizing uses the same rule independently on each axis. Area sampling uses
+display-space RGB, not linear-light averaging. Bilinear remains the default.
+No filter uses Lanczos resampling.
 
 Neutral brightness is 0. Neutral contrast, saturation, gamma, and strength are
 1. Neutral threshold is 0.5. Optional float pointers distinguish omission from an
@@ -287,3 +292,13 @@ offset that cost by reducing the median-cut input to color-space bins.
 Common Go image types use direct pixel readers to avoid per-pixel interface
 allocations. Diffusion storage uses rolling rows instead of a full floating-point
 image.
+
+## Interchange exports
+
+BMP export composites against white and writes opaque 24-bit RGB. TIFF export
+preserves unassociated 8-bit RGBA values without compression. The `tif` extension
+selects TIFF. Both encoders use the existing output budget and context-aware
+writer. TIFF copies straight-alpha pixels with row cancellation checks. Encoding
+observes cancellation through the output writer.
+The codec supplies default 72 DPI tags. These tags do not describe calibrated
+physical dimensions. The service accepts custom DPI only for PNG.

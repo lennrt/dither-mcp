@@ -6,11 +6,11 @@
   },
   "seed": "20261003",
   "source_sha256": {
-    "publication.qnt": "71c86b97da500d36ac9f917f36198214716e75181b31a10488ce4c4f2c4d254e",
+    "publication.qnt": "abd9e60f2e7b85d9bfe112f4f38f129a679b4fb81f8f9a62aab0ca86daa41140",
     "quantization.qnt": "571bbcf2c71b72e3e465abbfe27cf290e4b5957dfd9a0f7203bfaed1952af362",
     "palette_discovery.qnt": "54697f37b5d3d3ebbc3bc5e68f94ef9c5dc970e23238251db5e46a36fe512efd",
     "normalization.qnt": "911018c49955f50c37af5d8278f1a1482245b68c869040de352c0f8eacf58d57",
-    "mcp_apps.qnt": "edad4430435486c6414453dcc8f118489767f5199a09ef48b721b9ae6cc7a1fc",
+    "mcp_apps.qnt": "761381cccf312afac1ae45dc9ca7ffe0099698d765baa9a095e55ea18dce4082",
     "studio_export.qnt": "8bd70e9f542f6428e236efe7fa9ff8a1b855c70e78d56f34f83c76a67e6bba6b",
     "style_history.qnt": "1ae7b890492f52a34d52a1446ddb79ca44044d61e1906947c160e7a7c06641f1",
     "favorites.qnt": "425ccb7cd24acebd0bdc42b808642d35828b39b3b60387ae3d1a3d7e5fd77143"
@@ -27,8 +27,8 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 637,
-      "passed": 17
+      "duration_ms": 754,
+      "passed": 20
     },
     {
       "tool": "quint",
@@ -38,7 +38,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 851
+      "duration_ms": 1224
     },
     {
       "tool": "quint",
@@ -49,8 +49,8 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 539,
-      "passed": 13
+      "duration_ms": 1147,
+      "passed": 14
     },
     {
       "tool": "quint",
@@ -70,7 +70,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 16073,
+      "duration_ms": 20107,
       "witnesses": [
         {
           "name": "completed",
@@ -97,7 +97,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 635
+      "duration_ms": 736
     },
     {
       "tool": "quint",
@@ -108,7 +108,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 566,
+      "duration_ms": 796,
       "passed": 16
     },
     {
@@ -128,7 +128,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 6057,
+      "duration_ms": 10501,
       "witnesses": [
         {
           "name": "bothComplete",
@@ -150,7 +150,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 520
+      "duration_ms": 862
     },
     {
       "tool": "quint",
@@ -161,7 +161,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 525,
+      "duration_ms": 688,
       "passed": 13
     },
     {
@@ -183,7 +183,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 14937,
+      "duration_ms": 16611,
       "witnesses": [
         {
           "name": "filteredNonempty",
@@ -215,7 +215,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 518
+      "duration_ms": 920
     },
     {
       "tool": "quint",
@@ -226,7 +226,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 479,
+      "duration_ms": 726,
       "passed": 16
     },
     {
@@ -248,7 +248,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 19523,
+      "duration_ms": 26552,
       "witnesses": [
         {
           "name": "normalizedComplete",
@@ -280,7 +280,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 742
+      "duration_ms": 903
     },
     {
       "tool": "quint",
@@ -291,8 +291,8 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 710,
-      "passed": 44
+      "duration_ms": 886,
+      "passed": 47
     },
     {
       "tool": "quint",
@@ -316,41 +316,41 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 17735,
+      "duration_ms": 27371,
       "witnesses": [
         {
           "name": "previewAccepted",
-          "count": 268,
+          "count": 230,
           "samples": 10000
         },
         {
           "name": "staleDiscarded",
-          "count": 4064,
+          "count": 4138,
           "samples": 10000
         },
         {
           "name": "canceledRequest",
-          "count": 4491,
+          "count": 4476,
           "samples": 10000
         },
         {
           "name": "savedCurrent",
-          "count": 23,
+          "count": 20,
           "samples": 10000
         },
         {
           "name": "paletteExtracted",
-          "count": 132,
+          "count": 129,
           "samples": 10000
         },
         {
           "name": "recipeSaved",
-          "count": 4,
+          "count": 5,
           "samples": 10000
         },
         {
           "name": "randomAccepted",
-          "count": 34,
+          "count": 38,
           "samples": 10000
         }
       ]
@@ -363,7 +363,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 497
+      "duration_ms": 794
     },
     {
       "tool": "quint",
@@ -374,7 +374,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 465,
+      "duration_ms": 645,
       "passed": 17
     },
     {
@@ -396,7 +396,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 19508,
+      "duration_ms": 27524,
       "witnesses": [
         {
           "name": "sourceSizedExport",
@@ -428,7 +428,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 758
+      "duration_ms": 5331
     },
     {
       "tool": "quint",
@@ -439,7 +439,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 680,
+      "duration_ms": 1589,
       "passed": 14
     },
     {
@@ -461,7 +461,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 15709,
+      "duration_ms": 33224,
       "witnesses": [
         {
           "name": "hasHistory",
@@ -493,7 +493,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 555
+      "duration_ms": 1109
     },
     {
       "tool": "quint",
@@ -504,7 +504,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 563,
+      "duration_ms": 1006,
       "passed": 18
     },
     {
@@ -526,7 +526,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 19241,
+      "duration_ms": 21876,
       "witnesses": [
         {
           "name": "persistent",
@@ -567,7 +567,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1415,
+      "duration_ms": 2065,
       "witnesses": [
         {
           "name": "bothComplete",
@@ -594,7 +594,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1245,
+      "duration_ms": 1546,
       "witnesses": [
         {
           "name": "completeTraversal",
@@ -621,7 +621,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1485,
+      "duration_ms": 2465,
       "witnesses": [
         {
           "name": "normalizedComplete",
@@ -648,7 +648,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1224,
+      "duration_ms": 2406,
       "witnesses": [
         {
           "name": "savedCurrent",
@@ -675,7 +675,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1304,
+      "duration_ms": 1749,
       "witnesses": [
         {
           "name": "recipeSaved",
@@ -703,7 +703,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1266,
+      "duration_ms": 1493,
       "witnesses": [
         {
           "name": "sourceSizedExport",
@@ -735,7 +735,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 1847,
+      "duration_ms": 2283,
       "witnesses": [
         {
           "name": "historySaved",
@@ -762,7 +762,7 @@
       ],
       "status": 0,
       "expected": 0,
-      "duration_ms": 983,
+      "duration_ms": 1576,
       "witnesses": [
         {
           "name": "favoriteLoaded",
@@ -780,7 +780,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 562
+      "duration_ms": 942
     },
     {
       "tool": "quint",
@@ -791,7 +791,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 562
+      "duration_ms": 816
     },
     {
       "tool": "quint",
@@ -802,7 +802,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 561
+      "duration_ms": 1065
     },
     {
       "tool": "quint",
@@ -813,7 +813,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 556
+      "duration_ms": 785
     },
     {
       "tool": "quint",
@@ -824,7 +824,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 575
+      "duration_ms": 768
     },
     {
       "tool": "quint",
@@ -835,7 +835,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 579
+      "duration_ms": 741
     },
     {
       "tool": "quint",
@@ -846,7 +846,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 607
+      "duration_ms": 730
     },
     {
       "tool": "quint",
@@ -857,7 +857,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 607
+      "duration_ms": 704
     },
     {
       "tool": "quint",
@@ -868,7 +868,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 696
+      "duration_ms": 816
     },
     {
       "tool": "quint",
@@ -879,7 +879,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 669
+      "duration_ms": 793
     },
     {
       "tool": "quint",
@@ -890,7 +890,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 659
+      "duration_ms": 790
     },
     {
       "tool": "quint",
@@ -901,13 +901,46 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 666
+      "duration_ms": 893
     },
     {
       "tool": "quint",
       "args": [
         "test",
         "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 827
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 963
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of style_history.qnt>",
+        "--backend=typescript"
+      ],
+      "status": 1,
+      "expected": 1,
+      "duration_ms": 897
+    },
+    {
+      "tool": "quint",
+      "args": [
+        "test",
+        "<temporary mutation of publication.qnt>",
         "--backend=typescript"
       ],
       "status": 1,
@@ -918,45 +951,12 @@
       "tool": "quint",
       "args": [
         "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 667
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of style_history.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 634
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
         "<temporary mutation of publication.qnt>",
         "--backend=typescript"
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 506
-    },
-    {
-      "tool": "quint",
-      "args": [
-        "test",
-        "<temporary mutation of publication.qnt>",
-        "--backend=typescript"
-      ],
-      "status": 1,
-      "expected": 1,
-      "duration_ms": 482
+      "duration_ms": 624
     },
     {
       "tool": "quint",
@@ -967,7 +967,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 560
+      "duration_ms": 684
     },
     {
       "tool": "quint",
@@ -978,7 +978,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 566
+      "duration_ms": 710
     },
     {
       "tool": "quint",
@@ -989,7 +989,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 569
+      "duration_ms": 690
     },
     {
       "tool": "quint",
@@ -1000,7 +1000,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 545
+      "duration_ms": 688
     },
     {
       "tool": "quint",
@@ -1011,7 +1011,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 567
+      "duration_ms": 681
     },
     {
       "tool": "quint",
@@ -1022,7 +1022,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 523
+      "duration_ms": 622
     },
     {
       "tool": "quint",
@@ -1033,7 +1033,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 500
+      "duration_ms": 684
     },
     {
       "tool": "quint",
@@ -1044,7 +1044,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 707
+      "duration_ms": 1168
     },
     {
       "tool": "quint",
@@ -1055,7 +1055,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 752
+      "duration_ms": 1284
     },
     {
       "tool": "quint",
@@ -1066,7 +1066,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 773
+      "duration_ms": 983
     },
     {
       "tool": "quint",
@@ -1077,7 +1077,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 743
+      "duration_ms": 2157
     },
     {
       "tool": "quint",
@@ -1088,7 +1088,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 782
+      "duration_ms": 2842
     },
     {
       "tool": "quint",
@@ -1099,7 +1099,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 763
+      "duration_ms": 1227
     },
     {
       "tool": "quint",
@@ -1110,7 +1110,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 819
+      "duration_ms": 1224
     },
     {
       "tool": "quint",
@@ -1121,7 +1121,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 825
+      "duration_ms": 998
     },
     {
       "tool": "quint",
@@ -1132,7 +1132,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 784
+      "duration_ms": 1153
     },
     {
       "tool": "quint",
@@ -1143,7 +1143,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 868
+      "duration_ms": 1018
     },
     {
       "tool": "quint",
@@ -1154,7 +1154,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 757
+      "duration_ms": 657
     },
     {
       "tool": "quint",
@@ -1165,7 +1165,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 569
+      "duration_ms": 661
     },
     {
       "tool": "quint",
@@ -1176,7 +1176,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 481
+      "duration_ms": 669
     },
     {
       "tool": "quint",
@@ -1187,7 +1187,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 493
+      "duration_ms": 656
     },
     {
       "tool": "quint",
@@ -1198,7 +1198,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 492
+      "duration_ms": 594
     },
     {
       "tool": "quint",
@@ -1209,7 +1209,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 542
+      "duration_ms": 603
     },
     {
       "tool": "quint",
@@ -1220,7 +1220,7 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 917
+      "duration_ms": 607
     },
     {
       "tool": "quint",
@@ -1231,13 +1231,13 @@
       ],
       "status": 1,
       "expected": 1,
-      "duration_ms": 517
+      "duration_ms": 592
     }
   ],
   "totals": {
-    "openspec_items": 17,
+    "openspec_items": 20,
     "quint_models": 8,
-    "quint_run_tests": 151,
+    "quint_run_tests": 155,
     "simulation_traces": 88000,
     "mutation_checks": 42
   }

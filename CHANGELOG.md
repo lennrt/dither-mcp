@@ -1,5 +1,17 @@
 # Changes
 
+## Creative workflow handoffs and export controls
+
+- Return a complete recipe for each comparison cell, including actual dimensions.
+- Add alpha-correct area resizing for coverage-based downsampling.
+- Add opaque BMP output with a white matte and lossless RGBA TIFF output.
+- Reject conflicting CLI flags and `--options` fields before processing.
+- Preserve one indexed result per batch item after cancellation.
+- Restore accepted studio settings with Discard edits, including invalid JSON drafts.
+- Seed custom export sizes and optionally keep the accepted preview's aspect ratio.
+- Apply previews with Ctrl+Enter or Cmd+Enter from studio textareas.
+- Preserve custom colors when selecting the already-active Custom colors tab.
+
 ## Studio history and undo
 
 - Keep the 20 most recently used accepted preview settings, including the

@@ -466,11 +466,14 @@ func outputFormat(q RenderRequest) (string, error) {
 	if f == "jpg" {
 		f = "jpeg"
 	}
+	if f == "tif" {
+		f = "tiff"
+	}
 	if f == "txt" {
 		f = "ascii"
 	}
 	switch f {
-	case "png", "jpeg", "gif", "svg", "pbm", "ascii":
+	case "png", "jpeg", "gif", "svg", "pbm", "ascii", "bmp", "tiff":
 		return f, nil
 	default:
 		return "", fmt.Errorf("unsupported output format %q", f)
@@ -590,7 +593,9 @@ func (s *Service) batch(ctx context.Context, q BatchRequest) (BatchResult, error
 	r := BatchResult{Items: make([]BatchItem, 0, len(q.Items))}
 	for i, item := range q.Items {
 		if err := ctx.Err(); err != nil {
-			r.Items = append(r.Items, BatchItem{Index: i, Error: err.Error()})
+			for j := i; j < len(q.Items); j++ {
+				r.Items = append(r.Items, BatchItem{Index: j, Error: err.Error()})
+			}
 			break
 		}
 		a, err := s.render(ctx, item)
@@ -674,9 +679,13 @@ func (s *Service) compare(ctx context.Context, q CompareRequest) (CompareResult,
 		}
 		x, y := (i%q.Columns)*w, (i/q.Columns)*h
 		draw.Draw(sheet, image.Rect(x, y, x+w, y+h), out, image.Point{}, draw.Src)
-		cell := Cell{Algorithm: c.Algorithm, X: x, Y: y, Width: w, Height: h}
+		cellRecipe := r
+		cellRecipe.Options.Algorithm = c.Algorithm
+		cellRecipe.Options.Width, cellRecipe.Options.Height = w, h
+		cell := Cell{Algorithm: c.Algorithm, X: x, Y: y, Width: w, Height: h, Recipe: cellRecipe}
 		if paletteMode {
 			cell.Palette = id
+			cell.Recipe.Palette, cell.Recipe.Colors = id, nil
 		}
 		result.Cells = append(result.Cells, cell)
 	}

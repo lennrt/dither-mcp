@@ -13,10 +13,13 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/tiff"
 )
 
 // Formats lists supported export formats.
-func Formats() []string { return []string{"png", "jpeg", "gif", "svg", "pbm", "ascii"} }
+func Formats() []string { return []string{"png", "jpeg", "gif", "svg", "pbm", "ascii", "bmp", "tiff"} }
 
 func encode(ctx context.Context, format string, w io.Writer, img image.Image) (err error) {
 	if ctx == nil {
@@ -40,7 +43,7 @@ func encode(ctx context.Context, format string, w io.Writer, img image.Image) (e
 	switch format {
 	case "png":
 		return png.Encode(w, img)
-	case "jpeg", "jpg":
+	case "jpeg", "jpg", "bmp":
 		opaque := image.NewRGBA(image.Rect(0, 0, img.Bounds().Dx(), img.Bounds().Dy()))
 		white := image.NewUniform(color.White)
 		for y := 0; y < opaque.Bounds().Dy(); y++ {
@@ -54,7 +57,27 @@ func encode(ctx context.Context, format string, w io.Writer, img image.Image) (e
 		if err := ctx.Err(); err != nil {
 			return err
 		}
+		if format == "bmp" {
+			return bmp.Encode(w, opaque)
+		}
 		return jpeg.Encode(w, opaque, &jpeg.Options{Quality: 95})
+	case "tiff", "tif":
+		// Copy unassociated channels explicitly. The generic TIFF path premultiplies.
+		bounds := img.Bounds()
+		straight := image.NewNRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
+		read := pixelReader(img)
+		for y := 0; y < bounds.Dy(); y++ {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			for x := 0; x < bounds.Dx(); x++ {
+				straight.SetNRGBA(x, y, read(bounds.Min.X+x, bounds.Min.Y+y))
+			}
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		return tiff.Encode(w, straight, nil)
 	case "gif":
 		p, err := PalettizeContext(ctx, img)
 		if err != nil {
@@ -302,6 +325,8 @@ func FormatFromExtension(extension string) string {
 		return "jpeg"
 	case "txt":
 		return "ascii"
+	case "tif":
+		return "tiff"
 	default:
 		return e
 	}

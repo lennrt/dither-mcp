@@ -44,7 +44,7 @@ type RenderRequest struct {
 	MaskInput            string        `json:"mask_input,omitempty" jsonschema:"Read and normalize this local mask relative to the workspace. EXIF orientation and supported color declarations apply before luminance times alpha >= 0.5 selects pixels on the reduced grid."`
 	ExpectedSourceSHA256 string        `json:"expected_source_sha256,omitempty" jsonschema:"Require this 64-digit hexadecimal SHA256 to match the exact source bytes processed. Copy source_sha256 from dither_studio to guard an export. A mismatch returns source_changed and creates no output. Omit to render the current source."`
 	ExpectedMaskSHA256   string        `json:"expected_mask_sha256,omitempty" jsonschema:"Require this 64-digit hexadecimal SHA256 to match the exact mask bytes processed. Copy mask_sha256 from dither_studio. Requires mask_input. A mismatch returns mask_changed and creates no output."`
-	Format               string        `json:"format,omitempty" jsonschema:"Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."`
+	Format               string        `json:"format,omitempty" jsonschema:"Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."`
 	DPI                  int           `json:"dpi,omitempty" jsonschema:"Set PNG print metadata from 36 through 2400 DPI. Omission or zero leaves metadata unspecified. Animation and video require zero."`
 }
 type CompareRequest struct {
@@ -107,6 +107,7 @@ type CompareResult struct {
 	Cells    []Cell   `json:"cells"`
 }
 type Cell struct {
+	Recipe    Recipe `json:"recipe"`
 	Algorithm string `json:"algorithm"`
 	Palette   string `json:"palette,omitempty"`
 	X         int    `json:"x"`

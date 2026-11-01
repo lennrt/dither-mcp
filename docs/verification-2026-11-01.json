@@ -1,0 +1,117 @@
+{
+  "status": "local-checks-passed-with-documented-limitations",
+  "date": "2026-11-01",
+  "environment": {
+    "go": "go version go1.27.3 darwin/arm64",
+    "node": "v22.23.4",
+    "os": "darwin",
+    "arch": "arm64",
+    "pnpm": "11.25.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "openspec": "1.14.0",
+    "quint": "0.33.0"
+  },
+  "scope": "Ten distinct creative iteration, comparison handoff, reliability, and interchange improvements in the public tool. Separate private website excluded.",
+  "improvements": [
+    {
+      "id": 1,
+      "outcome": "Exact comparison-cell recipes",
+      "evidence": "TestComparisonCellRecipesReplayPixels: save/load/render every candidate and compare decoded cell pixels."
+    },
+    {
+      "id": 2,
+      "outcome": "Area resize filter",
+      "evidence": "Fractional coverage, alpha, crop, nonzero origins, mixed axes, cancellation; independent 1500-case rational oracle within one channel level."
+    },
+    {
+      "id": 3,
+      "outcome": "BMP export",
+      "evidence": "Decoded white-matte pixels, nonzero origins, bounded writer, cancellation, catalog discovery and no-clobber publication."
+    },
+    {
+      "id": 4,
+      "outcome": "Lossless TIFF export",
+      "evidence": "Exact decoded straight 8-bit RGBA, tif aliases, nonzero origins, byte limits, cancellation and PNG-only custom DPI."
+    },
+    {
+      "id": 5,
+      "outcome": "CLI option conflict rejection",
+      "evidence": "TestOptionsRejectExplicitFlagOverlap and TestOptionsComposeWithDistinctExplicitFlags; original overlap behavior fails regressions."
+    },
+    {
+      "id": 6,
+      "outcome": "Complete batch cancellation outcomes",
+      "evidence": "Private and public service tests preserve all indices and earlier artifacts; public regression passed 100 repetitions; old truncated-loop overlay fails."
+    },
+    {
+      "id": 7,
+      "outcome": "Discard studio edits",
+      "evidence": "State, browser and Quint tests preserve accepted settings without reviving invalid preview authority; bad revival mutation fails."
+    },
+    {
+      "id": 8,
+      "outcome": "Proportional custom exports",
+      "evidence": "Both axes, rounding, first-use initialization, hidden fields, changed accepted ratio, invalid blanks, mode reentry, unlocked values, host reset and export limits."
+    },
+    {
+      "id": 9,
+      "outcome": "Multiline preview shortcuts",
+      "evidence": "Ctrl/Cmd+Enter from custom colors and advanced JSON; invalid, pending and unsupported-host gating."
+    },
+    {
+      "id": 10,
+      "outcome": "Preserve active palette mode",
+      "evidence": "Actual browser case retains typed custom colors and advanced options when the selected tab is clicked."
+    }
+  ],
+  "commands_passed": [
+    "make spec-install",
+    "make verify",
+    "make fuzz",
+    "make spec-check",
+    "make ui-browser",
+    "make embedding-browser",
+    "openspec validate --all --strict --no-interactive --json"
+  ],
+  "counts": {
+    "ui_tests": 63,
+    "embedding_tests": 8,
+    "studio_browser_workflows": 23,
+    "embedding_browser_workflows": 12,
+    "openspec_items": 20,
+    "quint_models": 8,
+    "quint_run_tests": 155,
+    "simulation_traces": 88000,
+    "mutation_checks": 42
+  },
+  "independent_review": {
+    "participants_total": 10,
+    "worker_contexts": 9,
+    "worker_model_requested": "gpt-6.1-sol",
+    "coordinator_model": "fixed by harness; not changed by prompt",
+    "structure": "Three implementation contexts and six independent verification/review contexts; scheduled within three-worker concurrency limit.",
+    "repair": "One repair phase corrected stale docs and the ratio-lock lifecycle defect; independent browser checks confirmed the final fix."
+  },
+  "limits": [
+    "Local macOS arm64 and Chromium evidence; no hosted CI is configured and no all-host or all-platform claim.",
+    "Area uses display-space premultiplied-alpha averaging. Independent exact-rational coverage differs by one 8-bit channel level at floating half-rounding in 68 tested pixels; no universal proof.",
+    "BMP flattens alpha onto white. TIFF uses uncompressed straight 8-bit RGBA and codec-default 72 DPI. Custom DPI is PNG-only. The 32 MiB artifact limit remains.",
+    "Finite models abstract pixels, codecs and UI events; their passing results do not prove a machine-checked refinement.",
+    "No native Safari, Firefox, external MCP host, screen-reader, large-scale throughput or release/deployment verification."
+  ],
+  "source_sha256": {
+    "engine/resample_area.go": "b9de673e0083832c3f9f38beea0f989549c3cb93814d5b705c118779fa83199c",
+    "engine/encode.go": "f6e85f2c3d332acc4029a29c3389a9977da89517c302557a2d3699a5819c09d3",
+    "engine/process.go": "81fa465124cce1110fe0a782a01a68ce3e89088d7a47da214bd7bcf24ffd84d0",
+    "internal/app/service.go": "deab8802e4175985d4c1e35ea206313f967c2a4cc485c452ecbbdcd5c6431a6b",
+    "internal/app/catalog.go": "c7b07d7dc790337f6d5893ca51f4683ed3852a95e21da26a3d9a6fc3a2885046",
+    "internal/cli/cli.go": "ce3f18fcbf703f80e11bf20c794cefd247fc545cd8f34f4b1f39d6b6d358199c",
+    "ui/app.mjs": "1b3b8b5819b3cc4efad8ba21e886f68a0b656e0a9425cd30c940c02e5fd78b54",
+    "ui/state.mjs": "58680f2c5267d8fd59b93690d921c89dd2cf198820b542f0e22433e5f59c9045",
+    "ui/export-size.mjs": "8f64714a98b96daa28dbe51e1df04ba62df523d41bae4a233cd56af7909cfa1a",
+    "ui/browser-check.mjs": "682c8a34fe95d81ea8efc318a620a6e5bfc2465776accb0eef112dff5972f797",
+    "internal/mcpapp/studio.html": "3006c21283298cc537aed986a668951aea737161de128a582b3b50054cc045f4",
+    "docs/tool-schemas.json": "a2d2d2b515b837aa153e17be2eb0cbb98fb05005922cf1816664ddda67998b02"
+  }
+}

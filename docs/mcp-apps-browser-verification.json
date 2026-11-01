@@ -1,8 +1,11 @@
 {
-  "date": "2026-10-18",
+  "date": "2026-11-01",
   "browser": "151.0.7922.34",
   "checks": [
     "Initial preview, complete catalogs, and explicit save gating",
+    "Locked custom export follows new accepted geometry while invalid and unlocked dimensions stay intact",
+    "Local invalid-draft recovery, active palette-mode preservation, and multiline preview shortcuts",
+    "Custom export initializes from preview, locks either axis, enforces bounds, and permits unlocked dimensions",
     "Dirty settings reject late initial results; filtered palette library and real preview call",
     "Zoom, byte-identical PNG save, and overwrite rejection",
     "Source palette extraction validates count, preserves settings, requires preview, and saves exact extracted-color pixels",
@@ -37,8 +40,8 @@
     "studio-favorites-mobile.png"
   ],
   "published_screenshot_sha256": {
-    "assets/mcp-app-studio.png": "e0db6627e899241cf95755d3eae89b8230e5bc7c1cbdee3be896ebf9da1ac7c4",
-    "assets/mcp-app-studio-mobile.png": "f6ad4f227ade813053452db6c7b685bdfaf0ee2e81bee144e61abb02f4bb670c",
-    "assets/mcp-app-studio-dark.png": "0baf9556c4c43f1337ae2f5b7a45e46ad0c0a55bad9bc972220653c5ffd31df7"
+    "assets/mcp-app-studio.png": "435046d24ff2315fcc93513b7f6067120902626dfbd9850cdca82f933795e273",
+    "assets/mcp-app-studio-mobile.png": "86a1434d7792212ebf68cbbdd3ade194ee73d90ebde508c4ada998a995f5886a",
+    "assets/mcp-app-studio-dark.png": "c4e27f22168b9c6f004b0434b9780deb628526d2ea50e8166dfa818996ae61d4"
   }
 }

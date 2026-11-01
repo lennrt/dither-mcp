@@ -17,9 +17,9 @@ The lockfile pins OpenSpec 1.14.0 and Quint 0.33.0. The harness invokes the Type
 
 The command performs:
 
-1. Strict validation of six baseline OpenSpec capabilities and eleven changes.
+1. Strict validation of six baseline OpenSpec capabilities and fourteen changes.
 2. Typechecking of all eight Quint modules.
-3. 151 executable run tests, including negative precondition scenarios.
+3. 155 executable run tests, including negative precondition scenarios.
 4. 10,000 seeded traces of at most 30 transitions for each model.
 5. 1,000 additional traces for eight completion schedules: quantization, catalog browsing, normalization, image saves, recipe saves, guarded exports, restored-look saves, and favorite reload after restart.
 6. 42 negative mutations in independent temporary model copies. They challenge no-clobber publication, cancellation, histogram coverage and weighted sums, palette identity, pagination, normalization, current preview/style authority, explicit recipe saves, matching receipts, guarded exports, bounded current-look navigation, and persistent favorite authority. Each mutation must fail a regression test.
@@ -75,6 +75,8 @@ The [image-normalization change](../openspec/changes/image-normalization/proposa
 [`mcp_apps.qnt`](mcp_apps.qnt) represents user edits with four revision values and generated styles with separate identities. It permits three read operations and three save attempts. Each request keeps its identity and original revision, including after cancellation. Successful responses become current only while both identity and revision match.
 
 The model separates preview requests from explicit save authorization and publication outcomes. Save requires host tool support, a destination, a current successful preview, and no pending operation. An authorization records the current revision, accepted preview, and replay recipe. Invariants check that these agree. Run tests cover edits during requests, cancellation, late results, failed replacements, missing destinations, and busy-state guards.
+
+Local discard restores the accepted settings identity while idle. Invalidated preview restoration has no save-authority effect and is abstracted as stutter. Concrete tests also check editor text, image bytes, and unchanged history.
 
 Extraction actions share request identity and revision guards. Successful extraction updates a palette draft but cannot authorize saving until another preview succeeds. The model abstracts returned-color validity; controller and browser tests check malformed values and pending JSON.
 

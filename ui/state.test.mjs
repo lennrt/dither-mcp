@@ -512,3 +512,19 @@ test('edits, cancellation and newer operations discard both favorite loading sta
   const saved = withFavorites(); const save = saved.beginFavoriteSave('Old'); saved.setInput(request);
   assert.equal(saved.finishFavoriteSave(save, { structuredContent: favorite(save.request.recipe, 'Old') }), false); assert.deepEqual(saved.favorites, []);
 });
+
+test('discard restores exact accepted options without touching image, history, or validity', () => {
+  const state = ready(); const image = state.rendered; const history = clone(state.history);
+  state.edit({ ...clone(request), colors: ['#000000', '#FFFFFF'], palette: undefined });
+  assert.equal(state.discardEdits(), true);
+  assert.deepEqual(state.draft, request); assert.equal(state.rendered, image);
+  assert.deepEqual(state.history, history); assert.equal(state.canSave, true);
+  state.draft.options.effects.noise = 9; assert.equal(state.rendered.request.options.effects.noise, .1);
+});
+test('discard cannot authorize invalidated previews or restore another source or pending work', () => {
+  const state = ready(); state.validPreview = false; state.edit(clone(request));
+  assert.equal(state.discardEdits(), true); assert.equal(state.canSave, false);
+  const pending = state.beginPreview(); assert.equal(state.discardEdits(), false);
+  state.cancel(); assert.equal(state.finishPreview(pending, result()), false);
+  state.setInput({ input: 'other.png', options: {} }); assert.equal(state.discardEdits(), false);
+});

@@ -57,7 +57,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -247,7 +247,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
         },
         "dpi": {
           "type": "integer",
@@ -480,7 +480,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -619,7 +619,7 @@
                   },
                   "resize_filter": {
                     "type": "string",
-                    "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+                    "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
                   },
                   "brightness": {
                     "type": "number",
@@ -809,7 +809,7 @@
               },
               "format": {
                 "type": "string",
-                "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+                "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
               },
               "dpi": {
                 "type": "integer",
@@ -1037,7 +1037,7 @@
                             "type": "integer"
                           },
                           "resize_filter": {
-                            "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                            "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                             "type": "string"
                           },
                           "saturation": {
@@ -1362,7 +1362,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -2057,7 +2057,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -2247,7 +2247,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
         },
         "dpi": {
           "type": "integer",
@@ -2487,7 +2487,7 @@
                       "type": "integer"
                     },
                     "resize_filter": {
-                      "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                      "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                       "type": "string"
                     },
                     "saturation": {
@@ -2572,6 +2572,231 @@
               "palette": {
                 "type": "string"
               },
+              "recipe": {
+                "additionalProperties": false,
+                "properties": {
+                  "colors": {
+                    "description": "Supply 2 through 256 unique opaque hex colors instead of palette. Each color accepts RGB or RRGGBB with an optional leading #.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "options": {
+                    "additionalProperties": false,
+                    "description": "These engine settings define a reusable processing recipe without input or output paths.",
+                    "properties": {
+                      "algorithm": {
+                        "description": "Choose an algorithm ID from dither_catalog. Omission selects floyd-steinberg.",
+                        "type": "string"
+                      },
+                      "brightness": {
+                        "description": "Add an sRGB channel offset from -1 through 1. The default is 0.",
+                        "type": "number"
+                      },
+                      "color_space": {
+                        "description": "Use srgb or linear-rgb for palette distance and diffusion error. Omission selects srgb.",
+                        "type": "string"
+                      },
+                      "contrast": {
+                        "description": "Set contrast from 0 through 4 around the channel midpoint 0.5. Omission selects 1. Zero produces a flat midpoint.",
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "crop": {
+                        "additionalProperties": false,
+                        "description": "Crop within source bounds before resizing. Service inputs use upright coordinates after EXIF orientation, with a top-left origin.",
+                        "properties": {
+                          "height": {
+                            "description": "Set a positive crop height that fits wholly within the source.",
+                            "type": "integer"
+                          },
+                          "width": {
+                            "description": "Set a positive crop width that fits wholly within the source.",
+                            "type": "integer"
+                          },
+                          "x": {
+                            "description": "Set the nonnegative horizontal crop origin within the source.",
+                            "type": "integer"
+                          },
+                          "y": {
+                            "description": "Set the nonnegative vertical crop origin within the source.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "width",
+                          "height"
+                        ],
+                        "type": [
+                          "null",
+                          "object"
+                        ]
+                      },
+                      "effects": {
+                        "additionalProperties": false,
+                        "description": "Apply these effects after dithering. Shading and noise may produce colors outside the palette.",
+                        "properties": {
+                          "crt": {
+                            "description": "Set CRT shading strength from 0 through 1.",
+                            "type": "number"
+                          },
+                          "glitch": {
+                            "description": "Set the maximum seeded horizontal row-band shift from 0 through 1024 pixels.",
+                            "type": "integer"
+                          },
+                          "noise": {
+                            "description": "Set seeded additive noise strength from 0 through 1.",
+                            "type": "number"
+                          },
+                          "pixel_sort": {
+                            "description": "Sort visible contiguous luminance runs above pixel_sort_threshold.",
+                            "type": "boolean"
+                          },
+                          "pixel_sort_threshold": {
+                            "description": "Set the pixel-sorting threshold from 0 through 1. Omission selects 0.25.",
+                            "type": [
+                              "null",
+                              "number"
+                            ]
+                          },
+                          "scanline_spacing": {
+                            "description": "Set scanline spacing from 0 through 256 pixels. Omission or zero selects 2.",
+                            "type": "integer"
+                          },
+                          "scanlines": {
+                            "description": "Set scanline shading strength from 0 through 1.",
+                            "type": "number"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "gamma": {
+                        "description": "Set gamma from 0.1 through 8. The engine applies channel^(1/gamma). Omission selects 1.",
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "grayscale": {
+                        "description": "Convert RGB to grayscale before dithering. Alpha remains unchanged.",
+                        "type": "boolean"
+                      },
+                      "height": {
+                        "description": "Set output height from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when width is specified.",
+                        "type": "integer"
+                      },
+                      "invert": {
+                        "description": "Invert RGB channels before dithering. Alpha remains unchanged.",
+                        "type": "boolean"
+                      },
+                      "mask": {
+                        "additionalProperties": false,
+                        "description": "Dither only selected pixels on the reduced grid. Pixels outside the selection retain their adjusted source values.",
+                        "properties": {
+                          "height": {
+                            "description": "Set a positive rectangle height in reduced-grid pixels.",
+                            "type": "integer"
+                          },
+                          "invert": {
+                            "description": "Dither the complement of this selection. The default is false.",
+                            "type": "boolean"
+                          },
+                          "radius": {
+                            "description": "Set a circle radius from 1 through 16384 reduced-grid pixels.",
+                            "type": "integer"
+                          },
+                          "shape": {
+                            "description": "Use rectangle, circle, or image. Image masks require a separate mask_input path in the request.",
+                            "type": "string"
+                          },
+                          "width": {
+                            "description": "Set a positive rectangle width in reduced-grid pixels.",
+                            "type": "integer"
+                          },
+                          "x": {
+                            "description": "Set the rectangle left edge or circle center on the reduced grid.",
+                            "type": "integer"
+                          },
+                          "y": {
+                            "description": "Set the rectangle top edge or circle center on the reduced grid.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "shape"
+                        ],
+                        "type": [
+                          "null",
+                          "object"
+                        ]
+                      },
+                      "pixel_scale": {
+                        "description": "Set grid scale from 0 through 256. Zero or one keeps the full grid. Larger values reduce the grid before dithering and enlarge it afterward.",
+                        "type": "integer"
+                      },
+                      "resize_filter": {
+                        "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
+                        "type": "string"
+                      },
+                      "saturation": {
+                        "description": "Set saturation from 0 through 4. Omission selects 1. Zero produces grayscale.",
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "seed": {
+                        "description": "Use this integer seed for reproducible noise and moving effects. The default is 0.",
+                        "type": "integer"
+                      },
+                      "serpentine": {
+                        "description": "Reverse diffusion scan direction on alternate rows. The default is false.",
+                        "type": "boolean"
+                      },
+                      "strength": {
+                        "description": "Set dither strength from 0 through 2. Omission selects 1. Zero selects nearest-color quantization for ordered patterns.",
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "threshold": {
+                        "description": "Set threshold from 0 through 1. Omission selects 0.5. Higher values darken the quantization vector.",
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "width": {
+                        "description": "Set output width from 0 through 16384 pixels. Zero preserves source size or the aspect ratio when height is specified.",
+                        "type": "integer"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "palette": {
+                    "description": "Select a built-in palette ID from dither_palettes. Omit colors when this field is present. Omission selects mono unless colors supplies a palette.",
+                    "type": "string"
+                  },
+                  "version": {
+                    "description": "The recipe version must be 1.",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "version",
+                  "options"
+                ],
+                "type": "object"
+              },
               "width": {
                 "type": "integer"
               },
@@ -2583,6 +2808,7 @@
               }
             },
             "required": [
+              "recipe",
               "algorithm",
               "x",
               "y",
@@ -2807,7 +3033,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -2927,7 +3153,7 @@
                 },
                 "resize_filter": {
                   "type": "string",
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
                 },
                 "brightness": {
                   "type": "number",
@@ -3299,7 +3525,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -3975,7 +4201,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -4234,7 +4460,7 @@
               "type": "integer"
             },
             "resize_filter": {
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
               "type": "string"
             },
             "saturation": {
@@ -4346,7 +4572,7 @@
                 },
                 "resize_filter": {
                   "type": "string",
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
                 },
                 "brightness": {
                   "type": "number",
@@ -4737,7 +4963,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -4868,7 +5094,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -5058,7 +5284,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
         },
         "dpi": {
           "type": "integer",
@@ -5271,7 +5497,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -5402,7 +5628,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -5592,7 +5818,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
         },
         "dpi": {
           "type": "integer",
@@ -5805,7 +6031,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -5937,7 +6163,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -6336,7 +6562,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {
@@ -6478,7 +6704,7 @@
             },
             "resize_filter": {
               "type": "string",
-              "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling."
+              "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear."
             },
             "brightness": {
               "type": "number",
@@ -6668,7 +6894,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, or ascii. Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
+          "description": "Override the output extension. Still output supports png, jpeg, gif, svg, pbm, ascii, bmp, or tiff (tif alias). Animation supports gif or png. Video supports mp4, webm, gif, or png. Separations use zip."
         },
         "dpi": {
           "type": "integer",
@@ -6893,7 +7119,7 @@
                   "type": "integer"
                 },
                 "resize_filter": {
-                  "description": "Use bilinear or nearest sampling. Omission selects bilinear interpolation with correct alpha handling.",
+                  "description": "Use bilinear, nearest, or area sampling. Area averages pixel coverage with correct alpha. Omission selects bilinear.",
                   "type": "string"
                 },
                 "saturation": {

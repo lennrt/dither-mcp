@@ -33,6 +33,10 @@ merges into those options. Hidden settings remain intact. Invalid JSON stays
 visible and must be corrected before a control can change those options or Apply
 can submit them. Options must be a JSON object; `null` does not reset defaults.
 
+Use **Discard edits** to restore the last accepted settings and clear unfinished JSON or custom colors without another tool call. The displayed image, history, output paths, and export choices stay intact. Pending operations disable this action. If an earlier failure invalidated the preview, apply a fresh preview before saving.
+
+Press **Ctrl+Enter** or **Cmd+Enter** in either multiline editor to apply the draft. Ordinary Enter inserts a newline. Clicking the selected palette mode preserves your current colors and unfinished text.
+
 Select **Extract colors** to build a custom palette from the source. Choose
 2–256 colors; the default is 8. Extraction reads the complete normalized source
 before crop, tone adjustments, and masking. It may return fewer colors than
@@ -46,6 +50,8 @@ cancellation leaves the connected studio available for another preview.
 Select **Apply preview** to process changed settings. Editing controls marks the displayed image as stale. Save stays disabled until those settings have a successful preview. Pending, canceled, and late results cannot authorize a save of unpreviewed settings.
 
 Enter a new workspace-relative destination, then select **Save image**. Saving calls the existing `dither_render` tool. Choose **Preview**, **Source**, or **Custom dimensions** for the export. The filename extension selects the output format. The destination must not exist.
+
+On first use, custom export dimensions start at the accepted preview size. Later mode changes preserve intentionally empty fields for correction. **Keep preview aspect ratio** updates the other dimension when you edit either axis. Paired dimensions round to the nearest pixel, with a minimum of one. A new preview ratio keeps a valid locked custom width and recalculates its height. Invalid fields remain available for correction. Clear the checkbox to set each dimension independently. Unlocked dimensions stay intact when the preview changes. The export limits still apply. These choices do not change your preview settings.
 
 ## Start with Random style
 
@@ -244,7 +250,7 @@ DITHER_SITE_TEST_URL=http://localhost:8080 make ui-browser
 
 The browser check verifies navigation to the studio section, visible image
 loading, and desktop/mobile overflow. It fails on browser script errors,
-unexpected request failures, or external requests. On October 18, 2026, the studio and embedding checks passed
+unexpected request failures, or external requests. On November 1, 2026, the studio and embedding checks passed
 with Chromium 151.0.7922.34 and Playwright 1.62.1. The [browser report](mcp-apps-browser-verification.json) records the checks and published screenshot hashes. These results cover the local SDK test host. The separate showcase was not rerun in this pass. The separate [host guide](hosts.md) records the independent Inspector check and the limits of each compatibility claim.
 
 Published captures: [desktop](assets/mcp-app-studio.png), [mobile](assets/mcp-app-studio-mobile.png), and [dark mode](assets/mcp-app-studio-dark.png).

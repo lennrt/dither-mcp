@@ -159,6 +159,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 		}
 	}
 	if options != "" {
+		if err := validateOptionsFlags(options, f); err != nil {
+			return err
+		}
 		if err := app.StrictJSON([]byte(options), &q.Options); err != nil {
 			return err
 		}
@@ -277,4 +280,27 @@ func validateCommandFlags(command string, flags *flag.FlagSet) error {
 		return errors.New("flag --algorithm requires --palettes on compare. Use --algorithms for an algorithm comparison")
 	}
 	return nil
+}
+
+// Reject keys supplied both in advanced JSON and an explicit engine flag.
+func validateOptionsFlags(options string, flags *flag.FlagSet) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(options), &fields); err != nil {
+		return err
+	}
+	engineFlags := strings.Fields("algorithm width height pixel-scale seed serpentine invert grayscale brightness contrast gamma saturation strength threshold")
+	var conflict error
+	flags.Visit(func(f *flag.Flag) {
+		for _, name := range engineFlags {
+			if f.Name != name {
+				continue
+			}
+			for key := range fields {
+				if strings.EqualFold(key, strings.ReplaceAll(name, "-", "_")) {
+					conflict = fmt.Errorf("flag --%s conflicts with --options key %q; supply each engine setting once", name, key)
+				}
+			}
+		}
+	})
+	return conflict
 }

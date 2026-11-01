@@ -203,6 +203,14 @@ export class StudioState {
     this.status = 'Settings changed. Apply preview before saving.';
     this.error = false;
   }
+  discardEdits() {
+    if (this.busy || this.hostPending || !this.rendered || this.draft?.input !== this.rendered.request.input) return false;
+    this.draft = clone(this.rendered.request);
+    this.revision++;
+    this.status = this.validPreview ? 'Accepted settings restored.' : 'Accepted settings restored. Apply preview before saving.';
+    this.error = false;
+    return true;
+  }
   hostResult(result) {
     if (!result?._meta?.dither && !result?.isError) return false;
     // Host results have no app request ID. Edits close their delivery window.
